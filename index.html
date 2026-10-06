@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rekapan Keuangan Workshop GCC</title>
     <!-- Library docx & FileSaver untuk ekspor Word -->
     <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
@@ -10,46 +10,54 @@
     
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1, h2, h3 { color: #1a252f; margin-top: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 15px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #1a252f; margin-top: 0; font-size: 22px; }
+        h2 { color: #1a252f; font-size: 18px; }
+        h3 { color: #1a252f; font-size: 16px; margin-top: 0; }
+        
         .form-group { margin-bottom: 12px; }
         label { font-weight: bold; display: block; margin-bottom: 4px; color: #333; font-size: 13px; }
         input[type="text"], input[type="number"], input[type="file"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; background: white; }
         
-        .draft-bar { background: #e8f4fd; border: 1px solid #b6d4fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .draft-bar select { flex: 1; min-width: 200px; }
+        /* Bar Draf */
+        .draft-bar { background: #e8f4fd; border: 1px solid #b6d4fe; padding: 12px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .draft-bar select { flex: 1; min-width: 180px; }
 
-        .calc-group { display: flex; align-items: center; gap: 8px; }
-        .calc-operator { font-weight: bold; font-size: 18px; color: #555; user-select: none; }
+        /* Form Kalkulasi Perkalian */
+        .calc-group { display: flex; align-items: center; gap: 6px; }
+        .calc-operator { font-weight: bold; font-size: 16px; color: #555; user-select: none; }
         .calc-subtotal { background: #e9ecef; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; color: #2b579a; text-align: right; margin-top: 4px; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+        /* Grid Form Dual Columns */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
         .card { background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; }
         .card.masuk { border-left: 5px solid #28a745; }
         .card.keluar { border-left: 5px solid #dc3545; }
         
-        button { border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        button { border: none; padding: 10px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .btn-masuk { background-color: #28a745; color: white; width: 100%; margin-top: 5px; }
         .btn-masuk:hover { background-color: #218838; }
         .btn-keluar { background-color: #dc3545; color: white; width: 100%; margin-top: 5px; }
         .btn-keluar:hover { background-color: #c82333; }
-        .btn-word { background-color: #2b579a; color: white; font-size: 16px; padding: 12px 20px; margin-top: 20px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-word { background-color: #2b579a; color: white; font-size: 15px; padding: 12px 20px; margin-top: 20px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-word:hover { background-color: #1e3c6e; }
         .btn-new { background-color: #17a2b8; color: white; }
-        .btn-new:hover { background-color: #138496; }
         .btn-reset { background-color: #dc3545; color: white; }
         
-        .btn-history { background-color: #6c757d; color: white; padding: 6px 12px; font-size: 13px; border-radius: 5px; }
+        .btn-history { background-color: #6c757d; color: white; padding: 6px 12px; font-size: 12px; border-radius: 5px; }
         .btn-history:disabled { background-color: #ccc; cursor: not-allowed; }
-        .history-controls { display: flex; gap: 8px; align-items: center; }
+        .history-controls { display: flex; gap: 6px; align-items: center; }
 
-        .summary-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; background: #eef2f7; padding: 15px; border-radius: 8px; text-align: center; }
-        .summary-item h4 { margin: 0; font-size: 12px; color: #666; text-transform: uppercase; }
-        .summary-item p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: #1a252f; }
+        /* Box Ringkasan */
+        .summary-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; background: #eef2f7; padding: 12px; border-radius: 8px; text-align: center; }
+        .summary-item h4 { margin: 0; font-size: 11px; color: #666; text-transform: uppercase; }
+        .summary-item p { margin: 4px 0 0; font-size: 15px; font-weight: bold; color: #1a252f; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: middle; }
+        /* Container Tabel untuk Mobile Scroll */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
         th { background-color: #343a40; color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .badge-masuk { color: #28a745; font-weight: bold; }
@@ -57,26 +65,37 @@
         
         .btn-edit { background: #ffc107; color: #212529; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-right: 4px; }
         .btn-delete { background: #ff4d4d; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; }
-        .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
+        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
         .tfoot-summary { background-color: #f1f3f5; font-weight: bold; }
+
+        /* MEDIA QUERIES KHUSUS TAMPILAN HP (MOBILE) */
+        @media (max-width: 768px) {
+            body { padding: 8px; }
+            .container { padding: 12px; }
+            .grid { grid-template-columns: 1fr; } /* Mengubah form menjadi 1 kolom vertikal di HP */
+            .summary-box { grid-template-columns: repeat(2, 1fr); gap: 8px; } /* Ringkasan 2x2 di HP */
+            .draft-bar { flex-direction: column; align-items: stretch; }
+            .draft-bar button { width: 100%; }
+            .history-controls button { padding: 6px 10px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>📝 Rekapan Keuangan Workshop GCC</h1>
-    <p style="color: #666;">Pencatatan keuangan dengan fitur simpan draf otomatis, Undo/Redo (Ctrl+Z / Ctrl+Y), dan ekspor Word (.docx).</p>
+    <p style="color: #666; font-size: 13px;">Pencatatan keuangan interaktif dengan ekspor Word (.docx).</p>
 
     <!-- Bar Pilihan Draf Rekapan -->
     <div class="draft-bar">
-        <label style="margin: 0; white-space: nowrap;">📂 Pilih Riwayat Draf:</label>
+        <label style="margin: 0; white-space: nowrap;">📂 Pilihan Draf:</label>
         <select id="selectDraft" onchange="gantiDraft()"></select>
-        <button class="btn-new" onclick="buatDraftBaru()">➕ Buat Rekapan Baru</button>
-        <button class="btn-reset" onclick="hapusDraftAktif()">🗑️ Hapus Draf Ini</button>
+        <button class="btn-new" onclick="buatDraftBaru()">➕ Draf Baru</button>
+        <button class="btn-reset" onclick="hapusDraftAktif()">🗑️ Hapus Draf</button>
     </div>
 
     <!-- Form Informasi Peserta -->
-    <div class="form-group" style="background: #e8f4fd; padding: 15px; border-radius: 8px;">
+    <div class="form-group" style="background: #e8f4fd; padding: 12px; border-radius: 8px;">
         <label for="jumlahPeserta">👥 Jumlah Total Peserta Hadir:</label>
         <input type="number" id="jumlahPeserta" value="0" min="0" onchange="simpanStateKeHistory(); simpanKeStorage(); updateSummary();">
     </div>
@@ -155,36 +174,38 @@
     </div>
 
     <!-- Header Tabel Transaksi + Kontrol Undo/Redo -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
         <h2 style="margin: 0;">Rincian Transaksi</h2>
         <div class="history-controls">
-            <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Atau tekan Ctrl+Z">↩️ Undo</button>
-            <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Atau tekan Ctrl+Y">↪️ Redo</button>
+            <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩️ Undo</button>
+            <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪️️ Redo</button>
         </div>
     </div>
 
-    <!-- Tabel Rincian Transaksi -->
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 35px;">No</th>
-                <th style="width: 70px;">Jenis</th>
-                <th>Keterangan</th>
-                <th>Rincian Hitungan</th>
-                <th>Total (Rp)</th>
-                <th>Lampiran Nota</th>
-                <th>Catatan</th>
-                <th style="width: 100px;">Aksi</th>
-            </tr>
-        </thead>
-        <tbody id="tabelBody">
-            <tr>
-                <td colspan="8" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td>
-            </tr>
-        </tbody>
-        <tfoot id="tabelFoot">
-        </tfoot>
-    </table>
+    <!-- Tabel Rincian Transaksi dengan Container Responsive Scroll -->
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 35px;">No</th>
+                    <th style="width: 70px;">Jenis</th>
+                    <th>Keterangan</th>
+                    <th>Rincian Hitungan</th>
+                    <th>Total (Rp)</th>
+                    <th>Lampiran Nota</th>
+                    <th>Catatan</th>
+                    <th style="width: 100px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="tabelBody">
+                <tr>
+                    <td colspan="8" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td>
+                </tr>
+            </tbody>
+            <tfoot id="tabelFoot">
+            </tfoot>
+        </table>
+    </div>
 
     <!-- Tombol Export Word -->
     <button class="btn-word" onclick="exportToWord()">📄 Simpan & Download Rekapan ke Word (.docx)</button>
@@ -583,7 +604,6 @@
             insideVertical: borderKosong
         };
 
-        // Tabel Rincian Transaksi Tanpa Kolom Nota
         const tableRows = [
             new docx.TableRow({
                 children: [
@@ -597,13 +617,11 @@
             })
         ];
 
-        // Kumpulan Gambar Nota untuk Bagian Lampiran Akhir
         const lampiranNotaChildren = [];
 
         for (let index = 0; index < transaksi.length; index++) {
             const t = transaksi[index];
 
-            // Baris Tabel (Tanpa Kolom Nota)
             tableRows.push(
                 new docx.TableRow({
                     children: [
@@ -617,7 +635,6 @@
                 })
             );
 
-            // Jika ada foto nota, masukkan ke array lampiran
             if (t.notaData) {
                 try {
                     const imageBytes = dataURLtoUint8Array(t.notaData.dataUrl);
@@ -639,12 +656,10 @@
                         })
                     );
                 } catch (e) {
-                    // Abaikan jika gambar gagal dikonversi
                 }
             }
         }
 
-        // Baris Total Akhir di Bawah Tabel Word
         tableRows.push(
             new docx.TableRow({
                 children: [
@@ -666,7 +681,6 @@
             })
         );
 
-        // Susun Seluruh Elemen Dokumen Word
         const docChildren = [
             new docx.Paragraph({
                 children: [
@@ -752,7 +766,6 @@
             })
         ];
 
-        // Jika terdapat lampiran foto nota, tambahkan bagian Lampiran Nota di akhir file Word
         if (lampiranNotaChildren.length > 0) {
             docChildren.push(
                 new docx.Paragraph({ text: "", spacing: { after: 200, line: 276 } }),
