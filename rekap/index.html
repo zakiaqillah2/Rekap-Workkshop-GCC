@@ -46,32 +46,38 @@
         <div class="modal-caption" id="modalCaption"></div>
     </div>
 
-    <div class="container" id="exportContent">
-        
-        <!-- Top Header Bar -->
-        <div class="header-bar">
-            <div>
-                <h1>📊 Rekapan Keuangan GCC</h1>
-                <p>Sistem Pengelolaan & Laporan Keuangan GAMATIKA Coding Club</p>
+    <!-- ================= FLOATING NAVBAR ATAS (KOKOH DI ATAS) ================= -->
+    <header class="navbar-fixed">
+        <div class="nav-brand">
+            <img src="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl" alt="Logo GCC" class="nav-logo">
+            <div class="brand-text">
+                <span class="brand-title">GCC Keuangan</span>
+                <span class="brand-sub">GAMATIKA Coding Club</span>
             </div>
-            <button id="themeToggle" class="btn-theme" onclick="toggleTheme()" title="Ubah Mode Layar">🌙 Mode Gelap</button>
         </div>
 
-        <!-- Bar Navigasi Utama (Tab Menu) -->
-        <nav class="main-nav">
-            <button class="nav-tab active" onclick="switchTab('tab-pencatatan', this)">
+        <nav class="nav-menu">
+            <button class="nav-item active" onclick="switchTab('tab-pencatatan', this)">
                 <span class="nav-icon">📝</span>
                 <span class="nav-label">Pencatatan</span>
             </button>
-            <button class="nav-tab" onclick="switchTab('tab-analisis', this)">
+            <button class="nav-item" onclick="switchTab('tab-analisis', this)">
                 <span class="nav-icon">📊</span>
                 <span class="nav-label">Analisis & Grafik</span>
             </button>
-            <button class="nav-tab" onclick="switchTab('tab-gdrive', this)">
+            <button class="nav-item" onclick="switchTab('tab-gdrive', this)">
                 <span class="nav-icon">☁️</span>
                 <span class="nav-label">Google Drive</span>
             </button>
         </nav>
+
+        <button id="themeToggle" class="btn-theme-action" onclick="toggleTheme()" title="Ubah Mode Layar">
+            🌙 <span class="theme-text">Mode Gelap</span>
+        </button>
+    </header>
+
+    <!-- Container Konten Utama (Berada di Bawah Floating Navbar) -->
+    <div class="container" id="exportContent">
 
         <!-- ================= TAB 1: PENCATATAN ================= -->
         <div id="tab-pencatatan" class="tab-content active">
@@ -248,7 +254,7 @@
                 </table>
             </div>
 
-            <!-- Export Action Group (Unduh File Lokal) -->
+            <!-- Export Action Group -->
             <div class="export-group">
                 <button class="btn-word" onclick="exportToWord()">📄 Download Word (.docx)</button>
                 <button class="btn-pdf" onclick="exportToPDF()">📕 Download PDF (.pdf)</button>
@@ -271,7 +277,7 @@
                 </div>
             </div>
 
-            <!-- Section Charts / Analisis Visual -->
+            <!-- Section Charts -->
             <div class="charts-grid">
                 <div class="chart-card">
                     <h4>📊 Analisis Masuk vs Keluar</h4>
