@@ -1,3 +1,31 @@
+// Mapping Folder Google Drive Resmi Per Departemen (RAB & Realisasi Anggaran)
+const FOLDER_MAP = {
+    "CONTER": {
+        "RAB": "1ycHYO1rTHGfQ8lmOCY1CcED-MKy6VZ8U",
+        "Realisasi Anggaran": "1wI2ceA-TxpPbjIIMEp2OuH27INUeff1A"
+    },
+    "HUMAS": {
+        "RAB": "1TEyQeC3eh70qa_XMnHOFPLOgaVJ9yrCm",
+        "Realisasi Anggaran": "1xLDd3mq49vTXCZQALionmZjYfOZsBOyO"
+    },
+    "MEDIA": {
+        "RAB": "1gcaKGgNjPVgAZY5GNNVYCuYffGo863-a",
+        "Realisasi Anggaran": "1ix2_NUAedmCphmMGvkIZmonbrC27B8lV"
+    },
+    "PAKSIMA": {
+        "RAB": "1AoKVj1jv8hNiPqRt-reQA0RBXd9vXK4S",
+        "Realisasi Anggaran": "128wGr7Of8QgGuHgzgwy7WXn7lnGSXugV"
+    },
+    "PDK": {
+        "RAB": "1a5BY4WB-6wteMnRChDGYkd3Br3jY6phW",
+        "Realisasi Anggaran": "1E7h9S_J-UyvwbFfwm62DYmIi7BC5Hvh0"
+    },
+    "PPSDM": {
+        "RAB": "1h7aqkLck3qLXDj4d4ZKQkUbbE3AvBvuU",
+        "Realisasi Anggaran": "1-nXJWzKXogrHlEkJICcSCFpa9LgSifIV"
+    }
+};
+
 let listDraft = [];
 let currentDraftId = null;
 let transaksi = [];
@@ -7,29 +35,81 @@ let targetIndexNotaEdit = -1;
 let undoStack = [];
 let redoStack = [];
 
+let chartComp = null;
+let chartDiv = null;
+
 const GCC_LOGO_URL = "https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl";
 
 window.onload = function() {
+    initTheme();
     muatSemuaDraft();
+    initCharts();
     
     document.addEventListener('keydown', function(e) {
         const activeElement = document.activeElement;
         const isInputFocused = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-            if (e.shiftKey) {
-                e.preventDefault();
-                redo();
-            } else if (!isInputFocused || isInputFocused) {
-                e.preventDefault();
-                undo();
-            }
+            if (e.shiftKey) { e.preventDefault(); redo(); }
+            else if (!isInputFocused || isInputFocused) { e.preventDefault(); undo(); }
         } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
             e.preventDefault();
             redo();
         }
     });
 };
+
+/* ------------------- FUNGSI PERPINDAHAN TAB NAVIGASI ------------------- */
+function switchTab(tabId, btnElement) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById(tabId).classList.add('active');
+    btnElement.classList.add('active');
+
+    // Jika tab Analisis dibuka, refresh chart agar ter-render sempurna
+    if (tabId === 'tab-analisis') {
+        setTimeout(() => updateTampilan(), 50);
+    }
+}
+
+/* ------------------- HELPER FORMAT NAMA FILE DARI DRAF ------------------- */
+function getFileNameFormat(extension) {
+    const draft = listDraft.find(d => d.id === currentDraftId);
+    const rawName = draft && draft.nama ? draft.nama : 'Rekapan_Keuangan_GCC';
+    const safeName = rawName.replace(/[^a-zA-Z0-9_-]/g, '_');
+    return `${safeName}.${extension}`;
+}
+
+/* ------------------- NOTIFIKASI TOAST ------------------- */
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = message;
+
+    if (type === 'success') toast.style.borderLeftColor = '#10b981';
+    if (type === 'error') toast.style.borderLeftColor = '#f43f5e';
+
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
+}
+
+/* ------------------- DARK MODE ------------------- */
+function initTheme() {
+    const savedTheme = localStorage.getItem('gcc_theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeToggle').innerText = '☀️ Mode Terang';
+    }
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('gcc_theme', isDark ? 'dark' : 'light');
+    document.getElementById('themeToggle').innerText = isDark ? '☀️ Mode Terang' : '🌙 Mode Gelap';
+}
 
 function formatRupiah(angka) {
     return 'Rp ' + Number(angka).toLocaleString('id-ID');
@@ -45,7 +125,20 @@ function hitungSubtotal(jenis) {
     return total;
 }
 
-/* ------------------- FUNGSI EDIT & HAPUS LAMPIRAN NOTA ------------------- */
+/* ------------------- LIGHTBOX MODAL NOTA ------------------- */
+function openModal(dataUrl, title) {
+    const modal = document.getElementById('imageModal');
+    const img = document.getElementById('modalImage');
+    const caption = document.getElementById('modalCaption');
+    modal.style.display = 'flex';
+    img.src = dataUrl;
+    caption.innerText = title;
+}
+
+function closeModal() {
+    document.getElementById('imageModal').style.display = 'none';
+}
+
 function triggerGantiNota(realIndex) {
     targetIndexNotaEdit = realIndex;
     document.getElementById('fileNotaHidden').click();
@@ -68,6 +161,7 @@ async function prosesGantiNota(event) {
 
     simpanKeStorage(false);
     updateTampilan();
+    showToast("✅ Lampiran bukti/nota diperbarui!", "success");
 }
 
 function hapusNota(realIndex) {
@@ -76,52 +170,115 @@ function hapusNota(realIndex) {
         transaksi[realIndex].notaData = null;
         simpanKeStorage(false);
         updateTampilan();
+        showToast("🗑️ Lampiran dihapus", "info");
     }
 }
 
-/* ------------------- FUNGSI DOWNLOAD TEMPLAT WORD RESMI ------------------- */
+/* ------------------- KALKULATOR SIMULASI HTM ------------------- */
+function hitungSimulasiHTM() {
+    const summary = updateSummary();
+    const targetPeserta = parseFloat(document.getElementById('simPeserta').value) || 0;
+    const sponsor = parseFloat(document.getElementById('simSponsor').value) || 0;
+    const totalPengeluaran = summary.totalKeluar;
+
+    if (targetPeserta <= 0) {
+        document.getElementById('simulasiResult').innerText = "Masukkan jumlah estimasi peserta yang valid.";
+        return;
+    }
+
+    const sisaBeban = totalPengeluaran - sponsor;
+    if (sisaBeban <= 0) {
+        document.getElementById('simulasiResult').innerText = "🎉 Dana Sponsorship/Kas sudah menutupi seluruh pengeluaran! HTM Peserta bisa Rp 0 (Gratis).";
+    } else {
+        const htmPerPeserta = Math.ceil((sisaBeban / targetPeserta) / 1000) * 1000;
+        document.getElementById('simulasiResult').innerHTML = `
+            💡 <b>Hasil Simulasi:</b><br>
+            • Sisa Beban Pengeluaran: <b>${formatRupiah(sisaBeban)}</b><br>
+            • Estimasi HTM Minimal per Peserta: <b style="color:#10b981; font-size: 1.1rem;">${formatRupiah(htmPerPeserta)}</b>
+        `;
+    }
+}
+
+/* ------------------- CHARTS / GRAFIK ------------------- */
+function initCharts() {
+    const ctxComp = document.getElementById('chartComparison').getContext('2d');
+    chartComp = new Chart(ctxComp, {
+        type: 'bar',
+        data: {
+            labels: ['Total Masuk', 'Total Keluar'],
+            datasets: [{
+                label: 'Nominal (Rp)',
+                data: [0, 0],
+                backgroundColor: ['#10b981', '#f43f5e'],
+                borderRadius: 8
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    const ctxDiv = document.getElementById('chartDivisi').getContext('2d');
+    chartDiv = new Chart(ctxDiv, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f43f5e']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+}
+
+function updateCharts(totalMasuk, totalKeluar, kelompokDivisi) {
+    if (!chartComp || !chartDiv) return;
+
+    chartComp.data.datasets[0].data = [totalMasuk, totalKeluar];
+    chartComp.update();
+
+    const divLabels = [];
+    const divTotals = [];
+
+    for (const [divName, items] of Object.entries(kelompokDivisi)) {
+        let sumKeluar = 0;
+        items.forEach(t => { if (t.jenis === 'Keluar') sumKeluar += t.totalNominal; });
+        if (sumKeluar > 0) {
+            divLabels.push(divName);
+            divTotals.push(sumKeluar);
+        }
+    }
+
+    chartDiv.data.labels = divLabels;
+    chartDiv.data.datasets[0].data = divTotals;
+    chartDiv.update();
+}
+
+/* ------------------- TEMPLAT WORD & IMPOR ------------------- */
 async function downloadTemplateWord() {
     const { docx } = window;
     const borderStandard = { style: docx.BorderStyle.SINGLE, size: 1, color: "000000" };
-    const borders = {
-        top: borderStandard, bottom: borderStandard, left: borderStandard, right: borderStandard,
-        insideHorizontal: borderStandard, insideVertical: borderStandard
-    };
+    const borders = { top: borderStandard, bottom: borderStandard, left: borderStandard, right: borderStandard, insideHorizontal: borderStandard, insideVertical: borderStandard };
 
     const templateRows = [
         new docx.TableRow({
             children: [
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "No", bold: true, alignment: docx.AlignmentType.CENTER })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "Jenis (Masuk/Keluar)", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Keterangan / Nama Barang", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                new docx.TableCell({ children: [new docx.Paragraph({ text: "Keterangan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "Harga Satuan (Rp)", bold: true, alignment: docx.AlignmentType.CENTER })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "Jumlah (Qty)", bold: true, alignment: docx.AlignmentType.CENTER })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "Total Nominal (Rp)", bold: true, alignment: docx.AlignmentType.CENTER })] })
             ]
         }),
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ columnSpan: 6, children: [new docx.Paragraph({ text: "Acara", bold: true })] })
-            ]
-        }),
+        new docx.TableRow({ children: [new docx.TableCell({ columnSpan: 6, children: [new docx.Paragraph({ text: "CONTER", bold: true })] })] }),
         new docx.TableRow({
             children: [
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "Masuk" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Sponsorship A" })] }),
+                new docx.TableCell({ children: [new docx.Paragraph({ text: "Dana Kas GCC" })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "1000000" })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "1000000" })] })
-            ]
-        }),
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "2", alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Keluar" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Honor Pemateri" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "500000" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "500000" })] })
             ]
         })
     ];
@@ -129,99 +286,54 @@ async function downloadTemplateWord() {
     const doc = new docx.Document({
         sections: [{
             children: [
-                new docx.Paragraph({
-                    children: [new docx.TextRun({ text: "TEMPLAT RAB & REKAPAN KEUANGAN WORKSHOP GCC", bold: true, size: 24 })],
-                    alignment: docx.AlignmentType.CENTER,
-                    spacing: { after: 150 }
-                }),
-                new docx.Paragraph({
-                    children: [new docx.TextRun({ text: "Petunjuk: Isi data transaksi di bawah ini. Anda bisa menambah baris baru di bawah tiap divisi sesuai kebutuhan.", italic: true, size: 18 })],
-                    spacing: { after: 200 }
-                }),
-                new docx.Table({
-                    borders: borders,
-                    rows: templateRows,
-                    width: { size: 100, type: docx.WidthType.PERCENTAGE }
-                })
+                new docx.Paragraph({ children: [new docx.TextRun({ text: "TEMPLAT REKAPAN KEUANGAN GCC", bold: true, size: 24 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 150 } }),
+                new docx.Table({ borders: borders, rows: templateRows, width: { size: 100, type: docx.WidthType.PERCENTAGE } })
             ]
         }]
     });
 
-    docx.Packer.toBlob(doc).then(blob => {
-        saveAs(blob, "Templat_RAB_Rekapan_GCC.docx");
-    });
+    docx.Packer.toBlob(doc).then(blob => { saveAs(blob, "Templat_Rekapan_Keuangan_GCC.docx"); });
+    showToast("📥 Templat Word berhasil di-download!", "success");
 }
 
-/* ------------------- FUNGSI IMPOR KHUSUS WORD (.DOCX) ------------------- */
 async function imporDokumen(event) {
     const file = event.target.files[0];
-    const statusEl = document.getElementById('importStatus');
-    if (!file) return;
-
-    if (!file.name.endsWith('.docx')) {
-        alert("⚠️ Upload Ditolak!\n\nUntuk mengedit kembali laporan, gunakan file Word (.docx).");
-        event.target.value = '';
+    if (!file || !file.name.endsWith('.docx')) {
+        showToast("⚠️ Pilih file Word (.docx)!", "error");
         return;
     }
 
-    statusEl.innerText = "⏳ Membaca dokumen Word...";
-    statusEl.style.color = "#0056b3";
-
     try {
         const arrayBuffer = await file.arrayBuffer();
-        
-        // 1. Cek Metadata JSON Tersembunyi
         const rawTextResult = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-        const fullRawText = rawTextResult.value;
+        const matchData = rawTextResult.value.match(/GCC_DATA_START:::(.*?):::GCC_DATA_END/s);
 
-        const matchData = fullRawText.match(/GCC_DATA_START:::(.*?):::GCC_DATA_END/s);
         if (matchData && matchData[1]) {
-            try {
-                const cleanedJsonStr = decodeURIComponent(matchData[1].replace(/\s+/g, ''));
-                const decodedJson = JSON.parse(cleanedJsonStr);
-                simpanStateKeHistory();
-
-                if (decodedJson.jumlahPeserta !== undefined) {
-                    document.getElementById('jumlahPeserta').value = decodedJson.jumlahPeserta;
-                }
-                if (Array.isArray(decodedJson.transaksi)) {
-                    transaksi = decodedJson.transaksi;
-                }
-
-                simpanKeStorage(false);
-                updateTampilan();
-
-                statusEl.innerText = "✅ Berhasil memuat draf Word buatan web!";
-                statusEl.style.color = "#28a745";
-                alert("🎉 Draf Berhasil Dipulihkan!\n\nSeluruh data transaksi berhasil dimuat kembali secara utuh.");
-                return;
-            } catch (e) {
-                console.warn("Lanjut membaca sebagai file Word luar...");
-            }
+            const decodedJson = JSON.parse(decodeURIComponent(matchData[1].replace(/\s+/g, '')));
+            simpanStateKeHistory();
+            if (decodedJson.jumlahPeserta !== undefined) document.getElementById('jumlahPeserta').value = decodedJson.jumlahPeserta;
+            if (Array.isArray(decodedJson.transaksi)) transaksi = decodedJson.transaksi;
+            simpanKeStorage(false);
+            updateTampilan();
+            showToast("🎉 Data draf dipulihkan dari file Word!", "success");
+            return;
         }
 
-        // 2. Parser HTML-Table dari Templat Word
         const htmlResult = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = htmlResult.value;
 
         simpanStateKeHistory();
-        let countImported = 0;
-        let currentDivisi = 'Acara';
+        let count = 0;
+        let currentDiv = 'CONTER';
 
-        const rows = tempDiv.querySelectorAll('tr');
-        rows.forEach(row => {
+        tempDiv.querySelectorAll('tr').forEach(row => {
             const cells = Array.from(row.querySelectorAll('td, th')).map(c => (c.innerText || c.textContent || '').trim());
-            if (cells.length === 0) return;
-
-            const rowText = cells.join(' ');
-            if (rowText.toLowerCase().includes('jenis') || rowText.toLowerCase().includes('keterangan') || rowText.toLowerCase().includes('total')) return;
+            if (cells.length === 0 || cells.join(' ').toLowerCase().includes('keterangan')) return;
 
             if (cells.length === 1 || (cells.length > 1 && !cells[1] && !cells[2])) {
-                if (cells[0] && !cells[0].match(/\d{3,}/)) {
-                    currentDivisi = cells[0];
-                    return;
-                }
+                if (cells[0] && !cells[0].match(/\d{3,}/)) currentDiv = cells[0];
+                return;
             }
 
             if (cells.length >= 4) {
@@ -231,63 +343,37 @@ async function imporDokumen(event) {
                 let qty = parseFloat((cells[4] || '1').replace(/[^\d]/g, '')) || 1;
 
                 if (ket && harga > 0) {
-                    transaksi.push({
-                        divisi: currentDivisi,
-                        jenis: jenis,
-                        keterangan: ket,
-                        harga: harga,
-                        qty: qty,
-                        totalNominal: harga * qty,
-                        notaData: null,
-                        catatan: 'Diimpor dari Templat Word'
-                    });
-                    countImported++;
+                    transaksi.push({ divisi: currentDiv, jenis, keterangan: ket, harga, qty, totalNominal: harga * qty, notaData: null, catatan: 'Diimpor dari Word' });
+                    count++;
                 }
             }
         });
 
-        if (countImported === 0) {
-            alert("⚠️ Format tabel tidak terbaca. Silakan gunakan 'Download Templat Word' untuk membuat file yang valid.");
-        } else {
-            alert(`🎉 Berhasil Mengimpor ${countImported} item transaksi!`);
+        if (count > 0) {
             simpanKeStorage(false);
             updateTampilan();
+            showToast(`🎉 Berhasil mengimpor ${count} item transaksi!`, "success");
+        } else {
+            showToast("⚠️ Format tabel tidak terbaca.", "error");
         }
-
-        statusEl.innerText = "✅ Impor data selesai!";
-        statusEl.style.color = "#28a745";
-
-    } catch (err) {
-        statusEl.innerText = `❌ Error: ${err.message}`;
-        statusEl.style.color = "#dc3545";
-        alert(`Gagal Memproses File Word:\n${err.message}`);
+    } catch (e) {
+        showToast("❌ Gagal membaca file Word.", "error");
     }
 }
 
-/* ------------------- FUNGSI HISTORY & DRAFT ------------------- */
+/* ------------------- HISTORY & DRAFT ------------------- */
 function simpanStateKeHistory() {
-    const stateSaatIni = {
-        transaksi: JSON.parse(JSON.stringify(transaksi)),
-        jumlahPeserta: document.getElementById('jumlahPeserta').value || 0
-    };
-    undoStack.push(stateSaatIni);
+    undoStack.push({ transaksi: JSON.parse(JSON.stringify(transaksi)), jumlahPeserta: document.getElementById('jumlahPeserta').value || 0 });
     redoStack = [];
     updateTombolHistory();
 }
 
 function undo() {
     if (undoStack.length === 0) return;
-
-    const stateSaatIni = {
-        transaksi: JSON.parse(JSON.stringify(transaksi)),
-        jumlahPeserta: document.getElementById('jumlahPeserta').value || 0
-    };
-    redoStack.push(stateSaatIni);
-
-    const previousState = undoStack.pop();
-    transaksi = previousState.transaksi;
-    document.getElementById('jumlahPeserta').value = previousState.jumlahPeserta;
-
+    redoStack.push({ transaksi: JSON.parse(JSON.stringify(transaksi)), jumlahPeserta: document.getElementById('jumlahPeserta').value || 0 });
+    const prev = undoStack.pop();
+    transaksi = prev.transaksi;
+    document.getElementById('jumlahPeserta').value = prev.jumlahPeserta;
     simpanKeStorage(false);
     updateTampilan();
     updateTombolHistory();
@@ -295,17 +381,10 @@ function undo() {
 
 function redo() {
     if (redoStack.length === 0) return;
-
-    const stateSaatIni = {
-        transaksi: JSON.parse(JSON.stringify(transaksi)),
-        jumlahPeserta: document.getElementById('jumlahPeserta').value || 0
-    };
-    undoStack.push(stateSaatIni);
-
-    const nextState = redoStack.pop();
-    transaksi = nextState.transaksi;
-    document.getElementById('jumlahPeserta').value = nextState.jumlahPeserta;
-
+    undoStack.push({ transaksi: JSON.parse(JSON.stringify(transaksi)), jumlahPeserta: document.getElementById('jumlahPeserta').value || 0 });
+    const next = redoStack.pop();
+    transaksi = next.transaksi;
+    document.getElementById('jumlahPeserta').value = next.jumlahPeserta;
     simpanKeStorage(false);
     updateTampilan();
     updateTombolHistory();
@@ -316,17 +395,9 @@ function updateTombolHistory() {
     document.getElementById('btnRedo').disabled = redoStack.length === 0;
 }
 
-function resetHistory() {
-    undoStack = [];
-    redoStack = [];
-    updateTombolHistory();
-}
-
 function muatSemuaDraft() {
     const saved = localStorage.getItem('gcc_list_draft');
-    if (saved) {
-        listDraft = JSON.parse(saved);
-    }
+    if (saved) listDraft = JSON.parse(saved);
 
     if (listDraft.length === 0) {
         buatDraftBaru(false);
@@ -343,56 +414,43 @@ function renderDropdownDraft() {
     listDraft.forEach((d, idx) => {
         const opt = document.createElement('option');
         opt.value = d.id;
-        opt.innerText = `Draf #${idx + 1} - ${d.nama} (${d.tanggal})`;
+        opt.innerText = `Draf #${idx + 1} - ${d.nama}`;
         if (d.id === currentDraftId) opt.selected = true;
         select.appendChild(opt);
     });
 }
 
 function buatDraftBaru(userClick = true) {
-    if (listDraft.length >= 10 && userClick) {
-        alert("Maksimal 10 riwayat draf! Silakan hapus salah satu draf lama.");
-        return;
-    }
-
     let namaDraf = `Rekapan ${new Date().toLocaleDateString('id-ID')}`;
     if (userClick) {
-        const inputNama = prompt("Masukkan Nama Draf Baru:", namaDraf);
-        if (inputNama === null) return; 
-        if (inputNama.trim() !== '') namaDraf = inputNama.trim();
+        const inputNama = prompt("Masukkan Nama Draf Kegiatan Baru:", namaDraf);
+        if (!inputNama) return;
+        namaDraf = inputNama.trim();
     }
 
-    const now = new Date();
-    const newDraft = {
-        id: 'draft_' + Date.now(),
-        nama: namaDraf,
-        tanggal: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        jumlahPeserta: 0,
-        transaksi: []
-    };
-
+    const newDraft = { id: 'draft_' + Date.now(), nama: namaDraf, jumlahPeserta: 0, transaksi: [] };
     listDraft.unshift(newDraft);
     currentDraftId = newDraft.id;
     simpanListDraft();
     renderDropdownDraft();
     muatDraftAktif();
+    if (userClick) showToast("➕ Draf baru berhasil dibuat!", "success");
 }
 
 function ubahNamaDraft() {
     const draft = listDraft.find(d => d.id === currentDraftId);
     if (!draft) return;
-
     const namaBaru = prompt("Ubah Nama Draf:", draft.nama);
     if (namaBaru && namaBaru.trim() !== '') {
         draft.nama = namaBaru.trim();
         simpanListDraft();
         renderDropdownDraft();
+        showToast("✏️ Nama draf diperbarui", "success");
     }
 }
 
 function gantiDraft() {
-    const select = document.getElementById('selectDraft');
-    currentDraftId = select.value;
+    currentDraftId = document.getElementById('selectDraft').value;
     muatDraftAktif();
 }
 
@@ -401,111 +459,78 @@ function muatDraftAktif() {
     if (draft) {
         document.getElementById('jumlahPeserta').value = draft.jumlahPeserta || 0;
         transaksi = draft.transaksi || [];
-        resetHistory();
+        undoStack = []; redoStack = [];
+        updateTombolHistory();
         updateTampilan();
     }
 }
 
 function simpanKeStorage(recordHistory = true) {
-    if (recordHistory) {
-        simpanStateKeHistory();
-    }
-
+    if (recordHistory) simpanStateKeHistory();
     const draft = listDraft.find(d => d.id === currentDraftId);
     if (draft) {
         draft.jumlahPeserta = document.getElementById('jumlahPeserta').value || 0;
         draft.transaksi = transaksi;
-        const now = new Date();
-        draft.tanggal = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         simpanListDraft();
     }
 }
 
-function simpanListDraft() {
-    localStorage.setItem('gcc_list_draft', JSON.stringify(listDraft));
-}
+function simpanListDraft() { localStorage.setItem('gcc_list_draft', JSON.stringify(listDraft)); }
 
 function hapusDraftAktif() {
-    if (confirm("Apakah Anda yakin ingin menghapus draf rekapan ini?")) {
+    if (confirm("Apakah Anda yakin ingin menghapus draf ini?")) {
         listDraft = listDraft.filter(d => d.id !== currentDraftId);
         simpanListDraft();
         muatSemuaDraft();
+        showToast("🗑️ Draf dihapus", "info");
     }
 }
 
-/* ------------------- TAMBAH TRANSAKSI (SUPPORT BUKTI TF UANG MASUK) ------------------- */
+/* ------------------- TRANSAKSI ------------------- */
 async function tambahTransaksi(jenis) {
     const isMasuk = jenis === 'Masuk';
-    const divisiInput = document.getElementById(isMasuk ? 'divisiMasuk' : 'divisiKeluar');
-    const ketInput = document.getElementById(isMasuk ? 'ketMasuk' : 'ketKeluar');
-    const hargaInput = document.getElementById(isMasuk ? 'hargaMasuk' : 'hargaKeluar');
-    const qtyInput = document.getElementById(isMasuk ? 'jumlahMasuk' : 'jumlahKeluar');
-    const catInput = document.getElementById(isMasuk ? 'catMasuk' : 'catKeluar');
-    const fileInput = document.getElementById(isMasuk ? 'notaMasuk' : 'notaKeluar');
+    const divEl = document.getElementById(isMasuk ? 'divisiMasuk' : 'divisiKeluar');
+    const ketEl = document.getElementById(isMasuk ? 'ketMasuk' : 'ketKeluar');
+    const hargaEl = document.getElementById(isMasuk ? 'hargaMasuk' : 'hargaKeluar');
+    const qtyEl = document.getElementById(isMasuk ? 'jumlahMasuk' : 'jumlahKeluar');
+    const catEl = document.getElementById(isMasuk ? 'catMasuk' : 'catKeluar');
+    const fileEl = document.getElementById(isMasuk ? 'notaMasuk' : 'notaKeluar');
 
-    const divisi = divisiInput.value.trim() || 'Umum';
-    const keterangan = ketInput.value.trim();
-    const harga = parseFloat(hargaInput.value);
-    const qty = parseFloat(qtyInput.value) || 1;
-    const catatan = catInput.value.trim() || '-';
+    const divisi = divEl.value.trim() || 'CONTER';
+    const keterangan = ketEl.value.trim();
+    const harga = parseFloat(hargaEl.value);
+    const qty = parseFloat(qtyEl.value) || 1;
+    const catatan = catEl.value.trim() || '-';
 
-    if (!keterangan) {
-        alert("Keterangan tidak boleh kosong!");
-        return;
-    }
-    if (isNaN(harga) || harga <= 0) {
-        alert("Masukkan harga angka yang valid dan lebih dari 0!");
+    if (!keterangan || isNaN(harga) || harga <= 0) {
+        showToast("⚠️ Isi Keterangan dan Harga Nominal yang valid!", "error");
         return;
     }
 
     let notaData = null;
-    if (fileInput && fileInput.files[0]) {
-        const file = fileInput.files[0];
+    if (fileEl && fileEl.files[0]) {
         notaData = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => resolve({ dataUrl: e.target.result });
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(fileEl.files[0]);
         });
     }
 
     simpanStateKeHistory();
 
-    const totalNominal = harga * qty;
-
     if (editIndex >= 0) {
-        transaksi[editIndex] = {
-            divisi,
-            jenis,
-            keterangan,
-            harga,
-            qty,
-            totalNominal,
-            notaData: notaData || transaksi[editIndex].notaData,
-            catatan
-        };
+        transaksi[editIndex] = { divisi, jenis, keterangan, harga, qty, totalNominal: harga * qty, notaData: notaData || transaksi[editIndex].notaData, catatan };
         editIndex = -1;
         document.getElementById('btnSubmitMasuk').innerText = '+ Tambah Uang Masuk';
         document.getElementById('btnSubmitKeluar').innerText = '+ Tambah Uang Keluar';
+        showToast("💾 Perubahan transaksi disimpan!", "success");
     } else {
-        transaksi.push({
-            divisi,
-            jenis,
-            keterangan,
-            harga,
-            qty,
-            totalNominal,
-            notaData,
-            catatan
-        });
+        transaksi.push({ divisi, jenis, keterangan, harga, qty, totalNominal: harga * qty, notaData, catatan });
+        showToast("✅ Transaksi berhasil ditambahkan!", "success");
     }
 
-    ketInput.value = '';
-    hargaInput.value = '';
-    qtyInput.value = '1';
-    catInput.value = '';
-    if (fileInput) fileInput.value = '';
+    ketEl.value = ''; hargaEl.value = ''; qtyEl.value = '1'; catEl.value = ''; if (fileEl) fileEl.value = '';
     hitungSubtotal(jenis);
-
     simpanKeStorage(false);
     updateTampilan();
 }
@@ -514,34 +539,14 @@ function editTransaksi(index) {
     const item = transaksi[index];
     editIndex = index;
     const isMasuk = item.jenis === 'Masuk';
-
-    if (isMasuk) {
-        const divEl = document.getElementById('divisiMasuk');
-        divEl.value = item.divisi;
-        document.getElementById('ketMasuk').value = item.keterangan;
-        document.getElementById('hargaMasuk').value = item.harga;
-        document.getElementById('jumlahMasuk').value = item.qty;
-        document.getElementById('catMasuk').value = item.catatan === '-' ? '' : item.catatan;
-        document.getElementById('btnSubmitMasuk').innerText = '💾 Simpan Perubahan (Masuk)';
-        hitungSubtotal('Masuk');
-
-        const card = document.getElementById('cardMasuk');
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => divEl.focus(), 400);
-    } else {
-        const divEl = document.getElementById('divisiKeluar');
-        divEl.value = item.divisi;
-        document.getElementById('ketKeluar').value = item.keterangan;
-        document.getElementById('hargaKeluar').value = item.harga;
-        document.getElementById('jumlahKeluar').value = item.qty;
-        document.getElementById('catKeluar').value = item.catatan === '-' ? '' : item.catatan;
-        document.getElementById('btnSubmitKeluar').innerText = '💾 Simpan Perubahan (Keluar)';
-        hitungSubtotal('Keluar');
-
-        const card = document.getElementById('cardKeluar');
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => divEl.focus(), 400);
-    }
+    document.getElementById(isMasuk ? 'divisiMasuk' : 'divisiKeluar').value = item.divisi;
+    document.getElementById(isMasuk ? 'ketMasuk' : 'ketKeluar').value = item.keterangan;
+    document.getElementById(isMasuk ? 'hargaMasuk' : 'hargaKeluar').value = item.harga;
+    document.getElementById(isMasuk ? 'jumlahMasuk' : 'jumlahKeluar').value = item.qty;
+    document.getElementById(isMasuk ? 'catMasuk' : 'catKeluar').value = item.catatan === '-' ? '' : item.catatan;
+    document.getElementById(isMasuk ? 'btnSubmitMasuk' : 'btnSubmitKeluar').innerText = '💾 Simpan Perubahan';
+    hitungSubtotal(item.jenis);
+    document.getElementById(isMasuk ? 'cardMasuk' : 'cardKeluar').scrollIntoView({ behavior: 'smooth' });
 }
 
 function hapusTransaksi(index) {
@@ -549,12 +554,12 @@ function hapusTransaksi(index) {
     transaksi.splice(index, 1);
     simpanKeStorage(false);
     updateTampilan();
+    showToast("🗑️ Transaksi dihapus", "info");
 }
 
 function updateSummary() {
     const totalPeserta = document.getElementById('jumlahPeserta').value || 0;
-    let totalMasuk = 0;
-    let totalKeluar = 0;
+    let totalMasuk = 0, totalKeluar = 0;
 
     transaksi.forEach(t => {
         if (t.jenis === 'Masuk') totalMasuk += t.totalNominal;
@@ -562,11 +567,16 @@ function updateSummary() {
     });
 
     const saldoAkhir = totalMasuk - totalKeluar;
-
     document.getElementById('dispPeserta').innerText = `${totalPeserta} Orang`;
     document.getElementById('dispMasuk').innerText = formatRupiah(totalMasuk);
     document.getElementById('dispKeluar').innerText = formatRupiah(totalKeluar);
     document.getElementById('dispSaldo').innerText = formatRupiah(saldoAkhir);
+
+    const percent = totalMasuk > 0 ? Math.min(Math.round((totalKeluar / totalMasuk) * 100), 100) : 0;
+    const bar = document.getElementById('progressBar');
+    bar.style.width = percent + '%';
+    document.getElementById('progressText').innerText = percent + '%';
+    bar.style.background = percent > 90 ? '#f43f5e' : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
 
     return { totalPeserta, totalMasuk, totalKeluar, saldoAkhir };
 }
@@ -574,54 +584,57 @@ function updateSummary() {
 function updateTampilan() {
     const tbody = document.getElementById('tabelBody');
     const tfoot = document.getElementById('tabelFoot');
-    tbody.innerHTML = '';
-    tfoot.innerHTML = '';
+    tbody.innerHTML = ''; tfoot.innerHTML = '';
 
-    if (transaksi.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td></tr>';
-        updateSummary();
-        return;
-    }
+    const keyword = (document.getElementById('searchKeyword').value || '').toLowerCase();
+    const filterDiv = document.getElementById('filterDivisi').value;
+    const filterJen = document.getElementById('filterJenis').value;
+
+    const filtered = transaksi.filter(t => {
+        const matchKey = t.keterangan.toLowerCase().includes(keyword) || t.divisi.toLowerCase().includes(keyword);
+        const matchDiv = filterDiv === 'ALL' || t.divisi === filterDiv;
+        const matchJen = filterJen === 'ALL' || t.jenis === filterJen;
+        return matchKey && matchDiv && matchJen;
+    });
+
+    const listDivisiUnik = [...new Set(transaksi.map(t => t.divisi))];
+    const selectDiv = document.getElementById('filterDivisi');
+    const valDivBefore = selectDiv.value;
+    selectDiv.innerHTML = '<option value="ALL">Semua Divisi</option>';
+    listDivisiUnik.forEach(d => {
+        const opt = document.createElement('option'); opt.value = d; opt.innerText = d;
+        if (d === valDivBefore) opt.selected = true;
+        selectDiv.appendChild(opt);
+    });
 
     const kelompokDivisi = {};
-    transaksi.forEach((t, realIdx) => {
-        const divName = t.divisi || 'Umum';
-        if (!kelompokDivisi[divName]) {
-            kelompokDivisi[divName] = [];
-        }
+    filtered.forEach((t, realIdx) => {
+        const divName = t.divisi || 'CONTER';
+        if (!kelompokDivisi[divName]) kelompokDivisi[divName] = [];
         kelompokDivisi[divName].push({ ...t, realIndex: realIdx });
     });
 
-    let grandTotalMasuk = 0;
-    let grandTotalKeluar = 0;
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">Belum ada transaksi yang cocok.</td></tr>';
+        const summary = updateSummary();
+        updateCharts(summary.totalMasuk, summary.totalKeluar, kelompokDivisi);
+        return;
+    }
 
     for (const [divisiName, items] of Object.entries(kelompokDivisi)) {
-        tbody.innerHTML += `
-            <tr class="row-divisi-header">
-                <td colspan="9">${divisiName}</td>
-            </tr>
-        `;
+        tbody.innerHTML += `<tr class="row-divisi-header"><td colspan="9">${divisiName}</td></tr>`;
 
         items.forEach((t, i) => {
-            if (t.jenis === 'Masuk') grandTotalMasuk += t.totalNominal;
-            if (t.jenis === 'Keluar') grandTotalKeluar += t.totalNominal;
-
             let notaHtml = '-';
             if (t.notaData) {
                 notaHtml = `
-                    <img src="${t.notaData.dataUrl}" class="img-preview" alt="Nota/Bukti">
-                    <div style="text-align: center;">
-                        <span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">✏️ Ganti</span>
-                        <span class="btn-nota-delete" onclick="hapusNota(${t.realIndex})">🗑️ Hapus</span>
-                    </div>
-                `;
+                    <img src="${t.notaData.dataUrl}" class="img-preview" alt="Bukti" onclick="openModal('${t.notaData.dataUrl}', '${t.keterangan}')">
+                    <div style="text-align: center; margin-top:2px;">
+                        <span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">✏️</span>
+                        <span class="btn-nota-delete" onclick="hapusNota(${t.realIndex})">🗑️</span>
+                    </div>`;
             } else {
-                notaHtml = `
-                    <div style="text-align: center;">
-                        <span style="color: #888; font-size: 11px;">Tidak ada</span><br>
-                        <span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">➕ Upload</span>
-                    </div>
-                `;
+                notaHtml = `<span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">➕ Upload</span>`;
             }
 
             tbody.innerHTML += `<tr>
@@ -643,389 +656,193 @@ function updateTampilan() {
 
     const summary = updateSummary();
     tfoot.innerHTML = `
-        <tr class="tfoot-summary">
-            <td colspan="5" style="text-align: left;">Total Uang Masuk:</td>
-            <td colspan="4" style="color: #28a745;">${formatRupiah(summary.totalMasuk)}</td>
-        </tr>
-        <tr class="tfoot-summary">
-            <td colspan="5" style="text-align: left;">Total Uang Keluar:</td>
-            <td colspan="4" style="color: #dc3545;">${formatRupiah(summary.totalKeluar)}</td>
-        </tr>
-        <tr class="tfoot-summary" style="background-color: #e2e8f0; font-size: 14px;">
-            <td colspan="5" style="text-align: left;">Total Akhir (Uang Masuk - Uang Keluar):</td>
-            <td colspan="4">${formatRupiah(summary.saldoAkhir)}</td>
-        </tr>
+        <tr class="tfoot-summary"><td colspan="5">Total Uang Masuk:</td><td colspan="4" style="color: #10b981;">${formatRupiah(summary.totalMasuk)}</td></tr>
+        <tr class="tfoot-summary"><td colspan="5">Total Uang Keluar:</td><td colspan="4" style="color: #f43f5e;">${formatRupiah(summary.totalKeluar)}</td></tr>
+        <tr class="tfoot-summary" style="background:var(--input-bg);"><td colspan="5">Total Saldo Akhir:</td><td colspan="4">${formatRupiah(summary.saldoAkhir)}</td></tr>
     `;
 
-    updateSummary();
+    updateCharts(summary.totalMasuk, summary.totalKeluar, kelompokDivisi);
 }
 
-function dataURLtoUint8Array(dataurl) {
-    const arr = dataurl.split(',');
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return u8arr;
-}
-
-/* ------------------- EKSPOR PDF ------------------- */
-function exportToPDF() {
-    const draft = listDraft.find(d => d.id === currentDraftId);
-    const fileName = draft ? `${draft.nama.replace(/\s+/g, '_')}.pdf` : 'Rekapan_Keuangan.pdf';
-    
+/* ------------------- GENERATOR BLOB FILE UNTUK EKSPOR & UPLOAD ------------------- */
+async function generateFileBlob(formatType) {
     const summary = updateSummary();
-    const element = document.createElement('div');
-    element.style.padding = '10px';
-    element.style.fontFamily = "'Times New Roman', Times, serif";
-    element.style.backgroundColor = '#ffffff';
-    element.style.color = '#000000';
-    element.style.fontSize = '11pt';
 
-    const kelompokDivisi = {};
-    transaksi.forEach(t => {
-        const divName = t.divisi || 'Umum';
-        if (!kelompokDivisi[divName]) kelompokDivisi[divName] = [];
-        kelompokDivisi[divName].push(t);
-    });
+    if (formatType === 'xlsx') {
+        const dataExcel = [];
+        dataExcel.push(["LAPORAN REKAPAN KEUANGAN GAMATIKA CODING CLUB"]);
+        dataExcel.push(["Total Peserta", summary.totalPeserta + " Orang"]);
+        dataExcel.push(["Total Masuk", summary.totalMasuk]);
+        dataExcel.push(["Total Keluar", summary.totalKeluar]);
+        dataExcel.push(["Saldo Akhir", summary.saldoAkhir]);
+        dataExcel.push([]);
+        dataExcel.push(["Divisi", "No", "Jenis", "Keterangan", "Harga Satuan", "Jumlah", "Total Nominal", "Catatan"]);
 
-    const logoHtml = `<img src="${GCC_LOGO_URL}" style="height: 60px; width: auto; margin-bottom: 10px;" crossorigin="anonymous"><br>`;
-
-    let htmlContent = `
-        <style>
-            .pdf-block { page-break-inside: avoid !important; margin-bottom: 15px; }
-            .pdf-table { width: 100%; border-collapse: collapse; font-size: 10.5pt; table-layout: fixed; }
-            .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 5px 6px; text-align: left; vertical-align: middle; word-wrap: break-word; }
-            .pdf-table th { text-align: center; font-weight: bold; background-color: #f2f2f2; }
-            .pdf-tr { page-break-inside: avoid !important; page-break-after: auto !important; }
-        </style>
-
-        <div class="pdf-block" style="text-align: center;">
-            ${logoHtml}
-            <h2 style="font-size: 15pt; font-weight: bold; margin: 0 0 15px 0;">LAPORAN REKAPAN KEUANGAN WORKSHOP GCC</h2>
-        </div>
-        
-        <div class="pdf-block">
-            <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 8px 0;">RINGKASAN KEGIATAN</h3>
-            <table style="width: 100%; border-collapse: collapse; border: none; font-size: 10.5pt;">
-                <tr>
-                    <td style="border: none; padding: 3px 0; width: 35%;">• Total Peserta Hadir</td>
-                    <td style="border: none; padding: 3px 0; width: 65%;">: ${summary.totalPeserta} Orang</td>
-                </tr>
-                <tr>
-                    <td style="border: none; padding: 3px 0;">• Total Uang Masuk</td>
-                    <td style="border: none; padding: 3px 0;">: ${formatRupiah(summary.totalMasuk)}</td>
-                </tr>
-                <tr>
-                    <td style="border: none; padding: 3px 0;">• Total Uang Keluar</td>
-                    <td style="border: none; padding: 3px 0;">: ${formatRupiah(summary.totalKeluar)}</td>
-                </tr>
-                <tr>
-                    <td style="border: none; padding: 3px 0; font-weight: bold;">• Sisa Saldo Akhir</td>
-                    <td style="border: none; padding: 3px 0; font-weight: bold;">: ${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)</td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="pdf-block" style="margin-bottom: 5px;">
-            <h3 style="font-size: 12pt; font-weight: bold; margin: 0;">RINCIAN TRANSAKSI</h3>
-        </div>
-    `;
-
-    let lampiranNotaHtml = '';
-    let globalNotaIndex = 1;
-
-    htmlContent += `<table class="pdf-table">
-        <thead>
-            <tr class="pdf-tr">
-                <th style="width: 5%;">No</th>
-                <th style="width: 12%;">Jenis</th>
-                <th style="width: 38%;">Keterangan</th>
-                <th style="width: 18%;">Harga Satuan</th>
-                <th style="width: 9%;">Jumlah</th>
-                <th style="width: 18%;">Total Nominal</th>
-            </tr>
-        </thead>
-        <tbody>`;
-
-    for (const [divisiName, items] of Object.entries(kelompokDivisi)) {
-        htmlContent += `
-            <tr class="pdf-tr">
-                <td colspan="6" style="font-weight: bold; background-color: #f9f9f9; padding-left: 8px;">${divisiName}</td>
-            </tr>
-        `;
-
-        items.forEach((t, idx) => {
-            htmlContent += `
-                <tr class="pdf-tr">
-                    <td style="text-align: center;">${idx + 1}</td>
-                    <td style="padding-left: 6px;">${t.jenis}</td>
-                    <td style="padding-left: 6px;">${t.keterangan}</td>
-                    <td style="padding-left: 6px;">${formatRupiah(t.harga)}</td>
-                    <td style="text-align: center;">${t.qty}</td>
-                    <td style="padding-left: 6px;">${formatRupiah(t.totalNominal)}</td>
-                </tr>
-            `;
-
-            if (t.notaData) {
-                lampiranNotaHtml += `
-                    <div class="pdf-block">
-                        <p style="font-size: 10.5pt; font-weight: bold; margin: 0 0 6px 0;">
-                            • Bukti/Nota #${globalNotaIndex++} (${divisiName} - ${t.jenis}): ${t.keterangan} (${formatRupiah(t.totalNominal)})
-                        </p>
-                        <img src="${t.notaData.dataUrl}" style="max-width: 250px; max-height: 250px; border: 1px solid #ccc; padding: 4px; border-radius: 4px;">
-                    </div>
-                `;
-            }
+        transaksi.forEach((t, idx) => {
+            dataExcel.push([t.divisi, idx + 1, t.jenis, t.keterangan, t.harga, t.qty, t.totalNominal, t.catatan]);
         });
+
+        const ws = XLSX.utils.aoa_to_sheet(dataExcel);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Rekapan Keuangan");
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        return new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     }
 
-    htmlContent += `
-            <tr class="pdf-tr">
-                <td colspan="5" style="font-weight: bold; padding-left: 6px;">Total Uang Masuk</td>
-                <td style="font-weight: bold; padding-left: 6px;">${formatRupiah(summary.totalMasuk)}</td>
-            </tr>
-            <tr class="pdf-tr">
-                <td colspan="5" style="font-weight: bold; padding-left: 6px;">Total Uang Keluar</td>
-                <td style="font-weight: bold; padding-left: 6px;">${formatRupiah(summary.totalKeluar)}</td>
-            </tr>
-            <tr class="pdf-tr">
-                <td colspan="5" style="font-weight: bold; padding-left: 6px;">Total Akhir (Uang Masuk - Uang Keluar)</td>
-                <td style="font-weight: bold; padding-left: 6px;">${formatRupiah(summary.saldoAkhir)}</td>
-            </tr>
-        </tbody>
-    </table>`;
+    if (formatType === 'pdf') {
+        const element = document.createElement('div');
+        element.style.padding = '15px'; element.style.fontFamily = "'Times New Roman', serif";
 
-    if (lampiranNotaHtml !== '') {
-        htmlContent += `
-            <div class="pdf-block" style="margin-top: 25px;">
-                <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 12px 0;">LAMPIRAN BUKTI & NOTA</h3>
-                ${lampiranNotaHtml}
+        let html = `
+            <div style="text-align: center;">
+                <img src="${GCC_LOGO_URL}" style="height: 55px;" crossorigin="anonymous"><br>
+                <h2 style="margin: 10px 0;">LAPORAN KEUANGAN GAMATIKA CODING CLUB</h2>
             </div>
-        `;
+            <p><b>• Total Peserta:</b> ${summary.totalPeserta} Orang</p>
+            <p><b>• Total Uang Masuk:</b> ${formatRupiah(summary.totalMasuk)}</p>
+            <p><b>• Total Uang Keluar:</b> ${formatRupiah(summary.totalKeluar)}</p>
+            <p><b>• Saldo Akhir:</b> ${formatRupiah(summary.saldoAkhir)}</p>
+            <br>
+            <table border="1" style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+                <thead><tr><th>No</th><th>Divisi</th><th>Jenis</th><th>Keterangan</th><th>Harga</th><th>Qty</th><th>Total</th></tr></thead>
+                <tbody>`;
+
+        transaksi.forEach((t, i) => {
+            html += `<tr>
+                <td style="text-align:center;">${i+1}</td>
+                <td>${t.divisi}</td>
+                <td>${t.jenis}</td>
+                <td>${t.keterangan}</td>
+                <td>${formatRupiah(t.harga)}</td>
+                <td style="text-align:center;">${t.qty}</td>
+                <td>${formatRupiah(t.totalNominal)}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        element.innerHTML = html;
+
+        const opt = { margin: 10, filename: getFileNameFormat('pdf'), html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4' } };
+        return await html2pdf().set(opt).from(element).output('blob');
     }
 
-    element.innerHTML = htmlContent;
+    if (formatType === 'docx') {
+        const { docx } = window;
+        const borderStandard = { style: docx.BorderStyle.SINGLE, size: 1, color: "000000" };
+        const borders = { top: borderStandard, bottom: borderStandard, left: borderStandard, right: borderStandard, insideHorizontal: borderStandard, insideVertical: borderStandard };
 
-    const opt = {
-        margin:       [12, 12, 12, 12],
-        filename:     fileName,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'] }
-    };
-
-    html2pdf().set(opt).from(element).save();
-}
-
-/* ------------------- EKSPOR WORD ------------------- */
-async function exportToWord() {
-    const summary = updateSummary();
-    const draft = listDraft.find(d => d.id === currentDraftId);
-    const fileName = draft ? `${draft.nama.replace(/\s+/g, '_')}.docx` : 'Rekapan_Keuangan.docx';
-    const { docx } = window;
-
-    const borderKosong = { style: docx.BorderStyle.NONE, size: 0, color: "FFFFFF" };
-    const noBordersSummary = {
-        top: borderKosong, bottom: borderKosong, left: borderKosong, right: borderKosong,
-        insideHorizontal: borderKosong, insideVertical: borderKosong
-    };
-
-    const customIndentLeft = { left: 72 };
-
-    const kelompokDivisi = {};
-    transaksi.forEach(t => {
-        const divName = t.divisi || 'Umum';
-        if (!kelompokDivisi[divName]) kelompokDivisi[divName] = [];
-        kelompokDivisi[divName].push(t);
-    });
-
-    const tableRows = [
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "No", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Jenis", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Keterangan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Harga Satuan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Jumlah", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Total Nominal", bold: true, alignment: docx.AlignmentType.CENTER })] })
-            ]
-        })
-    ];
-
-    const lampiranNotaChildren = [];
-    let globalNotaIndex = 1;
-
-    for (const [divisiName, items] of Object.entries(kelompokDivisi)) {
-        tableRows.push(
+        const tableRows = [
             new docx.TableRow({
                 children: [
-                    new docx.TableCell({
-                        columnSpan: 6,
-                        children: [new docx.Paragraph({ text: divisiName, bold: true, indent: customIndentLeft })]
-                    })
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "No", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Jenis", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Keterangan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Harga Satuan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Jumlah", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Total Nominal", bold: true, alignment: docx.AlignmentType.CENTER })] })
                 ]
             })
-        );
+        ];
 
-        items.forEach((t, index) => {
-            tableRows.push(
-                new docx.TableRow({
-                    children: [
-                        new docx.TableCell({ children: [new docx.Paragraph({ text: String(index + 1), alignment: docx.AlignmentType.CENTER })] }),
-                        new docx.TableCell({ children: [new docx.Paragraph({ text: t.jenis, indent: customIndentLeft })] }),
-                        new docx.TableCell({ children: [new docx.Paragraph({ text: t.keterangan, indent: customIndentLeft })] }),
-                        new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(t.harga), indent: customIndentLeft })] }),
-                        new docx.TableCell({ children: [new docx.Paragraph({ text: String(t.qty), alignment: docx.AlignmentType.CENTER })] }),
-                        new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(t.totalNominal), indent: customIndentLeft })] })
-                    ]
-                })
-            );
-
-            if (t.notaData) {
-                try {
-                    const imageBytes = dataURLtoUint8Array(t.notaData.dataUrl);
-                    lampiranNotaChildren.push(
-                        new docx.Paragraph({
-                            children: [new docx.TextRun({ text: `• Bukti/Nota #${globalNotaIndex++} (${divisiName} - ${t.jenis}): ${t.keterangan} (${formatRupiah(t.totalNominal)})`, bold: true, color: "000000" })],
-                            spacing: { before: 100, after: 60, line: 276 }
-                        }),
-                        new docx.Paragraph({
-                            children: [new docx.ImageRun({ data: imageBytes, transformation: { width: 250, height: 250 } })],
-                            spacing: { after: 150, line: 276 }
-                        })
-                    );
-                } catch (e) {}
-            }
+        transaksi.forEach((t, index) => {
+            tableRows.push(new docx.TableRow({
+                children: [
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: String(index + 1), alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: t.jenis })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: t.keterangan })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(t.harga) })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: String(t.qty), alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(t.totalNominal) })] })
+                ]
+            }));
         });
+
+        const transaksiLight = transaksi.map(t => ({ ...t, notaData: null }));
+        const metadataString = encodeURIComponent(JSON.stringify({ jumlahPeserta: document.getElementById('jumlahPeserta').value || 0, transaksi: transaksiLight }));
+
+        const doc = new docx.Document({
+            sections: [{
+                children: [
+                    new docx.Paragraph({ children: [new docx.TextRun({ text: "LAPORAN KEUANGAN GAMATIKA CODING CLUB", bold: true, size: 28 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 200 } }),
+                    new docx.Paragraph({ children: [new docx.TextRun({ text: `Total Peserta: ${summary.totalPeserta} Orang | Total Masuk: ${formatRupiah(summary.totalMasuk)} | Total Keluar: ${formatRupiah(summary.totalKeluar)} | Saldo Akhir: ${formatRupiah(summary.saldoAkhir)}`, bold: true, size: 20 })], spacing: { after: 200 } }),
+                    new docx.Table({ borders: borders, rows: tableRows, width: { size: 100, type: docx.WidthType.PERCENTAGE } }),
+                    new docx.Paragraph({ children: [new docx.TextRun({ text: `GCC_DATA_START:::${metadataString}:::GCC_DATA_END`, color: "FFFFFF", size: 2 })] })
+                ]
+            }]
+        });
+
+        return await docx.Packer.toBlob(doc);
+    }
+}
+
+/* ------------------- EKSPOR LOKAL ------------------- */
+async function exportToExcel() {
+    const fileName = getFileNameFormat('xlsx');
+    const blob = await generateFileBlob('xlsx');
+    saveAs(blob, fileName);
+    showToast(`📊 File ${fileName} berhasil di-download!`, "success");
+}
+
+async function exportToPDF() {
+    const fileName = getFileNameFormat('pdf');
+    const blob = await generateFileBlob('pdf');
+    saveAs(blob, fileName);
+    showToast(`📕 File ${fileName} berhasil di-download!`, "success");
+}
+
+async function exportToWord() {
+    const fileName = getFileNameFormat('docx');
+    const blob = await generateFileBlob('docx');
+    saveAs(blob, fileName);
+    showToast(`📄 File ${fileName} berhasil di-download!`, "success");
+}
+
+/* ------------------- UPLOAD LANGSUNG KE GOOGLE DRIVE ------------------- */
+async function uploadKeDrive(formatType) {
+    const dept = document.getElementById('driveDeptSelect').value;
+    const category = document.getElementById('driveCategorySelect').value;
+    const fileName = getFileNameFormat(formatType);
+
+    const targetFolderId = FOLDER_MAP[dept]?.[category];
+
+    if (!targetFolderId) {
+        showToast("⚠️ ID Folder Google Drive belum terdaftar!", "error");
+        return;
     }
 
-    tableRows.push(
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ columnSpan: 5, children: [new docx.Paragraph({ text: "Total Uang Masuk", bold: true, alignment: docx.AlignmentType.LEFT, indent: customIndentLeft })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.totalMasuk), bold: true, indent: customIndentLeft })] })
-            ]
-        }),
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ columnSpan: 5, children: [new docx.Paragraph({ text: "Total Uang Keluar", bold: true, alignment: docx.AlignmentType.LEFT, indent: customIndentLeft })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.totalKeluar), bold: true, indent: customIndentLeft })] })
-            ]
-        }),
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ columnSpan: 5, children: [new docx.Paragraph({ text: "Total Akhir (Uang Masuk - Uang Keluar)", bold: true, alignment: docx.AlignmentType.LEFT, indent: customIndentLeft })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.saldoAkhir), bold: true, indent: customIndentLeft })] })
-            ]
-        })
-    );
+    showToast(`⏳ Mengunggah ${fileName} ke Drive [${dept} - ${category}]...`, "info");
 
-    const docChildren = [
-        new docx.Paragraph({
-            children: [new docx.TextRun({ text: "LAPORAN REKAPAN KEUANGAN WORKSHOP GCC", bold: true, color: "000000", size: 28 })],
-            alignment: docx.AlignmentType.CENTER,
-            spacing: { after: 200, line: 276 }
-        }),
-        
-        new docx.Paragraph({
-            children: [new docx.TextRun({ text: "RINGKASAN KEGIATAN", bold: true, color: "000000", size: 24 })],
-            spacing: { before: 150, after: 100, line: 276 }
-        }),
+    try {
+        const fileBlob = await generateFileBlob(formatType);
 
-        new docx.Table({
-            borders: noBordersSummary,
-            rows: [
-                new docx.TableRow({
-                    children: [
-                        new docx.TableCell({ width: { size: 35, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ text: "• Total Peserta Hadir", color: "000000" })] }),
-                        new docx.TableCell({ width: { size: 65, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ text: `: ${summary.totalPeserta} Orang`, color: "000000" })] })
-                    ]
-                }),
-                new docx.TableRow({
-                    children: [
-                        new docx.TableCell({ width: { size: 35, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ text: "• Total Uang Masuk", color: "000000" })] }),
-                        new docx.TableCell({ width: { size: 65, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ text: `: ${formatRupiah(summary.totalMasuk)}`, color: "000000" })] })
-                    ]
-                }),
-                new docx.TableRow({
-                    children: [
-                        new docx.TableCell({ width: { size: 35, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ text: "• Total Uang Keluar", color: "000000" })] }),
-                        new docx.TableCell({ width: { size: 65, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ text: `: ${formatRupiah(summary.totalKeluar)}`, color: "000000" })] })
-                    ]
-                }),
-                new docx.TableRow({
-                    children: [
-                        new docx.TableCell({ width: { size: 35, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ text: "• Sisa Saldo Akhir", bold: true, color: "000000" })] }),
-                        new docx.TableCell({ width: { size: 65, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ text: `: ${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)`, bold: true, color: "000000" })] })
-                    ]
-                })
-            ]
-        }),
+        const reader = new FileReader();
+        reader.readAsDataURL(fileBlob);
+        reader.onloadend = async function () {
+            const base64Data = reader.result.split(',')[1];
 
-        new docx.Paragraph({ text: "", spacing: { after: 150, line: 276 } }),
+            const payload = {
+                folderId: targetFolderId,
+                fileName: fileName,
+                mimeType: fileBlob.type,
+                fileData: base64Data
+            };
 
-        new docx.Paragraph({
-            children: [new docx.TextRun({ text: "RINCIAN TRANSAKSI", bold: true, color: "000000", size: 24 })],
-            spacing: { before: 150, after: 100, line: 276 }
-        }),
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
 
-        new docx.Table({
-            rows: tableRows,
-            width: { size: 100, type: docx.WidthType.PERCENTAGE }
-        })
-    ];
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
 
-    if (lampiranNotaChildren.length > 0) {
-        docChildren.push(
-            new docx.Paragraph({ text: "", spacing: { after: 200, line: 276 } }),
-            new docx.Paragraph({
-                children: [new docx.TextRun({ text: "LAMPIRAN BUKTI & NOTA", bold: true, color: "000000", size: 24 })],
-                spacing: { before: 150, after: 100, line: 276 }
-            }),
-            ...lampiranNotaChildren
-        );
-    }
-
-    const transaksiLight = transaksi.map(t => ({
-        divisi: t.divisi,
-        jenis: t.jenis,
-        keterangan: t.keterangan,
-        harga: t.harga,
-        qty: t.qty,
-        totalNominal: t.totalNominal,
-        catatan: t.catatan,
-        notaData: null
-    }));
-
-    const metadataObj = {
-        jumlahPeserta: document.getElementById('jumlahPeserta').value || 0,
-        transaksi: transaksiLight
-    };
-    const metadataString = encodeURIComponent(JSON.stringify(metadataObj));
-
-    docChildren.push(
-        new docx.Paragraph({
-            children: [new docx.TextRun({ text: `GCC_DATA_START:::${metadataString}:::GCC_DATA_END`, color: "FFFFFF", size: 2 })]
-        })
-    );
-
-    const doc = new docx.Document({
-        styles: {
-            default: {
-                document: {
-                    run: { font: "Times New Roman", size: 22, color: "000000" },
-                    paragraph: { spacing: { line: 276, before: 60, after: 60 } }
-                }
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast(`✅ Berhasil tersimpan di Drive: ${dept} -> ${category} / ${fileName}`, "success");
+            } else {
+                showToast(`❌ Gagal upload: ${result.message}`, "error");
             }
-        },
-        sections: [{ properties: {}, children: docChildren }]
-    });
-
-    docx.Packer.toBlob(doc).then(blob => {
-        saveAs(blob, fileName);
-    });
+        };
+    } catch (err) {
+        console.error(err);
+        showToast("❌ Gagal terhubung ke Google Drive.", "error");
+    }
 }
