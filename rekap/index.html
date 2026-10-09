@@ -78,8 +78,12 @@
                 <div class="calc-subtotal" id="subtotalMasuk">Total Item: Rp 0</div>
             </div>
             <div class="form-group">
+                <label>Upload Bukti Terima / Transfer (Foto/Gambar):</label>
+                <input type="file" id="notaMasuk" accept="image/*">
+            </div>
+            <div class="form-group">
                 <label>Catatan (Opsional):</label>
-                <input type="text" id="catMasuk" placeholder="misal: Pembayaran via Transfer">
+                <input type="text" id="catMasuk" placeholder="misal: Pembayaran via Transfer BSI">
             </div>
             <button class="btn-masuk" id="btnSubmitMasuk" onclick="tambahTransaksi('Masuk')">+ Tambah Uang Masuk</button>
         </div>
@@ -164,7 +168,7 @@
                     <th>Harga Satuan</th>
                     <th style="width: 60px; text-align: center;">Jumlah</th>
                     <th>Total Nominal</th>
-                    <th style="width: 120px; text-align: center;">Lampiran Nota</th>
+                    <th style="width: 120px; text-align: center;">Lampiran Nota / Bukti</th>
                     <th>Catatan</th>
                     <th style="width: 90px;" class="col-action">Aksi</th>
                 </tr>
@@ -180,9 +184,9 @@
     </div>
 
     <!-- Tombol Ekspor Word & PDF -->
-    <div class="export-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+    <div class="export-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
         <button class="btn-word" onclick="exportToWord()">📄 Download Word (.docx)</button>
-        <button class="btn-pdf" onclick="exportToPDF()" style="background: #dc3545; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">Download PDF (.pdf)</button>
+        <button class="btn-pdf" onclick="exportToPDF()">📕 Download PDF (.pdf)</button>
     </div>
 </div>
 
