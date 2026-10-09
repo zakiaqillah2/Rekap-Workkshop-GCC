@@ -71,7 +71,7 @@ async function prosesGantiNota(event) {
 }
 
 function hapusNota(realIndex) {
-    if (confirm("Apakah Anda yakin ingin menghapus lampiran nota transaksi ini?")) {
+    if (confirm("Apakah Anda yakin ingin menghapus lampiran nota/bukti transaksi ini?")) {
         simpanStateKeHistory();
         transaksi[realIndex].notaData = null;
         simpanKeStorage(false);
@@ -107,26 +107,21 @@ async function downloadTemplateWord() {
         new docx.TableRow({
             children: [
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
+                new docx.TableCell({ children: [new docx.Paragraph({ text: "Masuk" })] }),
+                new docx.TableCell({ children: [new docx.Paragraph({ text: "Sponsorship A" })] }),
+                new docx.TableCell({ children: [new docx.Paragraph({ text: "1000000" })] }),
+                new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
+                new docx.TableCell({ children: [new docx.Paragraph({ text: "1000000" })] })
+            ]
+        }),
+        new docx.TableRow({
+            children: [
+                new docx.TableCell({ children: [new docx.Paragraph({ text: "2", alignment: docx.AlignmentType.CENTER })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "Keluar" })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "Honor Pemateri" })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "500000" })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
                 new docx.TableCell({ children: [new docx.Paragraph({ text: "500000" })] })
-            ]
-        }),
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ columnSpan: 6, children: [new docx.Paragraph({ text: "Konsumsi", bold: true })] })
-            ]
-        }),
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Keluar" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Snack Peserta" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "15000" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "35", alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "525000" })] })
             ]
         })
     ];
@@ -164,7 +159,7 @@ async function imporDokumen(event) {
     if (!file) return;
 
     if (!file.name.endsWith('.docx')) {
-        alert("⚠️ Upload Ditolak!\n\nUntuk mengedit kembali laporan, gunakan file Word (.docx). File PDF hanya untuk keperluan cetak/laporan.");
+        alert("⚠️ Upload Ditolak!\n\nUntuk mengedit kembali laporan, gunakan file Word (.docx).");
         event.target.value = '';
         return;
     }
@@ -175,7 +170,7 @@ async function imporDokumen(event) {
     try {
         const arrayBuffer = await file.arrayBuffer();
         
-        // 1. Cek Metadata JSON Tersembunyi (Akurat 100% jika file Word buatan web kita)
+        // 1. Cek Metadata JSON Tersembunyi
         const rawTextResult = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
         const fullRawText = rawTextResult.value;
 
@@ -205,7 +200,7 @@ async function imporDokumen(event) {
             }
         }
 
-        // 2. Parser HTML-Table untuk File Word Templat / Luar
+        // 2. Parser HTML-Table dari Templat Word
         const htmlResult = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = htmlResult.value;
@@ -222,7 +217,6 @@ async function imporDokumen(event) {
             const rowText = cells.join(' ');
             if (rowText.toLowerCase().includes('jenis') || rowText.toLowerCase().includes('keterangan') || rowText.toLowerCase().includes('total')) return;
 
-            // Jika baris berisi judul Divisi (1 sel)
             if (cells.length === 1 || (cells.length > 1 && !cells[1] && !cells[2])) {
                 if (cells[0] && !cells[0].match(/\d{3,}/)) {
                     currentDivisi = cells[0];
@@ -230,7 +224,6 @@ async function imporDokumen(event) {
                 }
             }
 
-            // Jika baris transaksi (No, Jenis, Keterangan, Harga, Qty, Total)
             if (cells.length >= 4) {
                 let jenis = cells[1] && cells[1].toLowerCase().includes('masuk') ? 'Masuk' : 'Keluar';
                 let ket = cells[2] || cells[1] || '';
@@ -254,7 +247,7 @@ async function imporDokumen(event) {
         });
 
         if (countImported === 0) {
-            alert("⚠️ Format tabel tidak terbaca. Silakan gunakan tombol 'Download Templat Word' untuk membuat file RAB yang valid.");
+            alert("⚠️ Format tabel tidak terbaca. Silakan gunakan 'Download Templat Word' untuk membuat file yang valid.");
         } else {
             alert(`🎉 Berhasil Mengimpor ${countImported} item transaksi!`);
             simpanKeStorage(false);
@@ -440,6 +433,7 @@ function hapusDraftAktif() {
     }
 }
 
+/* ------------------- TAMBAH TRANSAKSI (SUPPORT BUKTI TF UANG MASUK) ------------------- */
 async function tambahTransaksi(jenis) {
     const isMasuk = jenis === 'Masuk';
     const divisiInput = document.getElementById(isMasuk ? 'divisiMasuk' : 'divisiKeluar');
@@ -447,7 +441,7 @@ async function tambahTransaksi(jenis) {
     const hargaInput = document.getElementById(isMasuk ? 'hargaMasuk' : 'hargaKeluar');
     const qtyInput = document.getElementById(isMasuk ? 'jumlahMasuk' : 'jumlahKeluar');
     const catInput = document.getElementById(isMasuk ? 'catMasuk' : 'catKeluar');
-    const fileInput = isMasuk ? null : document.getElementById('notaKeluar');
+    const fileInput = document.getElementById(isMasuk ? 'notaMasuk' : 'notaKeluar');
 
     const divisi = divisiInput.value.trim() || 'Umum';
     const keterangan = ketInput.value.trim();
@@ -465,7 +459,7 @@ async function tambahTransaksi(jenis) {
     }
 
     let notaData = null;
-    if (!isMasuk && fileInput && fileInput.files[0]) {
+    if (fileInput && fileInput.files[0]) {
         const file = fileInput.files[0];
         notaData = await new Promise((resolve) => {
             const reader = new FileReader();
@@ -615,7 +609,7 @@ function updateTampilan() {
             let notaHtml = '-';
             if (t.notaData) {
                 notaHtml = `
-                    <img src="${t.notaData.dataUrl}" class="img-preview" alt="Nota">
+                    <img src="${t.notaData.dataUrl}" class="img-preview" alt="Nota/Bukti">
                     <div style="text-align: center;">
                         <span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">✏️ Ganti</span>
                         <span class="btn-nota-delete" onclick="hapusNota(${t.realIndex})">🗑️ Hapus</span>
@@ -677,7 +671,7 @@ function dataURLtoUint8Array(dataurl) {
     return u8arr;
 }
 
-/* ------------------- EKSPOR PDF (UNTUK DI-DOWNLOAD / CETAK) ------------------- */
+/* ------------------- EKSPOR PDF ------------------- */
 function exportToPDF() {
     const draft = listDraft.find(d => d.id === currentDraftId);
     const fileName = draft ? `${draft.nama.replace(/\s+/g, '_')}.pdf` : 'Rekapan_Keuangan.pdf';
@@ -779,7 +773,7 @@ function exportToPDF() {
                 lampiranNotaHtml += `
                     <div class="pdf-block">
                         <p style="font-size: 10.5pt; font-weight: bold; margin: 0 0 6px 0;">
-                            • Nota Transaksi #${globalNotaIndex++} (${divisiName}): ${t.keterangan} (${formatRupiah(t.totalNominal)})
+                            • Bukti/Nota #${globalNotaIndex++} (${divisiName} - ${t.jenis}): ${t.keterangan} (${formatRupiah(t.totalNominal)})
                         </p>
                         <img src="${t.notaData.dataUrl}" style="max-width: 250px; max-height: 250px; border: 1px solid #ccc; padding: 4px; border-radius: 4px;">
                     </div>
@@ -807,7 +801,7 @@ function exportToPDF() {
     if (lampiranNotaHtml !== '') {
         htmlContent += `
             <div class="pdf-block" style="margin-top: 25px;">
-                <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 12px 0;">LAMPIRAN NOTA PENGELUARAN</h3>
+                <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 12px 0;">LAMPIRAN BUKTI & NOTA</h3>
                 ${lampiranNotaHtml}
             </div>
         `;
@@ -827,7 +821,7 @@ function exportToPDF() {
     html2pdf().set(opt).from(element).save();
 }
 
-/* ------------------- EKSPOR WORD (UNTUK UPLOAD / EDIT ULANG) ------------------- */
+/* ------------------- EKSPOR WORD ------------------- */
 async function exportToWord() {
     const summary = updateSummary();
     const draft = listDraft.find(d => d.id === currentDraftId);
@@ -896,7 +890,7 @@ async function exportToWord() {
                     const imageBytes = dataURLtoUint8Array(t.notaData.dataUrl);
                     lampiranNotaChildren.push(
                         new docx.Paragraph({
-                            children: [new docx.TextRun({ text: `• Nota Transaksi #${globalNotaIndex++} (${divisiName}): ${t.keterangan} (${formatRupiah(t.totalNominal)})`, bold: true, color: "000000" })],
+                            children: [new docx.TextRun({ text: `• Bukti/Nota #${globalNotaIndex++} (${divisiName} - ${t.jenis}): ${t.keterangan} (${formatRupiah(t.totalNominal)})`, bold: true, color: "000000" })],
                             spacing: { before: 100, after: 60, line: 276 }
                         }),
                         new docx.Paragraph({
@@ -989,7 +983,7 @@ async function exportToWord() {
         docChildren.push(
             new docx.Paragraph({ text: "", spacing: { after: 200, line: 276 } }),
             new docx.Paragraph({
-                children: [new docx.TextRun({ text: "LAMPIRAN NOTA PENGELUARAN", bold: true, color: "000000", size: 24 })],
+                children: [new docx.TextRun({ text: "LAMPIRAN BUKTI & NOTA", bold: true, color: "000000", size: 24 })],
                 spacing: { before: 150, after: 100, line: 276 }
             }),
             ...lampiranNotaChildren
