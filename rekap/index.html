@@ -73,7 +73,7 @@
         </button>
     </header>
 
-    <!-- Dropdown / Drawer Menu Navigasi HP (Tersembunyi secara default, muncul saat titik 3 diklik) -->
+    <!-- Dropdown / Drawer Menu Navigasi HP -->
     <div id="mobileMenuDropdown" class="mobile-dropdown-menu">
         <button class="mobile-menu-item active" onclick="switchTabMobile('tab-pencatatan', this)">📝 Pencatatan</button>
         <button class="mobile-menu-item" onclick="switchTabMobile('tab-analisis', this)">📊 Analisis & Grafik</button>
@@ -350,7 +350,7 @@
 
     </div>
 
-    <!-- Script Tambahan untuk Menu Titik Tiga HP -->
+    <!-- Script Menu HP -->
     <script>
         function toggleMobileMenu() {
             const dropdown = document.getElementById('mobileMenuDropdown');
@@ -360,13 +360,10 @@
         function switchTabMobile(tabId, btnElement) {
             switchTab(tabId, btnElement);
             document.getElementById('mobileMenuDropdown').style.display = 'none';
-            
-            // Update active state di menu dropdown mobile
             document.querySelectorAll('.mobile-menu-item').forEach(item => item.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
         }
 
-        // Tutup dropdown jika klik di luar
         window.addEventListener('click', function(e) {
             const dropdown = document.getElementById('mobileMenuDropdown');
             const menuBtn = document.querySelector('.mobile-menu-btn');
