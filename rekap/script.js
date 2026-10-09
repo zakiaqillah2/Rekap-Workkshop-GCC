@@ -10,13 +10,11 @@ let redoStack = [];
 let chartComparison = null;
 let chartDivisiInstance = null;
 
-// Inisialisasi saat halaman dimuat
 window.addEventListener('DOMContentLoaded', () => {
     muatDraftKeSelect();
     updateTampilan();
     inisialisasiGrafik();
     
-    // Cek tema awal dari storage
     if(localStorage.getItem('gcc_dark_mode') === 'true') {
         document.body.classList.add('dark-mode');
         const btn = document.getElementById('themeToggle');
@@ -24,7 +22,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Ambil draf aktif saat ini
 function getDraftAktif() {
     let draft = daftarDraft.find(d => d.id === activeDraftId);
     if (!draft) {
@@ -34,13 +31,11 @@ function getDraftAktif() {
     return draft;
 }
 
-// Simpan ke localStorage
 function simpanKeStorage() {
     localStorage.setItem('gcc_drafts', JSON.stringify(daftarDraft));
     localStorage.setItem('gcc_active_draft', activeDraftId);
 }
 
-// Simpan state untuk Undo/Redo
 function simpanStateKeHistory() {
     const draft = getDraftAktif();
     historyStack.push(JSON.stringify(draft.transaksi));
@@ -390,21 +385,6 @@ function updateGrafik(masuk, keluar, transaksi) {
     }
 }
 
-function hitungSimulasiHTM() {
-    const peserta = parseInt(document.getElementById('simPeserta').value) || 0;
-    const sponsor = parseFloat(document.getElementById('simSponsor').value) || 0;
-    const draft = getDraftAktif();
-    
-    let totalKeluar = draft.transaksi.filter(t => t.jenis === 'Keluar').reduce((acc, t) => acc + t.total, 0);
-    let sisaBiaya = totalKeluar - sponsor;
-    let minimalHTM = peserta > 0 && sisaBiaya > 0 ? Math.ceil(sisaBiaya / peserta / 1000) * 1000 : 0;
-
-    const resBox = document.getElementById('simulasiResult');
-    if (resBox) {
-        resBox.innerText = `Estimasi minimal HTM per peserta: ${formatRupiah(minimalHTM)} (Total Pengeluaran: ${formatRupiah(totalKeluar)})`;
-    }
-}
-
 /* ==========================================================================
    NAVIGASI TAB & MODAL LIGHTBOX
    ========================================================================== */
@@ -466,14 +446,93 @@ function showToast(pesan, tipe = "info") {
 }
 
 /* ==========================================================================
-   IMPOR DOKUMEN WORD (.docx) KEMBALI KE WEB (MAMMOTH.JS)
+   EKSPOR & IMPOR DOKUMEN WORD (.docx) DENGAN STRUKTUR RAPI
    ========================================================================== */
+function exportToWord() {
+    const draft = getDraftAktif();
+    const statusEl = document.getElementById('importStatus');
+    
+    // Hitung total
+    let totalMasuk = draft.transaksi.filter(t => t.jenis === 'Masuk').reduce((acc, t) => acc + t.total, 0);
+    let totalKeluar = draft.transaksi.filter(t => t.jenis === 'Keluar').reduce((acc, t) => acc + t.total, 0);
+    let saldoAkhir = totalMasuk - totalKeluar;
+
+    // Buat payload data tersembunyi agar bisa di-upload dan dibaca kembali dengan rapi
+    const hiddenDataPayload = "GCC_DATA_START:::" + encodeURIComponent(JSON.stringify({
+        namaDraft: draft.nama,
+        jumlahPeserta: draft.peserta,
+        transaksi: draft.transaksi
+    })) + ":::GCC_DATA_END";
+
+    let htmlContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>${draft.nama}</title></head>
+        <body style="font-family: 'Times New Roman', serif; line-height: 1.5; color: #000;">
+            <h2 style="text-align: center; text-transform: uppercase;">LAPORAN REKAPAN KEUANGAN ${draft.nama}</h2>
+            <h3>RINGKASAN KEGIATAN</h3>
+            <p>• Total Peserta Hadir : ${draft.peserta || 0} Orang</p>
+            <p>• Total Uang Masuk : ${formatRupiah(totalMasuk)}</p>
+            <p>• Total Uang Keluar : ${formatRupiah(totalKeluar)}</p>
+            <p>• Sisa Saldo Akhir : ${formatRupiah(saldoAkhir)}</p>
+            
+            <h3>RINCIAN TRANSAKSI</h3>
+            <table border="1" style="border-collapse: collapse; width: 100%; font-size: 11pt;">
+                <thead>
+                    <tr style="background-color: #f2f2f2;">
+                        <th>No</th>
+                        <th>Jenis</th>
+                        <th>Divisi</th>
+                        <th>Keterangan</th>
+                        <th>Harga Satuan</th>
+                        <th>Jumlah</th>
+                        <th>Total Nominal</th>
+                        <th>Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    draft.transaksi.forEach((t, i) => {
+        htmlContent += `
+            <tr>
+                <td style="text-align: center;">${i + 1}</td>
+                <td>${t.jenis}</td>
+                <td>${t.divisi}</td>
+                <td>${t.keterangan}</td>
+                <td>${formatRupiah(t.hargaSatuan)}</td>
+                <td style="text-align: center;">${t.jumlah}</td>
+                <td>${formatRupiah(t.total)}</td>
+                <td>${t.catatan || '-'}</td>
+            </tr>
+        `;
+    });
+
+    htmlContent += `
+                </tbody>
+            </table>
+            <br><p style="font-size: 8pt; color: #888; text-align: center;">${hiddenDataPayload}</p>
+        </body>
+        </html>
+    `;
+
+    const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${draft.nama.replace(/[^a-zA-Z0-9]/g, '_')}_Rekapan.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    showToast("📄 Berhasil mengunduh dokumen Word (.docx) resmi!", "success");
+}
+
 function imporDokumen(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const statusEl = document.getElementById('importStatus');
-    if (statusEl) statusEl.innerText = `Memproses file: ${file.name}...`;
+    if (statusEl) statusEl.innerText = `Membaca file: ${file.name}...`;
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -482,32 +541,53 @@ function imporDokumen(event) {
         mammoth.extractRawText({ arrayBuffer: arrayBuffer })
             .then(function(result) {
                 const text = result.value;
-                parseTeksImpor(text);
-                showToast("✅ Berhasil mengimpor dokumen Word!", "success");
-                if (statusEl) statusEl.innerText = "Impor berhasil! Data dimuat ke draf.";
+                
+                // Cek apakah ada data tersembunyi dari format web kita
+                let startIndex = text.indexOf("GCC_DATA_START:::");
+                let endIndex = text.indexOf(":::GCC_DATA_END");
+
+                if (startIndex !== -1 && endIndex !== -1) {
+                    let jsonString = decodeURIComponent(text.substring(startIndex + 17, endIndex));
+                    let parsedData = JSON.parse(jsonString);
+
+                    const draft = getDraftAktif();
+                    if (parsedData.namaDraft) draft.nama = parsedData.namaDraft;
+                    if (parsedData.jumlahPeserta) draft.peserta = parsedData.jumlahPeserta;
+                    if (parsedData.transaksi && Array.isArray(parsedData.transaksi)) {
+                        draft.transaksi = parsedData.transaksi.map(t => ({
+                            id: t.id || Date.now() + Math.random(),
+                            jenis: t.jenis || 'Masuk',
+                            divisi: t.divisi || 'UMUM',
+                            keterangan: t.keterangan || '-',
+                            hargaSatuan: t.harga || t.hargaSatuan || 0,
+                            jumlah: t.qty || t.jumlah || 1,
+                            total: t.totalNominal || t.total || 0,
+                            nota: t.notaData || t.nota || "",
+                            catatan: t.catatan || "-"
+                        }));
+                    }
+
+                    simpanKeStorage();
+                    muatDraftKeSelect();
+                    updateTampilan();
+                    showToast("✅ Berhasil memuat data dari file Word!", "success");
+                    if (statusEl) statusEl.innerText = "Impor berhasil! Data dimuat ke draf.";
+                } else {
+                    showToast("⚠️ Format file Word tidak dikenali atau bukan template rekapan web ini.", "error");
+                    if (statusEl) statusEl.innerText = "Gagal: Format tidak cocok.";
+                }
             })
             .catch(function(error) {
                 console.error("Gagal parse docx:", error);
-                showToast("❌ Gagal membaca file Word. Pastikan formatnya benar.", "error");
+                showToast("❌ Gagal membaca file Word.", "error");
                 if (statusEl) statusEl.innerText = "Gagal memproses file.";
             });
     };
     reader.readAsArrayBuffer(file);
 }
 
-function parseTeksImpor(text) {
-    const draft = getDraftAktif();
-    let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    lines.forEach(line => {
-        if (line.toLowerCase().includes('peserta') || line.toLowerCase().includes('sasaran')) {
-            let angka = line.replace(/[^0-9]/g, '');
-            if (angka) {
-                draft.peserta = parseInt(angka);
-            }
-        }
-    });
-    simpanKeStorage();
-    updateTampilan();
+function downloadTemplateWord() {
+    exportToWord();
 }
 
 /* ==========================================================================
@@ -530,7 +610,7 @@ async function uploadKeDrive(jenis) {
         const draftTitle = draft.nama.replace(/[^a-zA-Z0-9]/g, '_');
 
         if (jenis === 'docx') {
-            const contentHtml = document.getElementById('exportContent').innerHTML;
+            const contentHtml = document.getElementById('exportContent')?.innerHTML || "Rekapan GCC";
             fileBlob = btoa(unescape(encodeURIComponent(contentHtml)));
             mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
             fileName = `${draftTitle}_${kategori}_(${dept}).docx`;
@@ -571,18 +651,10 @@ async function uploadKeDrive(jenis) {
 }
 
 // Tombol Download Lokal di bawah tabel
-function exportToWord() {
-    showToast("📄 Mengunduh file Word (.docx) ke perangkat...", "success");
-}
-
 function exportToPDF() {
     showToast("📕 Mengunduh file PDF ke perangkat...", "success");
 }
 
 function exportToExcel() {
     showToast("📊 Mengunduh file Excel (.xlsx) ke perangkat...", "success");
-}
-
-function downloadTemplateWord() {
-    showToast("📥 Mendownload templat resmi Word...", "info");
 }
