@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rekapan Keuangan Workshop GCC</title>
 
-    <!-- Favicon Tab Browser (Logo GCC) -->
+    <!-- Favicon Logo GCC untuk Tab Browser -->
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl">
 
     <!-- Library docx & FileSaver untuk ekspor Word -->
@@ -126,12 +126,6 @@
         <p>📥 Impor / Salin Data Otomatis dari Dokumen (.docx / .pdf):</p>
         <input type="file" id="fileImportDoc" accept=".docx,.pdf" onchange="imporDokumen(event)">
         <span id="importStatus" style="font-size: 12px; color: #555; display: block; margin-top: 5px;"></span>
-    </div>
-
-    <!-- Input URL Logo GCC -->
-    <div class="form-group" style="background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
-        <label for="urlLogo">🖼️ Link / URL Logo (Terhubung ke Drive Logo GCC):</label>
-        <input type="text" id="urlLogo" value="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl" onchange="simpanKeStorage(false)">
     </div>
 
     <!-- Hidden Input File untuk Mengubah/Ganti Nota dari Tabel -->
@@ -286,7 +280,7 @@
     let undoStack = [];
     let redoStack = [];
 
-    const DEFAULT_LOGO_URL = "https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl";
+    const GCC_LOGO_URL = "https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl";
 
     window.onload = function() {
         muatSemuaDraft();
@@ -559,7 +553,6 @@
             nama: namaDraf,
             tanggal: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
             jumlahPeserta: 0,
-            urlLogo: DEFAULT_LOGO_URL,
             transaksi: []
         };
 
@@ -592,7 +585,6 @@
         const draft = listDraft.find(d => d.id === currentDraftId);
         if (draft) {
             document.getElementById('jumlahPeserta').value = draft.jumlahPeserta || 0;
-            document.getElementById('urlLogo').value = draft.urlLogo || DEFAULT_LOGO_URL;
             transaksi = draft.transaksi || [];
             resetHistory();
             updateTampilan();
@@ -607,7 +599,6 @@
         const draft = listDraft.find(d => d.id === currentDraftId);
         if (draft) {
             draft.jumlahPeserta = document.getElementById('jumlahPeserta').value || 0;
-            draft.urlLogo = document.getElementById('urlLogo').value.trim() || DEFAULT_LOGO_URL;
             draft.transaksi = transaksi;
             const now = new Date();
             draft.tanggal = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -864,11 +855,10 @@
         return u8arr;
     }
 
-    /* ------------------- EKSPOR PDF DENGAN LOGO DARI URL ------------------- */
+    /* ------------------- EKSPOR PDF ------------------- */
     function exportToPDF() {
         const draft = listDraft.find(d => d.id === currentDraftId);
         const fileName = draft ? `${draft.nama.replace(/\s+/g, '_')}.pdf` : 'Rekapan_Keuangan.pdf';
-        const urlLogo = document.getElementById('urlLogo').value.trim();
         
         const summary = updateSummary();
         const element = document.createElement('div');
@@ -885,7 +875,7 @@
             kelompokDivisi[divName].push(t);
         });
 
-        const logoHtml = urlLogo ? `<img src="${urlLogo}" style="height: 60px; width: auto; margin-bottom: 10px;" crossorigin="anonymous"><br>` : '';
+        const logoHtml = `<img src="${GCC_LOGO_URL}" style="height: 60px; width: auto; margin-bottom: 10px;" crossorigin="anonymous"><br>`;
 
         let htmlContent = `
             <style>
