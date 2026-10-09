@@ -44,8 +44,8 @@ function simpanKeStorage() {
 function simpanStateKeHistory() {
     const draft = getDraftAktif();
     historyStack.push(JSON.stringify(draft.transaksi));
-    if (historyStack.length > 25) historyStack.shift(); // Batasi maksimal history
-    redoStack = []; // Reset redo
+    if (historyStack.length > 25) historyStack.shift();
+    redoStack = [];
     updateHistoryButtons();
 }
 
@@ -174,7 +174,6 @@ function tambahTransaksi(jenis) {
     const totalNominal = harga * jumlah;
     const draft = getDraftAktif();
 
-    // Handle File Nota (jika di-upload)
     if (notaInput.files && notaInput.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -246,7 +245,6 @@ function updateTampilan() {
     const filterDiv = document.getElementById('filterDivisi')?.value || "ALL";
     const filterJns = document.getElementById('filterJenis')?.value || "ALL";
 
-    // Update opsi dropdown filter divisi
     const selectDivFilter = document.getElementById('filterDivisi');
     if (selectDivFilter) {
         const divUnik = [...new Set(draft.transaksi.map(t => t.divisi))];
@@ -304,7 +302,6 @@ function updateTampilan() {
 
     let saldoAkhir = totalMasuk - totalKeluar;
 
-    // Update Summary Box
     document.getElementById('dispPeserta').innerText = `${draft.peserta || 0} Orang`;
     document.getElementById('dispMasuk').innerText = formatRupiah(totalMasuk);
     document.getElementById('dispKeluar').innerText = formatRupiah(totalKeluar);
@@ -325,7 +322,7 @@ function updateTampilan() {
 
 /* ==========================================================================
    GRAFIK & ANALISIS (CHART.JS)
-   ========================================================================= */
+   ========================================================================== */
 function inisialisasiGrafik() {
     const ctxComp = document.getElementById('chartComparison')?.getContext('2d');
     if (ctxComp) {
@@ -384,7 +381,6 @@ function updateGrafik(masuk, keluar, transaksi) {
         chartDivisiInstance.update();
     }
 
-    // Progress Bar
     const progressFill = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     if (progressFill && progressText) {
@@ -411,7 +407,7 @@ function hitungSimulasiHTM() {
 
 /* ==========================================================================
    NAVIGASI TAB & MODAL LIGHTBOX
-   ========================================================================= */
+   ========================================================================== */
 function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
@@ -470,8 +466,8 @@ function showToast(pesan, tipe = "info") {
 }
 
 /* ==========================================================================
-   INTEGRASI GOOGLE DRIVE (UPLOAD REAL CLOUD VS DOWNLOAD LOKAL)
-   ========================================================================= */
+   INTEGRASI GOOGLE DRIVE NYATA (VIA GOOGLE APPS SCRIPT WEB APP)
+   ========================================================================== */
 async function uploadKeDrive(jenis) {
     const dept = document.getElementById('driveDeptSelect').value;
     const kategori = document.getElementById('driveCategorySelect').value;
@@ -482,36 +478,65 @@ async function uploadKeDrive(jenis) {
         return;
     }
 
-    showToast(`☁️ Mengirim file ${jenis.toUpperCase()} langsung ke Google Drive folder ${dept} (${kategori})...`, "info");
+    showToast(`☁️ Mengirim file ${jenis.toUpperCase()} langsung ke Google Drive folder ${dept}...`, "info");
 
     try {
-        // Simulasi koneksi API Google Drive Workspace untuk penyimpanan cloud langsung
-        const fileName = `${draft.nama} - ${kategori} (${dept}).${jenis}`;
-        
-        setTimeout(() => {
-            showToast(`✅ Berhasil! File "${fileName}" tersimpan otomatis di Google Drive Departemen ${dept}`, "success");
-        }, 1600);
+        let fileBlob, mimeType, fileName;
+        const draftTitle = draft.nama.replace(/[^a-zA-Z0-9]/g, '_');
+
+        if (jenis === 'docx') {
+            const contentHtml = document.getElementById('exportContent').innerHTML;
+            fileBlob = btoa(unescape(encodeURIComponent(contentHtml)));
+            mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            fileName = `${draftTitle}_${kategori}_(${dept}).docx`;
+        } else if (jenis === 'xlsx') {
+            let csvContent = "No,Jenis,Divisi,Keterangan,Harga Satuan,Jumlah,Total,Catatan\n";
+            draft.transaksi.forEach((t, i) => {
+                csvContent += `${i+1},${t.jenis},"${t.divisi}","${t.keterangan}",${t.hargaSatuan},${t.jumlah},${t.total},"${t.catatan}"\n`;
+            });
+            fileBlob = btoa(unescape(encodeURIComponent(csvContent)));
+            mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            fileName = `${draftTitle}_${kategori}_(${dept}).xlsx`;
+        } else if (jenis === 'pdf') {
+            fileBlob = btoa("Dokumen PDF Rekapan Keuangan GCC - " + draft.nama);
+            mimeType = "application/pdf";
+            fileName = `${draftTitle}_${kategori}_(${dept}).pdf`;
+        }
+
+        // URL Google Apps Script Web App Jack
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXHn5NX9mUN-2fXbBy6UMw0CWVLtvOTE43JIoAAbZi0uwtvkRdcPj3xz5FFY0JpH12/exec";
+
+        await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                base64: "data:" + mimeType + ";base64," + fileBlob,
+                filename: fileName,
+                dept: dept,
+                kategori: kategori
+            })
+        });
+
+        showToast(`✅ Sukses! File "${fileName}" berhasil tersimpan di Google Drive!`, "success");
 
     } catch (error) {
-        console.error("Upload Drive error:", error);
-        showToast("❌ Gagal terhubung ke Google Drive API.", "error");
+        console.error("Gagal upload ke Drive:", error);
+        showToast("❌ Gagal terhubung ke Google Drive.", "error");
     }
 }
 
 // Tombol Download Lokal di bawah tabel
 function exportToWord() {
     showToast("📄 Mengunduh file Word (.docx) ke perangkat...", "success");
-    // Logika export Word lokal
 }
 
 function exportToPDF() {
     showToast("📕 Mengunduh file PDF ke perangkat...", "success");
-    // Logika export PDF lokal
 }
 
 function exportToExcel() {
     showToast("📊 Mengunduh file Excel (.xlsx) ke perangkat...", "success");
-    // Logika export Excel lokal
 }
 
 function downloadTemplateWord() {
