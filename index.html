@@ -84,7 +84,10 @@
         
         .btn-edit { background: #ffc107; color: #212529; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin-right: 4px; }
         .btn-delete { background: #ff4d4d; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; }
-        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
+        .btn-nota-action { background: #17a2b8; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; margin-top: 4px; display: inline-block; cursor: pointer; }
+        .btn-nota-delete { background: #dc3545; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; margin-top: 4px; display: inline-block; cursor: pointer; }
+        
+        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; display: block; margin: auto; }
         .tfoot-summary { background-color: #f1f3f5; font-weight: bold; }
 
         @media (max-width: 768px) {
@@ -120,6 +123,15 @@
         <input type="file" id="fileImportDoc" accept=".docx,.pdf" onchange="imporDokumen(event)">
         <span id="importStatus" style="font-size: 12px; color: #555; display: block; margin-top: 5px;"></span>
     </div>
+
+    <!-- Input URL Logo GCC (Direct Link Google Drive) -->
+    <div class="form-group" style="background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+        <label for="urlLogo">🖼️ Link / URL Logo (Terhubung ke Drive Logo GCC):</label>
+        <input type="text" id="urlLogo" value="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl" onchange="simpanKeStorage(false)">
+    </div>
+
+    <!-- Hidden Input File untuk Mengubah/Ganti Nota dari Tabel -->
+    <input type="file" id="fileNotaHidden" accept="image/*" style="display: none;" onchange="prosesGantiNota(event)">
 
     <!-- Form Informasi Peserta -->
     <div class="form-group" style="background: #e8f4fd; padding: 12px; border-radius: 8px;">
@@ -238,7 +250,7 @@
                     <th>Harga Satuan</th>
                     <th style="width: 60px; text-align: center;">Jumlah</th>
                     <th>Total Nominal</th>
-                    <th>Lampiran Nota</th>
+                    <th style="width: 120px; text-align: center;">Lampiran Nota</th>
                     <th>Catatan</th>
                     <th style="width: 90px;" class="col-action">Aksi</th>
                 </tr>
@@ -265,9 +277,12 @@
     let currentDraftId = null;
     let transaksi = [];
     let editIndex = -1;
+    let targetIndexNotaEdit = -1;
 
     let undoStack = [];
     let redoStack = [];
+
+    const DEFAULT_LOGO_URL = "https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl";
 
     window.onload = function() {
         muatSemuaDraft();
@@ -305,7 +320,41 @@
         return total;
     }
 
-    /* ------------------- FUNGSI IMPOR & PARSING DOKUMEN WORD/PDF ------------------- */
+    /* ------------------- FUNGSI EDIT & HAPUS LAMPIRAN NOTA ------------------- */
+    function triggerGantiNota(realIndex) {
+        targetIndexNotaEdit = realIndex;
+        document.getElementById('fileNotaHidden').click();
+    }
+
+    async function prosesGantiNota(event) {
+        const file = event.target.files[0];
+        if (!file || targetIndexNotaEdit < 0) return;
+
+        const notaData = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve({ dataUrl: e.target.result });
+            reader.readAsDataURL(file);
+        });
+
+        simpanStateKeHistory();
+        transaksi[targetIndexNotaEdit].notaData = notaData;
+        targetIndexNotaEdit = -1;
+        event.target.value = '';
+
+        simpanKeStorage(false);
+        updateTampilan();
+    }
+
+    function hapusNota(realIndex) {
+        if (confirm("Apakah Anda yakin ingin menghapus lampiran nota transaksi ini?")) {
+            simpanStateKeHistory();
+            transaksi[realIndex].notaData = null;
+            simpanKeStorage(false);
+            updateTampilan();
+        }
+    }
+
+    /* ------------------- FUNGSI IMPOR & PARSING DOKUMEN ------------------- */
     async function imporDokumen(event) {
         const file = event.target.files[0];
         const statusEl = document.getElementById('importStatus');
@@ -354,24 +403,20 @@
 
         simpanStateKeHistory();
 
-        // 1. Cari Angka Total Peserta jika ada dalam file
         const matchPeserta = rawText.match(/(?:peserta|total\s+peserta)\s*[:=]?\s*(\d+)/i);
         if (matchPeserta) {
             document.getElementById('jumlahPeserta').value = parseInt(matchPeserta[1]);
             foundPeserta = true;
         }
 
-        // 2. Ekstraksi Baris Transaksi
         let currentDivisi = 'Umum';
 
         lines.forEach(line => {
-            // Deteksi baris yang mengindikasikan Divisi
             if (/^(divisi|bagian|seksi)\b/i.test(line) || line.toUpperCase().includes('DIVISI')) {
                 currentDivisi = line.replace(/^(divisi|bagian|seksi)\s*[:=-]?\s*/i, '').trim() || 'Umum';
                 return;
             }
 
-            // Ekstraksi transaksi dengan kecocokan angka nominal Rp / Rp.
             const matchNominal = line.match(/(masuk|keluar)?\s*([a-zA-Z0-9\s\.\,\-]+?)\s+(?:rp\.?\s*)?([\d\.\,]+)\s*(?:[x×\*]\s*(\d+))?/i);
             
             if (matchNominal) {
@@ -398,15 +443,15 @@
         });
 
         if (countImported === 0 && !foundPeserta) {
-            alert("⚠️ Warning / Validasi Format Gagal:\n\nFormat dokumen tidak sesuai! Tidak ditemukan struktur data transaksi atau angka nominal yang valid dalam file yang Anda unggah.");
+            alert("⚠️ Validasi Gagal:\n\nFormat dokumen tidak sesuai! Tidak ditemukan struktur data transaksi yang valid.");
         } else {
-            alert(`🎉 Berhasil Mengimpor:\n- ${countImported} item transaksi ditambahkan.\n${foundPeserta ? '- Data Jumlah Peserta berhasil diperbarui.' : ''}`);
+            alert(`🎉 Berhasil Mengimpor:\n- ${countImported} item transaksi ditambahkan.\n${foundPeserta ? '- Data Jumlah Peserta diperbarui.' : ''}`);
             simpanKeStorage(false);
             updateTampilan();
         }
     }
 
-    /* ------------------- FUNGSI HISTORY & STATE MANAGEMENT ------------------- */
+    /* ------------------- FUNGSI HISTORY & DRAFT ------------------- */
     function simpanStateKeHistory() {
         const stateSaatIni = {
             transaksi: JSON.parse(JSON.stringify(transaksi)),
@@ -510,6 +555,7 @@
             nama: namaDraf,
             tanggal: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
             jumlahPeserta: 0,
+            urlLogo: DEFAULT_LOGO_URL,
             transaksi: []
         };
 
@@ -542,6 +588,7 @@
         const draft = listDraft.find(d => d.id === currentDraftId);
         if (draft) {
             document.getElementById('jumlahPeserta').value = draft.jumlahPeserta || 0;
+            document.getElementById('urlLogo').value = draft.urlLogo || DEFAULT_LOGO_URL;
             transaksi = draft.transaksi || [];
             resetHistory();
             updateTampilan();
@@ -556,6 +603,7 @@
         const draft = listDraft.find(d => d.id === currentDraftId);
         if (draft) {
             draft.jumlahPeserta = document.getElementById('jumlahPeserta').value || 0;
+            draft.urlLogo = document.getElementById('urlLogo').value.trim() || DEFAULT_LOGO_URL;
             draft.transaksi = transaksi;
             const now = new Date();
             draft.tanggal = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -747,7 +795,23 @@
                 if (t.jenis === 'Masuk') grandTotalMasuk += t.totalNominal;
                 if (t.jenis === 'Keluar') grandTotalKeluar += t.totalNominal;
 
-                const notaHtml = t.notaData ? `<img src="${t.notaData.dataUrl}" class="img-preview" alt="Nota">` : '-';
+                let notaHtml = '-';
+                if (t.notaData) {
+                    notaHtml = `
+                        <img src="${t.notaData.dataUrl}" class="img-preview" alt="Nota">
+                        <div style="text-align: center;">
+                            <span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">✏️ Ganti</span>
+                            <span class="btn-nota-delete" onclick="hapusNota(${t.realIndex})">🗑️ Hapus</span>
+                        </div>
+                    `;
+                } else {
+                    notaHtml = `
+                        <div style="text-align: center;">
+                            <span style="color: #888; font-size: 11px;">Tidak ada</span><br>
+                            <span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">➕ Upload</span>
+                        </div>
+                    `;
+                }
 
                 tbody.innerHTML += `<tr>
                     <td style="text-align: center;">${i + 1}</td>
@@ -796,10 +860,11 @@
         return u8arr;
     }
 
-    // Ekspor ke PDF
+    /* ------------------- EKSPOR PDF DENGAN LOGO DARI URL ------------------- */
     function exportToPDF() {
         const draft = listDraft.find(d => d.id === currentDraftId);
         const fileName = draft ? `${draft.nama.replace(/\s+/g, '_')}.pdf` : 'Rekapan_Keuangan.pdf';
+        const urlLogo = document.getElementById('urlLogo').value.trim();
         
         const summary = updateSummary();
         const element = document.createElement('div');
@@ -816,6 +881,8 @@
             kelompokDivisi[divName].push(t);
         });
 
+        const logoHtml = urlLogo ? `<img src="${urlLogo}" style="height: 60px; width: auto; margin-bottom: 10px;" crossorigin="anonymous"><br>` : '';
+
         let htmlContent = `
             <style>
                 .pdf-block { page-break-inside: avoid !important; margin-bottom: 15px; }
@@ -826,6 +893,7 @@
             </style>
 
             <div class="pdf-block" style="text-align: center;">
+                ${logoHtml}
                 <h2 style="font-size: 15pt; font-weight: bold; margin: 0 0 15px 0;">LAPORAN REKAPAN KEUANGAN WORKSHOP GCC</h2>
             </div>
             
