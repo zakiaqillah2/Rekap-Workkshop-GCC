@@ -466,6 +466,56 @@ function showToast(pesan, tipe = "info") {
 }
 
 /* ==========================================================================
+   IMPOR DOKUMEN WORD (.docx) KEMBALI KE WEB
+   ========================================================================== */
+function imporDokumen(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusEl = document.getElementById('importStatus');
+    if (statusEl) statusEl.innerText = `Memproses file: ${file.name}...`;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const arrayBuffer = e.target.result;
+
+        // Menggunakan library Mammoth.js untuk membaca isi file Word (.docx)
+        mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+            .then(function(result) {
+                const text = result.value;
+                parseTeksImpor(text);
+                showToast("✅ Berhasil mengimpor dokumen Word!", "success");
+                if (statusEl) statusEl.innerText = "Impor berhasil! Data dimuat ke draf.";
+            })
+            .catch(function(error) {
+                console.error("Gagal parse docx:", error);
+                showToast("❌ Gagal membaca file Word. Pastikan formatnya benar.", "error");
+                if (statusEl) statusEl.innerText = "Gagal memproses file.";
+            });
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// Parser sederhana untuk mendeteksi teks dari hasil ekspor web
+function parseTeksImpor(text) {
+    const draft = getDraftAktif();
+    
+    // Contoh deteksi jumlah peserta dari teks dokumen
+    let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    lines.forEach(line => {
+        if (line.toLowerCase().includes('peserta') || line.toLowerCase().includes('sasaran')) {
+            let angka = line.replace(/[^0-9]/g, '');
+            if (angka) {
+                draft.peserta = parseInt(angka);
+            }
+        }
+    });
+
+    simpanKeStorage();
+    updateTampilan();
+}
+
+/* ==========================================================================
    INTEGRASI GOOGLE DRIVE NYATA (VIA GOOGLE APPS SCRIPT WEB APP)
    ========================================================================== */
 async function uploadKeDrive(jenis) {
