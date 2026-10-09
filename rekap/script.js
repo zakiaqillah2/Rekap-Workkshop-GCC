@@ -466,7 +466,7 @@ function showToast(pesan, tipe = "info") {
 }
 
 /* ==========================================================================
-   IMPOR DOKUMEN WORD (.docx) KEMBALI KE WEB
+   IMPOR DOKUMEN WORD (.docx) KEMBALI KE WEB (MAMMOTH.JS)
    ========================================================================== */
 function imporDokumen(event) {
     const file = event.target.files[0];
@@ -479,7 +479,6 @@ function imporDokumen(event) {
     reader.onload = function(e) {
         const arrayBuffer = e.target.result;
 
-        // Menggunakan library Mammoth.js untuk membaca isi file Word (.docx)
         mammoth.extractRawText({ arrayBuffer: arrayBuffer })
             .then(function(result) {
                 const text = result.value;
@@ -496,11 +495,8 @@ function imporDokumen(event) {
     reader.readAsArrayBuffer(file);
 }
 
-// Parser sederhana untuk mendeteksi teks dari hasil ekspor web
 function parseTeksImpor(text) {
     const draft = getDraftAktif();
-    
-    // Contoh deteksi jumlah peserta dari teks dokumen
     let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     lines.forEach(line => {
         if (line.toLowerCase().includes('peserta') || line.toLowerCase().includes('sasaran')) {
@@ -510,7 +506,6 @@ function parseTeksImpor(text) {
             }
         }
     });
-
     simpanKeStorage();
     updateTampilan();
 }
@@ -553,7 +548,6 @@ async function uploadKeDrive(jenis) {
             fileName = `${draftTitle}_${kategori}_(${dept}).pdf`;
         }
 
-        // URL Google Apps Script Web App Jack
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXHn5NX9mUN-2fXbBy6UMw0CWVLtvOTE43JIoAAbZi0uwtvkRdcPj3xz5FFY0JpH12/exec";
 
         await fetch(APPS_SCRIPT_URL, {
