@@ -7,7 +7,16 @@
     <!-- Library docx & FileSaver untuk ekspor Word -->
     <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    
+    <!-- Library html2pdf untuk ekspor PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Library Mammoth.js untuk membaca file Word (.docx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <!-- Library PDF.js untuk membaca file PDF (.pdf) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 15px; }
@@ -20,9 +29,12 @@
         label { font-weight: bold; display: block; margin-bottom: 4px; color: #333; font-size: 13px; }
         input[type="text"], input[type="number"], input[type="file"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; background: white; }
         
-        /* Bar Draf */
+        /* Bar Draf & Import */
         .draft-bar { background: #e8f4fd; border: 1px solid #b6d4fe; padding: 12px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .draft-bar select { flex: 1; min-width: 180px; }
+
+        .import-box { background: #fff8e1; border: 1px dashed #ffa000; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+        .import-box p { margin: 0 0 8px 0; font-size: 13px; color: #856404; font-weight: bold; }
 
         /* Form Kalkulasi Perkalian */
         .calc-group { display: flex; align-items: center; gap: 6px; }
@@ -31,7 +43,7 @@
 
         /* Grid Form Dual Columns */
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        .card { background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; }
+        .card { background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; transition: all 0.3s ease; }
         .card.masuk { border-left: 5px solid #28a745; }
         .card.keluar { border-left: 5px solid #dc3545; }
         
@@ -40,9 +52,16 @@
         .btn-masuk:hover { background-color: #218838; }
         .btn-keluar { background-color: #dc3545; color: white; width: 100%; margin-top: 5px; }
         .btn-keluar:hover { background-color: #c82333; }
-        .btn-word { background-color: #2b579a; color: white; font-size: 15px; padding: 12px 20px; margin-top: 20px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        /* Export Buttons Grid */
+        .export-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn-word { background-color: #2b579a; color: white; font-size: 14px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-word:hover { background-color: #1e3c6e; }
+        .btn-pdf { background-color: #d9534f; color: white; font-size: 14px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-pdf:hover { background-color: #c9302c; }
+
         .btn-new { background-color: #17a2b8; color: white; }
+        .btn-rename { background-color: #ffc107; color: #212529; }
         .btn-reset { background-color: #dc3545; color: white; }
         
         .btn-history { background-color: #6c757d; color: white; padding: 6px 12px; font-size: 12px; border-radius: 5px; }
@@ -55,7 +74,7 @@
         .summary-item p { margin: 4px 0 0; font-size: 15px; font-weight: bold; color: #1a252f; }
         
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 650px; }
         th, td { border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle; }
         th { background-color: #ffffff; color: #000; font-weight: bold; }
         
@@ -72,6 +91,7 @@
             body { padding: 8px; }
             .container { padding: 12px; }
             .grid { grid-template-columns: 1fr; }
+            .export-group { grid-template-columns: 1fr; }
             .summary-box { grid-template-columns: repeat(2, 1fr); gap: 8px; }
             .draft-bar { flex-direction: column; align-items: stretch; }
             .draft-bar button { width: 100%; }
@@ -81,7 +101,7 @@
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="exportContent">
     <h1>📝 Rekapan Keuangan Workshop GCC</h1>
     <p style="color: #666; font-size: 13px;">Pencatatan keuangan dengan susunan tabel terintegrasi per Divisi.</p>
 
@@ -90,7 +110,15 @@
         <label style="margin: 0; white-space: nowrap;">📂 Pilihan Draf:</label>
         <select id="selectDraft" onchange="gantiDraft()"></select>
         <button class="btn-new" onclick="buatDraftBaru()">➕ Draf Baru</button>
+        <button class="btn-rename" onclick="ubahNamaDraft()">✏️ Ubah Nama Draf</button>
         <button class="btn-reset" onclick="hapusDraftAktif()">🗑️ Hapus Draf</button>
+    </div>
+
+    <!-- Kotak Upload File Laporan (Word / PDF) -->
+    <div class="import-box">
+        <p>📥 Impor / Salin Data Otomatis dari Dokumen (.docx / .pdf):</p>
+        <input type="file" id="fileImportDoc" accept=".docx,.pdf" onchange="imporDokumen(event)">
+        <span id="importStatus" style="font-size: 12px; color: #555; display: block; margin-top: 5px;"></span>
     </div>
 
     <!-- Form Informasi Peserta -->
@@ -102,7 +130,7 @@
     <!-- Form Input Pemasukan & Pengeluaran -->
     <div class="grid">
         <!-- Card Uang Masuk -->
-        <div class="card masuk">
+        <div class="card masuk" id="cardMasuk">
             <h3>💵 Input Uang Masuk</h3>
             <div class="form-group">
                 <label>Pilih / Ketik Nama Divisi:</label>
@@ -129,7 +157,7 @@
         </div>
 
         <!-- Card Uang Keluar -->
-        <div class="card keluar">
+        <div class="card keluar" id="cardKeluar">
             <h3>💸 Input Uang Keluar</h3>
             <div class="form-group">
                 <label>Pilih / Ketik Nama Divisi:</label>
@@ -199,24 +227,25 @@
         </div>
     </div>
 
-    <!-- Tabel Rincian Transaksi Satu Wadah -->
+    <!-- Tabel Rincian Transaksi -->
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 35px;">No</th>
+                    <th style="width: 35px; text-align: center;">No</th>
                     <th style="width: 70px;">Jenis</th>
                     <th>Keterangan</th>
-                    <th>Hitungan</th>
+                    <th>Harga Satuan</th>
+                    <th style="width: 60px; text-align: center;">Jumlah</th>
                     <th>Total Nominal</th>
                     <th>Lampiran Nota</th>
                     <th>Catatan</th>
-                    <th style="width: 90px;">Aksi</th>
+                    <th style="width: 90px;" class="col-action">Aksi</th>
                 </tr>
             </thead>
             <tbody id="tabelBody">
                 <tr>
-                    <td colspan="8" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td>
+                    <td colspan="9" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td>
                 </tr>
             </tbody>
             <tfoot id="tabelFoot">
@@ -224,8 +253,11 @@
         </table>
     </div>
 
-    <!-- Tombol Export Word -->
-    <button class="btn-word" onclick="exportToWord()">📄 Simpan & Download Rekapan ke Word (.docx)</button>
+    <!-- Group Tombol Export -->
+    <div class="export-group">
+        <button class="btn-word" onclick="exportToWord()">📄 Download Word (.docx)</button>
+        <button class="btn-pdf" onclick="exportToPDF()">📕 Download PDF (.pdf)</button>
+    </div>
 </div>
 
 <script>
@@ -273,6 +305,108 @@
         return total;
     }
 
+    /* ------------------- FUNGSI IMPOR & PARSING DOKUMEN WORD/PDF ------------------- */
+    async function imporDokumen(event) {
+        const file = event.target.files[0];
+        const statusEl = document.getElementById('importStatus');
+        if (!file) return;
+
+        statusEl.innerText = "⏳ Membaca dokumen...";
+        statusEl.style.color = "#0056b3";
+
+        let textData = "";
+
+        try {
+            if (file.name.endsWith('.docx')) {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                textData = result.value;
+            } else if (file.name.endsWith('.pdf')) {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = "";
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    const pageStrings = content.items.map(item => item.str);
+                    fullText += pageStrings.join(" ") + "\n";
+                }
+                textData = fullText;
+            } else {
+                throw new Error("Format file tidak didukung! Gunakan .docx atau .pdf");
+            }
+
+            prosesEkstraksiTeks(textData);
+            statusEl.innerText = "✅ Impor data selesai!";
+            statusEl.style.color = "#28a745";
+        } catch (err) {
+            statusEl.innerText = `❌ Error: ${err.message}`;
+            statusEl.style.color = "#dc3545";
+            alert(`Gagal Memproses File:\n${err.message}`);
+        }
+    }
+
+    function prosesEkstraksiTeks(rawText) {
+        const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        let countImported = 0;
+        let foundPeserta = false;
+
+        simpanStateKeHistory();
+
+        // 1. Cari Angka Total Peserta jika ada dalam file
+        const matchPeserta = rawText.match(/(?:peserta|total\s+peserta)\s*[:=]?\s*(\d+)/i);
+        if (matchPeserta) {
+            document.getElementById('jumlahPeserta').value = parseInt(matchPeserta[1]);
+            foundPeserta = true;
+        }
+
+        // 2. Ekstraksi Baris Transaksi
+        let currentDivisi = 'Umum';
+
+        lines.forEach(line => {
+            // Deteksi baris yang mengindikasikan Divisi
+            if (/^(divisi|bagian|seksi)\b/i.test(line) || line.toUpperCase().includes('DIVISI')) {
+                currentDivisi = line.replace(/^(divisi|bagian|seksi)\s*[:=-]?\s*/i, '').trim() || 'Umum';
+                return;
+            }
+
+            // Ekstraksi transaksi dengan kecocokan angka nominal Rp / Rp.
+            const matchNominal = line.match(/(masuk|keluar)?\s*([a-zA-Z0-9\s\.\,\-]+?)\s+(?:rp\.?\s*)?([\d\.\,]+)\s*(?:[x×\*]\s*(\d+))?/i);
+            
+            if (matchNominal) {
+                let jenis = matchNominal[1] ? (matchNominal[1].toLowerCase() === 'masuk' ? 'Masuk' : 'Keluar') : 'Keluar';
+                let ket = matchNominal[2].trim();
+                let hargaRaw = matchNominal[3].replace(/[^\d]/g, '');
+                let qtyRaw = matchNominal[4] ? parseInt(matchNominal[4]) : 1;
+                let harga = parseFloat(hargaRaw);
+
+                if (harga > 0 && ket.length > 2 && !ket.toLowerCase().includes('total')) {
+                    transaksi.push({
+                        divisi: currentDivisi,
+                        jenis: jenis,
+                        keterangan: ket,
+                        harga: harga,
+                        qty: qtyRaw,
+                        totalNominal: harga * qtyRaw,
+                        notaData: null,
+                        catatan: 'Diimpor dari dokumen'
+                    });
+                    countImported++;
+                }
+            }
+        });
+
+        if (countImported === 0 && !foundPeserta) {
+            alert("⚠️ Warning / Validasi Format Gagal:\n\nFormat dokumen tidak sesuai! Tidak ditemukan struktur data transaksi atau angka nominal yang valid dalam file yang Anda unggah.");
+        } else {
+            alert(`🎉 Berhasil Mengimpor:\n- ${countImported} item transaksi ditambahkan.\n${foundPeserta ? '- Data Jumlah Peserta berhasil diperbarui.' : ''}`);
+            simpanKeStorage(false);
+            updateTampilan();
+        }
+    }
+
+    /* ------------------- FUNGSI HISTORY & STATE MANAGEMENT ------------------- */
     function simpanStateKeHistory() {
         const stateSaatIni = {
             transaksi: JSON.parse(JSON.stringify(transaksi)),
@@ -358,27 +492,44 @@
     }
 
     function buatDraftBaru(userClick = true) {
-        if (listDraft.length >= 3 && userClick) {
-            alert("Maksimal 3 riwayat draf! Silakan hapus salah satu draf lama untuk membuat rekapan baru.");
+        if (listDraft.length >= 10 && userClick) {
+            alert("Maksimal 10 riwayat draf! Silakan hapus salah satu draf lama.");
             return;
+        }
+
+        let namaDraf = `Rekapan ${new Date().toLocaleDateString('id-ID')}`;
+        if (userClick) {
+            const inputNama = prompt("Masukkan Nama Draf Baru:", namaDraf);
+            if (inputNama === null) return; 
+            if (inputNama.trim() !== '') namaDraf = inputNama.trim();
         }
 
         const now = new Date();
         const newDraft = {
             id: 'draft_' + Date.now(),
-            nama: `Rekapan ${now.toLocaleDateString('id-ID')}`,
+            nama: namaDraf,
             tanggal: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
             jumlahPeserta: 0,
             transaksi: []
         };
 
         listDraft.unshift(newDraft);
-        if (listDraft.length > 3) listDraft = listDraft.slice(0, 3);
-
         currentDraftId = newDraft.id;
         simpanListDraft();
         renderDropdownDraft();
         muatDraftAktif();
+    }
+
+    function ubahNamaDraft() {
+        const draft = listDraft.find(d => d.id === currentDraftId);
+        if (!draft) return;
+
+        const namaBaru = prompt("Ubah Nama Draf:", draft.nama);
+        if (namaBaru && namaBaru.trim() !== '') {
+            draft.nama = namaBaru.trim();
+            simpanListDraft();
+            renderDropdownDraft();
+        }
     }
 
     function gantiDraft() {
@@ -506,21 +657,31 @@
         const isMasuk = item.jenis === 'Masuk';
 
         if (isMasuk) {
-            document.getElementById('divisiMasuk').value = item.divisi;
+            const divEl = document.getElementById('divisiMasuk');
+            divEl.value = item.divisi;
             document.getElementById('ketMasuk').value = item.keterangan;
             document.getElementById('hargaMasuk').value = item.harga;
             document.getElementById('jumlahMasuk').value = item.qty;
             document.getElementById('catMasuk').value = item.catatan === '-' ? '' : item.catatan;
             document.getElementById('btnSubmitMasuk').innerText = '💾 Simpan Perubahan (Masuk)';
             hitungSubtotal('Masuk');
+
+            const card = document.getElementById('cardMasuk');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => divEl.focus(), 400);
         } else {
-            document.getElementById('divisiKeluar').value = item.divisi;
+            const divEl = document.getElementById('divisiKeluar');
+            divEl.value = item.divisi;
             document.getElementById('ketKeluar').value = item.keterangan;
             document.getElementById('hargaKeluar').value = item.harga;
             document.getElementById('jumlahKeluar').value = item.qty;
             document.getElementById('catKeluar').value = item.catatan === '-' ? '' : item.catatan;
             document.getElementById('btnSubmitKeluar').innerText = '💾 Simpan Perubahan (Keluar)';
             hitungSubtotal('Keluar');
+
+            const card = document.getElementById('cardKeluar');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => divEl.focus(), 400);
         }
     }
 
@@ -558,12 +719,11 @@
         tfoot.innerHTML = '';
 
         if (transaksi.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td></tr>';
             updateSummary();
             return;
         }
 
-        // Kelompokkan Transaksi
         const kelompokDivisi = {};
         transaksi.forEach((t, realIdx) => {
             const divName = t.divisi || 'Umum';
@@ -577,10 +737,9 @@
         let grandTotalKeluar = 0;
 
         for (const [divisiName, items] of Object.entries(kelompokDivisi)) {
-            // Header Baris Divisi (Colspan 8)
             tbody.innerHTML += `
                 <tr class="row-divisi-header">
-                    <td colspan="8">${divisiName}</td>
+                    <td colspan="9">${divisiName}</td>
                 </tr>
             `;
 
@@ -588,18 +747,18 @@
                 if (t.jenis === 'Masuk') grandTotalMasuk += t.totalNominal;
                 if (t.jenis === 'Keluar') grandTotalKeluar += t.totalNominal;
 
-                const rincianHitungan = `${formatRupiah(t.harga)} × ${t.qty}`;
                 const notaHtml = t.notaData ? `<img src="${t.notaData.dataUrl}" class="img-preview" alt="Nota">` : '-';
 
                 tbody.innerHTML += `<tr>
-                    <td>${i + 1}</td>
+                    <td style="text-align: center;">${i + 1}</td>
                     <td><span class="${t.jenis === 'Masuk' ? 'badge-masuk' : 'badge-keluar'}">${t.jenis}</span></td>
                     <td>${t.keterangan}</td>
-                    <td>${rincianHitungan}</td>
+                    <td>${formatRupiah(t.harga)}</td>
+                    <td style="text-align: center;">${t.qty}</td>
                     <td><b>${formatRupiah(t.totalNominal)}</b></td>
                     <td style="text-align: center;">${notaHtml}</td>
                     <td>${t.catatan}</td>
-                    <td>
+                    <td class="col-action">
                         <button class="btn-edit" onclick="editTransaksi(${t.realIndex})">Edit</button>
                         <button class="btn-delete" onclick="hapusTransaksi(${t.realIndex})">Hapus</button>
                     </td>
@@ -610,15 +769,15 @@
         const summary = updateSummary();
         tfoot.innerHTML = `
             <tr class="tfoot-summary">
-                <td colspan="4" style="text-align: left;">Total Uang Masuk:</td>
+                <td colspan="5" style="text-align: left;">Total Uang Masuk:</td>
                 <td colspan="4" style="color: #28a745;">${formatRupiah(summary.totalMasuk)}</td>
             </tr>
             <tr class="tfoot-summary">
-                <td colspan="4" style="text-align: left;">Total Uang Keluar:</td>
+                <td colspan="5" style="text-align: left;">Total Uang Keluar:</td>
                 <td colspan="4" style="color: #dc3545;">${formatRupiah(summary.totalKeluar)}</td>
             </tr>
             <tr class="tfoot-summary" style="background-color: #e2e8f0; font-size: 14px;">
-                <td colspan="4" style="text-align: left;">Total Akhir (Uang Masuk - Uang Keluar):</td>
+                <td colspan="5" style="text-align: left;">Total Akhir (Uang Masuk - Uang Keluar):</td>
                 <td colspan="4">${formatRupiah(summary.saldoAkhir)}</td>
             </tr>
         `;
@@ -637,9 +796,158 @@
         return u8arr;
     }
 
-    // Ekspor ke File Microsoft Word (.docx) dengan Header Divisi di Dalam Tabel
+    // Ekspor ke PDF
+    function exportToPDF() {
+        const draft = listDraft.find(d => d.id === currentDraftId);
+        const fileName = draft ? `${draft.nama.replace(/\s+/g, '_')}.pdf` : 'Rekapan_Keuangan.pdf';
+        
+        const summary = updateSummary();
+        const element = document.createElement('div');
+        element.style.padding = '10px';
+        element.style.fontFamily = "'Times New Roman', Times, serif";
+        element.style.backgroundColor = '#ffffff';
+        element.style.color = '#000000';
+        element.style.fontSize = '11pt';
+
+        const kelompokDivisi = {};
+        transaksi.forEach(t => {
+            const divName = t.divisi || 'Umum';
+            if (!kelompokDivisi[divName]) kelompokDivisi[divName] = [];
+            kelompokDivisi[divName].push(t);
+        });
+
+        let htmlContent = `
+            <style>
+                .pdf-block { page-break-inside: avoid !important; margin-bottom: 15px; }
+                .pdf-table { width: 100%; border-collapse: collapse; font-size: 10.5pt; table-layout: fixed; }
+                .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 5px 6px; text-align: left; vertical-align: middle; word-wrap: break-word; }
+                .pdf-table th { text-align: center; font-weight: bold; background-color: #f2f2f2; }
+                .pdf-tr { page-break-inside: avoid !important; page-break-after: auto !important; }
+            </style>
+
+            <div class="pdf-block" style="text-align: center;">
+                <h2 style="font-size: 15pt; font-weight: bold; margin: 0 0 15px 0;">LAPORAN REKAPAN KEUANGAN WORKSHOP GCC</h2>
+            </div>
+            
+            <div class="pdf-block">
+                <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 8px 0;">RINGKASAN KEGIATAN</h3>
+                <table style="width: 100%; border-collapse: collapse; border: none; font-size: 10.5pt;">
+                    <tr>
+                        <td style="border: none; padding: 3px 0; width: 35%;">• Total Peserta Hadir</td>
+                        <td style="border: none; padding: 3px 0; width: 65%;">: ${summary.totalPeserta} Orang</td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 3px 0;">• Total Uang Masuk</td>
+                        <td style="border: none; padding: 3px 0;">: ${formatRupiah(summary.totalMasuk)}</td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 3px 0;">• Total Uang Keluar</td>
+                        <td style="border: none; padding: 3px 0;">: ${formatRupiah(summary.totalKeluar)}</td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 3px 0; font-weight: bold;">• Sisa Saldo Akhir</td>
+                        <td style="border: none; padding: 3px 0; font-weight: bold;">: ${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="pdf-block" style="margin-bottom: 5px;">
+                <h3 style="font-size: 12pt; font-weight: bold; margin: 0;">RINCIAN TRANSAKSI</h3>
+            </div>
+        `;
+
+        let lampiranNotaHtml = '';
+        let globalNotaIndex = 1;
+
+        htmlContent += `<table class="pdf-table">
+            <thead>
+                <tr class="pdf-tr">
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 12%;">Jenis</th>
+                    <th style="width: 38%;">Keterangan</th>
+                    <th style="width: 18%;">Harga Satuan</th>
+                    <th style="width: 9%;">Jumlah</th>
+                    <th style="width: 18%;">Total Nominal</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        for (const [divisiName, items] of Object.entries(kelompokDivisi)) {
+            htmlContent += `
+                <tr class="pdf-tr">
+                    <td colspan="6" style="font-weight: bold; background-color: #f9f9f9; padding-left: 8px;">${divisiName}</td>
+                </tr>
+            `;
+
+            items.forEach((t, idx) => {
+                htmlContent += `
+                    <tr class="pdf-tr">
+                        <td style="text-align: center;">${idx + 1}</td>
+                        <td style="padding-left: 6px;">${t.jenis}</td>
+                        <td style="padding-left: 6px;">${t.keterangan}</td>
+                        <td style="padding-left: 6px;">${formatRupiah(t.harga)}</td>
+                        <td style="text-align: center;">${t.qty}</td>
+                        <td style="padding-left: 6px;">${formatRupiah(t.totalNominal)}</td>
+                    </tr>
+                `;
+
+                if (t.notaData) {
+                    lampiranNotaHtml += `
+                        <div class="pdf-block">
+                            <p style="font-size: 10.5pt; font-weight: bold; margin: 0 0 6px 0;">
+                                • Nota Transaksi #${globalNotaIndex++} (${divisiName}): ${t.keterangan} (${formatRupiah(t.totalNominal)})
+                            </p>
+                            <img src="${t.notaData.dataUrl}" style="max-width: 250px; max-height: 250px; border: 1px solid #ccc; padding: 4px; border-radius: 4px;">
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        htmlContent += `
+                <tr class="pdf-tr">
+                    <td colspan="5" style="font-weight: bold; padding-left: 6px;">Total Uang Masuk</td>
+                    <td style="font-weight: bold; padding-left: 6px;">${formatRupiah(summary.totalMasuk)}</td>
+                </tr>
+                <tr class="pdf-tr">
+                    <td colspan="5" style="font-weight: bold; padding-left: 6px;">Total Uang Keluar</td>
+                    <td style="font-weight: bold; padding-left: 6px;">${formatRupiah(summary.totalKeluar)}</td>
+                </tr>
+                <tr class="pdf-tr">
+                    <td colspan="5" style="font-weight: bold; padding-left: 6px;">Total Akhir (Uang Masuk - Uang Keluar)</td>
+                    <td style="font-weight: bold; padding-left: 6px;">${formatRupiah(summary.saldoAkhir)}</td>
+                </tr>
+            </tbody>
+        </table>`;
+
+        if (lampiranNotaHtml !== '') {
+            htmlContent += `
+                <div class="pdf-block" style="margin-top: 25px;">
+                    <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 12px 0;">LAMPIRAN NOTA PENGELUARAN</h3>
+                    ${lampiranNotaHtml}
+                </div>
+            `;
+        }
+
+        element.innerHTML = htmlContent;
+
+        const opt = {
+            margin:       [12, 12, 12, 12],
+            filename:     fileName,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak:    { mode: ['css', 'legacy'] }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // Ekspor ke Word (.docx)
     async function exportToWord() {
         const summary = updateSummary();
+        const draft = listDraft.find(d => d.id === currentDraftId);
+        const fileName = draft ? `${draft.nama.replace(/\s+/g, '_')}.docx` : 'Rekapan_Keuangan.docx';
         const { docx } = window;
 
         const borderKosong = { style: docx.BorderStyle.NONE, size: 0, color: "FFFFFF" };
@@ -648,7 +956,8 @@
             insideHorizontal: borderKosong, insideVertical: borderKosong
         };
 
-        // Kelompokkan Transaksi
+        const customIndentLeft = { left: 72 };
+
         const kelompokDivisi = {};
         transaksi.forEach(t => {
             const divName = t.divisi || 'Umum';
@@ -656,15 +965,15 @@
             kelompokDivisi[divName].push(t);
         });
 
-        // Header Tabel Transaksi (5 Kolom Sesuai Gambar Contoh)
         const tableRows = [
             new docx.TableRow({
                 children: [
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "No", bold: true })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Jenis", bold: true })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Keterangan", bold: true })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Hitungan", bold: true })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Total Nominal", bold: true })] })
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "No", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Jenis", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Keterangan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Harga Satuan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Jumlah", bold: true, alignment: docx.AlignmentType.CENTER })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Total Nominal", bold: true, alignment: docx.AlignmentType.CENTER })] })
                 ]
             })
         ];
@@ -672,15 +981,13 @@
         const lampiranNotaChildren = [];
         let globalNotaIndex = 1;
 
-        // Menyusun Baris Divisi & Transaksinya ke Dalam Tabel Tunggal
         for (const [divisiName, items] of Object.entries(kelompokDivisi)) {
-            // Baris Header Divisi (Colspan 5)
             tableRows.push(
                 new docx.TableRow({
                     children: [
                         new docx.TableCell({
-                            columnSpan: 5,
-                            children: [new docx.Paragraph({ text: divisiName, bold: true })]
+                            columnSpan: 6,
+                            children: [new docx.Paragraph({ text: divisiName, bold: true, indent: customIndentLeft })]
                         })
                     ]
                 })
@@ -690,11 +997,12 @@
                 tableRows.push(
                     new docx.TableRow({
                         children: [
-                            new docx.TableCell({ children: [new docx.Paragraph(String(index + 1))] }),
-                            new docx.TableCell({ children: [new docx.Paragraph(t.jenis)] }),
-                            new docx.TableCell({ children: [new docx.Paragraph(t.keterangan)] }),
-                            new docx.TableCell({ children: [new docx.Paragraph(`${formatRupiah(t.harga)} × ${t.qty}`)] }),
-                            new docx.TableCell({ children: [new docx.Paragraph(formatRupiah(t.totalNominal))] })
+                            new docx.TableCell({ children: [new docx.Paragraph({ text: String(index + 1), alignment: docx.AlignmentType.CENTER })] }),
+                            new docx.TableCell({ children: [new docx.Paragraph({ text: t.jenis, indent: customIndentLeft })] }),
+                            new docx.TableCell({ children: [new docx.Paragraph({ text: t.keterangan, indent: customIndentLeft })] }),
+                            new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(t.harga), indent: customIndentLeft })] }),
+                            new docx.TableCell({ children: [new docx.Paragraph({ text: String(t.qty), alignment: docx.AlignmentType.CENTER })] }),
+                            new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(t.totalNominal), indent: customIndentLeft })] })
                         ]
                     })
                 );
@@ -717,24 +1025,23 @@
             });
         }
 
-        // Baris Total Akhir di Bawah Tabel
         tableRows.push(
             new docx.TableRow({
                 children: [
-                    new docx.TableCell({ columnSpan: 4, children: [new docx.Paragraph({ text: "Total Uang Masuk", bold: true, alignment: docx.AlignmentType.LEFT })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.totalMasuk), bold: true })] })
+                    new docx.TableCell({ columnSpan: 5, children: [new docx.Paragraph({ text: "Total Uang Masuk", bold: true, alignment: docx.AlignmentType.LEFT, indent: customIndentLeft })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.totalMasuk), bold: true, indent: customIndentLeft })] })
                 ]
             }),
             new docx.TableRow({
                 children: [
-                    new docx.TableCell({ columnSpan: 4, children: [new docx.Paragraph({ text: "Total Uang Keluar", bold: true, alignment: docx.AlignmentType.LEFT })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.totalKeluar), bold: true })] })
+                    new docx.TableCell({ columnSpan: 5, children: [new docx.Paragraph({ text: "Total Uang Keluar", bold: true, alignment: docx.AlignmentType.LEFT, indent: customIndentLeft })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.totalKeluar), bold: true, indent: customIndentLeft })] })
                 ]
             }),
             new docx.TableRow({
                 children: [
-                    new docx.TableCell({ columnSpan: 4, children: [new docx.Paragraph({ text: "Total Akhir (Uang Masuk - Uang Keluar)", bold: true, alignment: docx.AlignmentType.LEFT })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.saldoAkhir), bold: true })] })
+                    new docx.TableCell({ columnSpan: 5, children: [new docx.Paragraph({ text: "Total Akhir (Uang Masuk - Uang Keluar)", bold: true, alignment: docx.AlignmentType.LEFT, indent: customIndentLeft })] }),
+                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(summary.saldoAkhir), bold: true, indent: customIndentLeft })] })
                 ]
             })
         );
@@ -809,7 +1116,7 @@
             styles: {
                 default: {
                     document: {
-                        run: { font: "Time New Roman", size: 22, color: "000000" },
+                        run: { font: "Times New Roman", size: 22, color: "000000" },
                         paragraph: { spacing: { line: 276, before: 60, after: 60 } }
                     }
                 }
@@ -818,7 +1125,7 @@
         });
 
         docx.Packer.toBlob(doc).then(blob => {
-            saveAs(blob, `Rekapan_Workshop_GCC.docx`);
+            saveAs(blob, fileName);
         });
     }
 </script>
