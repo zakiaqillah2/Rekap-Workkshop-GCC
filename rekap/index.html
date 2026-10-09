@@ -46,41 +46,41 @@
         <div class="modal-caption" id="modalCaption"></div>
     </div>
 
-    <!-- ================= NAVBAR UTAMA (RESPONSIF PC & HP) ================= -->
+    <!-- ================= NAVBAR UTAMA (PC & MOBILE) ================= -->
     <header class="navbar-main">
         <div class="nav-brand">
             <img src="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl" alt="Logo GCC" class="nav-logo">
             <div class="brand-info">
-                <h1>Rekapan Keuangan GCC</h1>
+                <h1>Keuangan GCC</h1>
                 <p>GAMATIKA Coding Club</p>
             </div>
         </div>
 
-        <!-- Menu Navigasi Utama (Tampil di PC) -->
+        <!-- Navigasi Horizontal (Tampil Sempurna di PC) -->
         <nav class="desktop-nav">
             <button class="nav-tab active" onclick="switchTab('tab-pencatatan', this)">📝 Pencatatan</button>
             <button class="nav-tab" onclick="switchTab('tab-analisis', this)">📊 Analisis & Grafik</button>
             <button class="nav-tab" onclick="switchTab('tab-gdrive', this)">☁️ Google Drive</button>
         </nav>
 
-        <button id="themeToggle" class="btn-theme" onclick="toggleTheme()" title="Ubah Tema">🌙 Mode Gelap</button>
+        <div class="nav-right-pc">
+            <button id="themeToggle" class="btn-theme" onclick="toggleTheme()" title="Ubah Tema">🌙 Mode Gelap</button>
+        </div>
+
+        <!-- Tombol Titik Tiga / Menu Hamburger (Khusus HP) -->
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
     </header>
 
-    <!-- ================= BOTTOM BAR NAVIGASI (KHUSUS HP) ================= -->
-    <nav class="mobile-bottom-nav">
-        <button class="mobile-nav-item active" onclick="switchTab('tab-pencatatan', this)">
-            <span class="m-icon">📝</span>
-            <span class="m-label">Pencatatan</span>
-        </button>
-        <button class="mobile-nav-item" onclick="switchTab('tab-analisis', this)">
-            <span class="m-icon">📊</span>
-            <span class="m-label">Analisis</span>
-        </button>
-        <button class="mobile-nav-item" onclick="switchTab('tab-gdrive', this)">
-            <span class="m-icon">☁️</span>
-            <span class="m-label">Drive</span>
-        </button>
-    </nav>
+    <!-- Dropdown / Drawer Menu Navigasi HP (Tersembunyi secara default, muncul saat titik 3 diklik) -->
+    <div id="mobileMenuDropdown" class="mobile-dropdown-menu">
+        <button class="mobile-menu-item active" onclick="switchTabMobile('tab-pencatatan', this)">📝 Pencatatan</button>
+        <button class="mobile-menu-item" onclick="switchTabMobile('tab-analisis', this)">📊 Analisis & Grafik</button>
+        <button class="mobile-menu-item" onclick="switchTabMobile('tab-gdrive', this)">☁️ Google Drive</button>
+        <div class="mobile-menu-divider"></div>
+        <button class="mobile-menu-item theme-toggle-mobile" onclick="toggleTheme(); toggleMobileMenu();">🌙 Ubah Tema Layar</button>
+    </div>
 
     <!-- Container Konten Utama -->
     <div class="container" id="exportContent">
@@ -91,11 +91,9 @@
             <div class="draft-bar">
                 <label for="selectDraft">📂 Pilih Draf Kegiatan:</label>
                 <select id="selectDraft" onchange="gantiDraft()"></select>
-                <div class="draft-btn-group">
-                    <button class="btn-new" onclick="buatDraftBaru()">➕ Baru</button>
-                    <button class="btn-rename" onclick="ubahNamaDraft()">✏️ Ubah</button>
-                    <button class="btn-reset" onclick="hapusDraftAktif()">🗑️ Hapus</button>
-                </div>
+                <button class="btn-new" onclick="buatDraftBaru()">➕ Draf Baru</button>
+                <button class="btn-rename" onclick="ubahNamaDraft()">✏️ Ubah Nama</button>
+                <button class="btn-reset" onclick="hapusDraftAktif()">🗑️ Hapus Draf</button>
             </div>
 
             <!-- Impor & Download Templat Word -->
@@ -105,7 +103,7 @@
                         <p class="import-title">📥 Impor Dokumen Word (.docx):</p>
                         <span id="importStatus" class="import-status">Gunakan file Word hasil ekspor web ini atau Templat Resmi.</span>
                     </div>
-                    <button onclick="downloadTemplateWord()" class="btn-template">📥 Templat Word</button>
+                    <button onclick="downloadTemplateWord()" class="btn-template">📥 Download Templat Word</button>
                 </div>
                 <input type="file" id="fileImportDoc" accept=".docx" onchange="imporDokumen(event)">
             </div>
@@ -125,7 +123,7 @@
                 <div class="card masuk" id="cardMasuk">
                     <h3>💵 Input Uang Masuk</h3>
                     <div class="form-group">
-                        <label>Nama Divisi:</label>
+                        <label>Pilih / Ketik Nama Divisi:</label>
                         <input type="text" id="divisiMasuk" list="listDivisi" placeholder="misal: CONTER / Bendahara">
                     </div>
                     <div class="form-group">
@@ -133,16 +131,16 @@
                         <input type="text" id="ketMasuk" placeholder="misal: HTM Peserta / Dana Fakultas">
                     </div>
                     <div class="form-group">
-                        <label>Perhitungan (Harga × Jumlah):</label>
+                        <label>Perhitungan (Harga Satuan × Jumlah):</label>
                         <div class="calc-group">
                             <input type="number" id="hargaMasuk" placeholder="Harga Satuan" step="5000" oninput="hitungSubtotal('Masuk')">
                             <span class="calc-operator">×</span>
-                            <input type="number" id="jumlahMasuk" placeholder="Qty" value="1" min="1" oninput="hitungSubtotal('Masuk')">
+                            <input type="number" id="jumlahMasuk" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Masuk')">
                         </div>
                         <div class="calc-subtotal" id="subtotalMasuk">Total Item: Rp 0</div>
                     </div>
                     <div class="form-group">
-                        <label>Upload Bukti Terima / Transfer:</label>
+                        <label>Upload Bukti Terima / Transfer (Foto/Gambar):</label>
                         <input type="file" id="notaMasuk" accept="image/*">
                     </div>
                     <div class="form-group">
@@ -155,7 +153,7 @@
                 <div class="card keluar" id="cardKeluar">
                     <h3>💸 Input Uang Keluar</h3>
                     <div class="form-group">
-                        <label>Nama Divisi:</label>
+                        <label>Pilih / Ketik Nama Divisi:</label>
                         <input type="text" id="divisiKeluar" list="listDivisi" placeholder="misal: MEDIA / PAKSIMA">
                     </div>
                     <div class="form-group">
@@ -163,16 +161,16 @@
                         <input type="text" id="ketKeluar" placeholder="misal: Snack / Cetak Banner">
                     </div>
                     <div class="form-group">
-                        <label>Perhitungan (Harga × Jumlah):</label>
+                        <label>Perhitungan (Harga Satuan × Jumlah):</label>
                         <div class="calc-group">
                             <input type="number" id="hargaKeluar" placeholder="Harga Satuan" step="5000" oninput="hitungSubtotal('Keluar')">
                             <span class="calc-operator">×</span>
-                            <input type="number" id="jumlahKeluar" placeholder="Qty" value="1" min="1" oninput="hitungSubtotal('Keluar')">
+                            <input type="number" id="jumlahKeluar" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Keluar')">
                         </div>
                         <div class="calc-subtotal" id="subtotalKeluar">Total Item: Rp 0</div>
                     </div>
                     <div class="form-group">
-                        <label>Upload File Nota / Kuitansi:</label>
+                        <label>Upload File Nota / Kuitansi (Foto/Gambar):</label>
                         <input type="file" id="notaKeluar" accept="image/*">
                     </div>
                     <div class="form-group">
@@ -199,15 +197,15 @@
                     <p id="dispPeserta">0 Orang</p>
                 </div>
                 <div class="summary-item">
-                    <h4>Uang Masuk</h4>
+                    <h4>Total Uang Masuk</h4>
                     <p id="dispMasuk" style="color: #10b981;">Rp 0</p>
                 </div>
                 <div class="summary-item">
-                    <h4>Uang Keluar</h4>
+                    <h4>Total Uang Keluar</h4>
                     <p id="dispKeluar" style="color: #f43f5e;">Rp 0</p>
                 </div>
                 <div class="summary-item">
-                    <h4>Saldo Akhir</h4>
+                    <h4>Sisa Saldo Akhir</h4>
                     <p id="dispSaldo">Rp 0</p>
                 </div>
             </div>
@@ -216,8 +214,8 @@
             <div class="table-header-section">
                 <h2>Rincian Transaksi</h2>
                 <div class="history-controls">
-                    <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Undo">↩️ Undo</button>
-                    <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Redo">↪ Redo</button>
+                    <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩️ Undo</button>
+                    <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
                 </div>
             </div>
 
@@ -243,7 +241,7 @@
                             <th>Harga Satuan</th>
                             <th style="width: 60px; text-align: center;">Jumlah</th>
                             <th>Total Nominal</th>
-                            <th style="width: 120px; text-align: center;">Lampiran Nota</th>
+                            <th style="width: 120px; text-align: center;">Lampiran Nota / Bukti</th>
                             <th>Catatan</th>
                             <th style="width: 90px;" class="col-action">Aksi</th>
                         </tr>
@@ -352,6 +350,31 @@
 
     </div>
 
+    <!-- Script Tambahan untuk Menu Titik Tiga HP -->
+    <script>
+        function toggleMobileMenu() {
+            const dropdown = document.getElementById('mobileMenuDropdown');
+            dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function switchTabMobile(tabId, btnElement) {
+            switchTab(tabId, btnElement);
+            document.getElementById('mobileMenuDropdown').style.display = 'none';
+            
+            // Update active state di menu dropdown mobile
+            document.querySelectorAll('.mobile-menu-item').forEach(item => item.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+        }
+
+        // Tutup dropdown jika klik di luar
+        window.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('mobileMenuDropdown');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            if (dropdown && menuBtn && !dropdown.contains(e.target) && !menuBtn.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
