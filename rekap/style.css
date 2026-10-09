@@ -6,7 +6,7 @@
     --text-muted: #94a3b8;
     --card-glass: rgba(15, 23, 42, 0.82);
     --card-border: rgba(255, 255, 255, 0.12);
-    --card-solid: rgba(30, 41, 59, 0.8);
+    --card-solid: rgba(30, 41, 59, 0.85);
     --input-bg: rgba(15, 23, 42, 0.65);
     --border-color: rgba(255, 255, 255, 0.15);
     
@@ -51,22 +51,64 @@ body {
     min-height: 100vh;
     padding: 100px 20px 40px 20px;
     transition: background-color 0.3s ease;
+    position: relative;
 }
 
-/* BACKGROUND BLOBS */
+/* ================= RONA-RONA CAHAYA LATAR BELAKANG (DIPERCANTIK & DINAMIS) ================= */
 .bg-blobs {
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    z-index: -1;
+    top: 0; 
+    left: 0;
+    width: 100vw; 
+    height: 100vh;
+    z-index: -999;
     overflow: hidden;
     pointer-events: none;
-    filter: blur(80px);
+    filter: blur(70px);
 }
-.blob { position: absolute; border-radius: 50%; opacity: 0.5; }
-.blob-1 { width: 450px; height: 450px; background: #6366f1; top: -100px; left: -100px; }
-.blob-2 { width: 500px; height: 500px; background: #10b981; bottom: -150px; right: -100px; }
-.blob-3 { width: 380px; height: 380px; background: #f43f5e; top: 40%; left: 35%; }
+
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.65;
+    mix-blend-mode: screen;
+    animation: floatAnimation 15s infinite alternate ease-in-out;
+}
+
+/* Rona 1: Ungu/Indigo di kiri atas */
+.blob-1 { 
+    width: 450px; 
+    height: 450px; 
+    background: radial-gradient(circle, #818cf8 0%, #4f46e5 100%); 
+    top: -80px; 
+    left: -80px; 
+}
+
+/* Rona 2: Tosca/Emerald di kanan bawah */
+.blob-2 { 
+    width: 500px; 
+    height: 500px; 
+    background: radial-gradient(circle, #34d399 0%, #059669 100%); 
+    bottom: -100px; 
+    right: -80px; 
+    animation-delay: -5s; 
+}
+
+/* Rona 3: Pink/Coral di tengah/variasi */
+.blob-3 { 
+    width: 380px; 
+    height: 380px; 
+    background: radial-gradient(circle, #fb7185 0%, #e11d48 100%); 
+    top: 35%; 
+    left: 40%; 
+    animation-delay: -10s; 
+}
+
+@keyframes floatAnimation {
+    0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    50% { transform: translate(45px, -55px) scale(1.15) rotate(180deg); }
+    100% { transform: translate(-40px, 45px) scale(0.9) rotate(360deg); }
+}
 
 /* ================= NAVBAR UTAMA PC ================= */
 .navbar-main {
@@ -152,7 +194,7 @@ body {
     cursor: pointer;
 }
 
-/* TOMBOL TITIK TIGA (DEFAULT DISEMATKAN/DISABEL DI PC) */
+/* TOMBOL HAMBURGER (TITIK TIGA DI HP) */
 .mobile-menu-btn {
     display: none;
     background: var(--card-solid);
@@ -208,7 +250,7 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* KOMPONEN FORM & DRAF (PC) */
+/* KOMPONEN FORM & DRAF */
 .draft-bar {
     display: flex;
     align-items: center;
@@ -219,7 +261,6 @@ body {
     border-radius: var(--radius-lg);
     margin-bottom: 24px;
 }
-.draft-btn-group { display: flex; gap: 8px; margin-left: auto; }
 
 select, input[type="text"], input[type="number"] {
     padding: 10px 14px;
@@ -250,6 +291,32 @@ button:hover { transform: translateY(-2px); }
 .btn-new { background: var(--primary-gradient); color: white; }
 .btn-rename { background: var(--card-solid); color: var(--text-main); border: 1px solid var(--border-color); }
 .btn-reset { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
+
+/* PERBAIKAN TOMBOL UNDO & REDO (AGAR JELAS DI MODE MALAM & TERANG) */
+.history-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-history {
+    background: var(--card-solid);
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color);
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn-history:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+}
 
 /* IMPORT BOX */
 .import-box {
@@ -364,7 +431,7 @@ td { padding: 14px; border-bottom: 1px solid var(--border-color); vertical-align
 
 
 /* ==========================================================================
-   TAMPILAN KHUSUS HP (HAMBURGER MENU / TITIK TIGA DI ATAS)
+   TAMPILAN KHUSUS HP (MOBILE)
    ========================================================================== */
 @media (max-width: 768px) {
     body {
@@ -398,7 +465,6 @@ td { padding: 14px; border-bottom: 1px solid var(--border-color); vertical-align
         height: 30px;
     }
 
-    /* Dropdown Menu Titik Tiga */
     .mobile-dropdown-menu {
         display: none;
         position: fixed;
@@ -452,7 +518,6 @@ td { padding: 14px; border-bottom: 1px solid var(--border-color); vertical-align
         color: #6366f1;
     }
 
-    /* Container & Komponen HP */
     .container {
         padding: 16px 12px;
         border-radius: var(--radius-lg);
