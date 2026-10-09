@@ -3,193 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rekapan Keuangan Workshop GCC</title>
+    <title>Rekapan Keuangan - GAMATIKA Coding Club</title>
 
     <!-- Favicon Logo GCC -->
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl">
 
-    <!-- Stylesheet Eksternal -->
+    <!-- Stylesheet Kustom -->
     <link rel="stylesheet" href="style.css">
 
-    <!-- Library docx & FileSaver untuk ekspor/templat Word -->
+    <!-- Library docx & FileSaver untuk Word -->
     <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- Library html2pdf untuk ekspor PDF -->
+
+    <!-- Library html2pdf untuk PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Library Mammoth.js untuk membaca file Word (.docx) -->
+
+    <!-- Library Mammoth.js untuk Impor Word -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <!-- Library Chart.js untuk Grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Library SheetJS (XLSX) untuk Ekspor Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-<div class="container" id="exportContent">
-    <h1>📝 Rekapan Keuangan Workshop GCC</h1>
-    <p style="color: #666; font-size: 13px;">Pencatatan keuangan dengan susunan tabel terintegrasi per Divisi.</p>
-
-    <!-- Bar Pilihan Draf -->
-    <div class="draft-bar">
-        <label style="margin: 0; white-space: nowrap;">📂 Pilihan Draf:</label>
-        <select id="selectDraft" onchange="gantiDraft()"></select>
-        <button class="btn-new" onclick="buatDraftBaru()">➕ Draf Baru</button>
-        <button class="btn-rename" onclick="ubahNamaDraft()">✏️ Ubah Nama Draf</button>
-        <button class="btn-reset" onclick="hapusDraftAktif()">🗑️ Hapus Draf</button>
+    <!-- Elemen Bola Cahaya Bergerak Dekoratif -->
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
 
-    <!-- Kotak Upload & Download Templat Word -->
-    <div class="import-box" style="background: #f8f9fa; padding: 15px; border: 1px dashed #007bff; border-radius: 8px; margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <!-- Container Toast Notifikasi -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Modal Lightbox Bukti/Nota -->
+    <div id="imageModal" class="modal-lightbox" onclick="closeModal()">
+        <span class="modal-close">&times;</span>
+        <img id="modalImage" class="modal-content" alt="Preview Nota/Bukti">
+        <div class="modal-caption" id="modalCaption"></div>
+    </div>
+
+    <div class="container" id="exportContent">
+        
+        <!-- Top Header Bar -->
+        <div class="header-bar">
             <div>
-                <p style="margin: 0; font-weight: bold; color: #333;">📥 Impor Dokumen Word (.docx):</p>
-                <span id="importStatus" style="font-size: 12px; color: #666;">Gunakan file Word hasil download web ini atau dari Templat Resmi.</span>
+                <h1>📊 Rekapan Keuangan GCC</h1>
+                <p>Sistem Pengelolaan & Laporan Keuangan GAMATIKA Coding Club</p>
             </div>
-            <button onclick="downloadTemplateWord()" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; font-weight: bold; cursor: pointer;">
-                📥 Download Templat Word
+            <button id="themeToggle" class="btn-theme" onclick="toggleTheme()" title="Ubah Mode Layar">🌙 Mode Gelap</button>
+        </div>
+
+        <!-- Bar Navigasi Utama (Tab Menu) -->
+        <nav class="main-nav">
+            <button class="nav-tab active" onclick="switchTab('tab-pencatatan', this)">
+                <span class="nav-icon">📝</span>
+                <span class="nav-label">Pencatatan</span>
             </button>
-        </div>
-        <input type="file" id="fileImportDoc" accept=".docx" onchange="imporDokumen(event)" style="margin-top: 10px; width: 100%;">
-    </div>
+            <button class="nav-tab" onclick="switchTab('tab-analisis', this)">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Analisis & Grafik</span>
+            </button>
+            <button class="nav-tab" onclick="switchTab('tab-gdrive', this)">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-label">Google Drive</span>
+            </button>
+        </nav>
 
-    <input type="file" id="fileNotaHidden" accept="image/*" style="display: none;" onchange="prosesGantiNota(event)">
-
-    <!-- Form Informasi Peserta -->
-    <div class="form-group" style="background: #e8f4fd; padding: 12px; border-radius: 8px;">
-        <label for="jumlahPeserta">👥 Jumlah Total Peserta Hadir:</label>
-        <input type="number" id="jumlahPeserta" value="0" min="0" onchange="simpanStateKeHistory(); simpanKeStorage(); updateSummary();">
-    </div>
-
-    <!-- Form Input Pemasukan & Pengeluaran -->
-    <div class="grid">
-        <div class="card masuk" id="cardMasuk">
-            <h3>💵 Input Uang Masuk</h3>
-            <div class="form-group">
-                <label>Pilih / Ketik Nama Divisi:</label>
-                <input type="text" id="divisiMasuk" list="listDivisi" placeholder="misal: Acara / Humas / Sponsor">
+        <!-- ================= TAB 1: PENCATATAN ================= -->
+        <div id="tab-pencatatan" class="tab-content active">
+            <!-- Bar Pilihan Draf -->
+            <div class="draft-bar">
+                <label for="selectDraft">📂 Pilih Draf Kegiatan:</label>
+                <select id="selectDraft" onchange="gantiDraft()"></select>
+                <button class="btn-new" onclick="buatDraftBaru()">➕ Draf Baru</button>
+                <button class="btn-rename" onclick="ubahNamaDraft()">✏️ Ubah Nama</button>
+                <button class="btn-reset" onclick="hapusDraftAktif()">🗑️ Hapus Draf</button>
             </div>
-            <div class="form-group">
-                <label>Keterangan:</label>
-                <input type="text" id="ketMasuk" placeholder="misal: HTM Peserta / Sponsorship">
-            </div>
-            <div class="form-group">
-                <label>Perhitungan (Harga Satuan × Jumlah):</label>
-                <div class="calc-group">
-                    <input type="number" id="hargaMasuk" placeholder="Harga Satuan" step="10000" oninput="hitungSubtotal('Masuk')">
-                    <span class="calc-operator">×</span>
-                    <input type="number" id="jumlahMasuk" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Masuk')">
+
+            <!-- Impor & Download Templat Word -->
+            <div class="import-box">
+                <div class="import-box-header">
+                    <div>
+                        <p class="import-title">📥 Impor Dokumen Word (.docx):</p>
+                        <span id="importStatus" class="import-status">Gunakan file Word hasil ekspor web ini atau dari Templat Resmi.</span>
+                    </div>
+                    <button onclick="downloadTemplateWord()" class="btn-template">
+                        📥 Download Templat Word
+                    </button>
                 </div>
-                <div class="calc-subtotal" id="subtotalMasuk">Total Item: Rp 0</div>
+                <input type="file" id="fileImportDoc" accept=".docx" onchange="imporDokumen(event)">
             </div>
-            <div class="form-group">
-                <label>Upload Bukti Terima / Transfer (Foto/Gambar):</label>
-                <input type="file" id="notaMasuk" accept="image/*">
-            </div>
-            <div class="form-group">
-                <label>Catatan (Opsional):</label>
-                <input type="text" id="catMasuk" placeholder="misal: Pembayaran via Transfer BSI">
-            </div>
-            <button class="btn-masuk" id="btnSubmitMasuk" onclick="tambahTransaksi('Masuk')">+ Tambah Uang Masuk</button>
-        </div>
 
-        <div class="card keluar" id="cardKeluar">
-            <h3>💸 Input Uang Keluar</h3>
-            <div class="form-group">
-                <label>Pilih / Ketik Nama Divisi:</label>
-                <input type="text" id="divisiKeluar" list="listDivisi" placeholder="misal: Acara / PDD / Konsumsi">
-            </div>
-            <div class="form-group">
-                <label>Keterangan:</label>
-                <input type="text" id="ketKeluar" placeholder="misal: Snack Peserta / Cetak Banner">
-            </div>
-            <div class="form-group">
-                <label>Perhitungan (Harga Satuan × Jumlah):</label>
-                <div class="calc-group">
-                    <input type="number" id="hargaKeluar" placeholder="Harga Satuan" step="10000" oninput="hitungSubtotal('Keluar')">
-                    <span class="calc-operator">×</span>
-                    <input type="number" id="jumlahKeluar" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Keluar')">
+            <input type="file" id="fileNotaHidden" accept="image/*" style="display: none;" onchange="prosesGantiNota(event)">
+
+            <!-- Informasi Jumlah Peserta -->
+            <div class="info-card">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="jumlahPeserta">👥 Jumlah Total Peserta / Sasaran Kegiatan:</label>
+                    <input type="number" id="jumlahPeserta" value="0" min="0" onchange="simpanStateKeHistory(); simpanKeStorage(); updateSummary();">
                 </div>
-                <div class="calc-subtotal" id="subtotalKeluar">Total Item: Rp 0</div>
             </div>
-            <div class="form-group">
-                <label>Upload File Nota (Foto/Gambar):</label>
-                <input type="file" id="notaKeluar" accept="image/*">
+
+            <!-- Form Input Pemasukan & Pengeluaran -->
+            <div class="grid">
+                <div class="card masuk" id="cardMasuk">
+                    <h3>💵 Input Uang Masuk</h3>
+                    <div class="form-group">
+                        <label>Pilih / Ketik Nama Divisi:</label>
+                        <input type="text" id="divisiMasuk" list="listDivisi" placeholder="misal: CONTER / Bendahara / Kas GCC">
+                    </div>
+                    <div class="form-group">
+                        <label>Keterangan:</label>
+                        <input type="text" id="ketMasuk" placeholder="misal: HTM Peserta / Dana Fakultas">
+                    </div>
+                    <div class="form-group">
+                        <label>Perhitungan (Harga Satuan × Jumlah):</label>
+                        <div class="calc-group">
+                            <input type="number" id="hargaMasuk" placeholder="Harga Satuan" step="5000" oninput="hitungSubtotal('Masuk')">
+                            <span class="calc-operator">×</span>
+                            <input type="number" id="jumlahMasuk" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Masuk')">
+                        </div>
+                        <div class="calc-subtotal" id="subtotalMasuk">Total Item: Rp 0</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Upload Bukti Terima / Transfer (Foto/Gambar):</label>
+                        <input type="file" id="notaMasuk" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label>Catatan (Opsional):</label>
+                        <input type="text" id="catMasuk" placeholder="misal: Transfer Bank BSI">
+                    </div>
+                    <button class="btn-masuk" id="btnSubmitMasuk" onclick="tambahTransaksi('Masuk')">+ Tambah Uang Masuk</button>
+                </div>
+
+                <div class="card keluar" id="cardKeluar">
+                    <h3>💸 Input Uang Keluar</h3>
+                    <div class="form-group">
+                        <label>Pilih / Ketik Nama Divisi:</label>
+                        <input type="text" id="divisiKeluar" list="listDivisi" placeholder="misal: MEDIA / PAKSIMA / Konsumsi">
+                    </div>
+                    <div class="form-group">
+                        <label>Keterangan:</label>
+                        <input type="text" id="ketKeluar" placeholder="misal: Snack / Cetak Banner / Plakat">
+                    </div>
+                    <div class="form-group">
+                        <label>Perhitungan (Harga Satuan × Jumlah):</label>
+                        <div class="calc-group">
+                            <input type="number" id="hargaKeluar" placeholder="Harga Satuan" step="5000" oninput="hitungSubtotal('Keluar')">
+                            <span class="calc-operator">×</span>
+                            <input type="number" id="jumlahKeluar" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Keluar')">
+                        </div>
+                        <div class="calc-subtotal" id="subtotalKeluar">Total Item: Rp 0</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Upload File Nota / Kuitansi (Foto/Gambar):</label>
+                        <input type="file" id="notaKeluar" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label>Catatan (Opsional):</label>
+                        <input type="text" id="catKeluar" placeholder="misal: Nota Fisik Diserahkan">
+                    </div>
+                    <button class="btn-keluar" id="btnSubmitKeluar" onclick="tambahTransaksi('Keluar')">+ Tambah Uang Keluar</button>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Catatan (Opsional):</label>
-                <input type="text" id="catKeluar" placeholder="misal: Toko A - Nota fisik diserahkan">
+
+            <datalist id="listDivisi">
+                <option value="CONTER">
+                <option value="HUMAS">
+                <option value="MEDIA">
+                <option value="PAKSIMA">
+                <option value="PDK">
+                <option value="PPSDM">
+            </datalist>
+
+            <!-- Summary Ringkas -->
+            <div class="summary-box">
+                <div class="summary-item">
+                    <h4>Total Peserta</h4>
+                    <p id="dispPeserta">0 Orang</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Total Uang Masuk</h4>
+                    <p id="dispMasuk" style="color: #10b981;">Rp 0</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Total Uang Keluar</h4>
+                    <p id="dispKeluar" style="color: #f43f5e;">Rp 0</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Sisa Saldo Akhir</h4>
+                    <p id="dispSaldo">Rp 0</p>
+                </div>
             </div>
-            <button class="btn-keluar" id="btnSubmitKeluar" onclick="tambahTransaksi('Keluar')">+ Tambah Uang Keluar</button>
+
+            <!-- Header & Filter Tabel Transaksi -->
+            <div class="table-header-section">
+                <h2>Rincian Transaksi</h2>
+                <div class="history-controls">
+                    <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩️ Undo</button>
+                    <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
+                </div>
+            </div>
+
+            <!-- Bar Pencarian & Filter -->
+            <div class="filter-bar">
+                <input type="text" id="searchKeyword" placeholder="🔍 Cari transaksi / barang..." oninput="updateTampilan()">
+                <select id="filterDivisi" onchange="updateTampilan()">
+                    <option value="ALL">Semua Divisi</option>
+                </select>
+                <select id="filterJenis" onchange="updateTampilan()">
+                    <option value="ALL">Semua Jenis</option>
+                    <option value="Masuk">Hanya Uang Masuk</option>
+                    <option value="Keluar">Hanya Uang Keluar</option>
+                </select>
+            </div>
+
+            <!-- Tabel Rincian Transaksi -->
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 35px; text-align: center;">No</th>
+                            <th style="width: 75px;">Jenis</th>
+                            <th>Keterangan</th>
+                            <th>Harga Satuan</th>
+                            <th style="width: 60px; text-align: center;">Jumlah</th>
+                            <th>Total Nominal</th>
+                            <th style="width: 120px; text-align: center;">Lampiran Nota / Bukti</th>
+                            <th>Catatan</th>
+                            <th style="width: 90px;" class="col-action">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelBody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td>
+                        </tr>
+                    </tbody>
+                    <tfoot id="tabelFoot">
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Export Action Group (Unduh File Lokal) -->
+            <div class="export-group">
+                <button class="btn-word" onclick="exportToWord()">📄 Download Word (.docx)</button>
+                <button class="btn-pdf" onclick="exportToPDF()">📕 Download PDF (.pdf)</button>
+                <button class="btn-excel" onclick="exportToExcel()">📊 Download Excel (.xlsx)</button>
+            </div>
         </div>
+
+        <!-- ================= TAB 2: ANALISIS & GRAFIK ================= -->
+        <div id="tab-analisis" class="tab-content">
+            <!-- Progress Bar Anggaran -->
+            <div class="info-card">
+                <div class="progress-section">
+                    <div class="progress-label-group">
+                        <span>Penyerapan Uang Keluar dari Uang Masuk:</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="progressBar" class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Charts / Analisis Visual -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h4>📊 Analisis Masuk vs Keluar</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="chartComparison"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h4>🍩 Pengeluaran per Divisi</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="chartDivisi"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widget Kalkulator Target HTM -->
+            <div class="calc-widget" style="margin-top: 20px;">
+                <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 12px;">🧮 Simulator Kalkulator Target HTM Peserta</h3>
+                <div class="grid-calc">
+                    <div class="form-group">
+                        <label>Estimasi Target Peserta:</label>
+                        <input type="number" id="simPeserta" placeholder="35" oninput="hitungSimulasiHTM()">
+                    </div>
+                    <div class="form-group">
+                        <label>Target Dana Non-HTM (Sponsor/Kas):</label>
+                        <input type="number" id="simSponsor" placeholder="1500000" oninput="hitungSimulasiHTM()">
+                    </div>
+                </div>
+                <div id="simulasiResult" class="calc-result-box">
+                    Masukkan jumlah peserta dan sponsor untuk melihat estimasi minimal HTM/peserta.
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: GOOGLE DRIVE ================= -->
+        <div id="tab-gdrive" class="tab-content">
+            <div class="card" style="border-top: 5px solid #4285F4;">
+                <h3>☁️ Upload Rekapan ke Google Drive GCC</h3>
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
+                    File hasil rekapan akan tersimpan otomatis ke folder target Google Drive resmi departemen yang dipilih.
+                </p>
+                
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>Pilih Departemen / Divisi:</label>
+                        <select id="driveDeptSelect">
+                            <option value="CONTER">CONTER</option>
+                            <option value="HUMAS">HUMAS</option>
+                            <option value="MEDIA">MEDIA</option>
+                            <option value="PAKSIMA">PAKSIMA</option>
+                            <option value="PDK">PDK</option>
+                            <option value="PPSDM">PPSDM</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Kategori Dokumen:</label>
+                        <select id="driveCategorySelect">
+                            <option value="RAB">📁 RAB (Rencana Anggaran Biaya)</option>
+                            <option value="Realisasi Anggaran">📁 Realisasi Anggaran</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="export-group" style="margin-top: 15px;">
+                    <button class="btn-word" onclick="uploadKeDrive('docx')">☁️ Upload Word (.docx)</button>
+                    <button class="btn-pdf" onclick="uploadKeDrive('pdf')">☁️ Upload PDF (.pdf)</button>
+                    <button class="btn-excel" onclick="uploadKeDrive('xlsx')">☁️ Upload Excel (.xlsx)</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <datalist id="listDivisi">
-        <option value="Acara">
-        <option value="Konsumsi">
-        <option value="PDD">
-        <option value="Perlengkapan">
-        <option value="Humas & Kesekretariatan">
-        <option value="Bendahara">
-    </datalist>
-
-    <!-- Box Ringkasan -->
-    <div class="summary-box">
-        <div class="summary-item">
-            <h4>Total Peserta</h4>
-            <p id="dispPeserta">0 Orang</p>
-        </div>
-        <div class="summary-item">
-            <h4>Total Uang Masuk</h4>
-            <p id="dispMasuk" style="color: #28a745;">Rp 0</p>
-        </div>
-        <div class="summary-item">
-            <h4>Total Uang Keluar</h4>
-            <p id="dispKeluar" style="color: #dc3545;">Rp 0</p>
-        </div>
-        <div class="summary-item">
-            <h4>Sisa Saldo Akhir</h4>
-            <p id="dispSaldo">Rp 0</p>
-        </div>
-    </div>
-
-    <!-- Header Tabel Transaksi -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-        <h2 style="margin: 0;">Rincian Transaksi</h2>
-        <div class="history-controls">
-            <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩️ Undo</button>
-            <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
-        </div>
-    </div>
-
-    <!-- Tabel Rincian Transaksi -->
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 35px; text-align: center;">No</th>
-                    <th style="width: 70px;">Jenis</th>
-                    <th>Keterangan</th>
-                    <th>Harga Satuan</th>
-                    <th style="width: 60px; text-align: center;">Jumlah</th>
-                    <th>Total Nominal</th>
-                    <th style="width: 120px; text-align: center;">Lampiran Nota / Bukti</th>
-                    <th>Catatan</th>
-                    <th style="width: 90px;" class="col-action">Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="tabelBody">
-                <tr>
-                    <td colspan="9" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td>
-                </tr>
-            </tbody>
-            <tfoot id="tabelFoot">
-            </tfoot>
-        </table>
-    </div>
-
-    <!-- Tombol Ekspor Word & PDF -->
-    <div class="export-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
-        <button class="btn-word" onclick="exportToWord()">📄 Download Word (.docx)</button>
-        <button class="btn-pdf" onclick="exportToPDF()">📕 Download PDF (.pdf)</button>
-    </div>
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
