@@ -827,7 +827,7 @@ async function uploadKeDrive(formatType) {
             };
 
             // URL Google Apps Script Jack yang sudah dihubungkan
-            const GOOGLE_SCRIPT_URL = "hhttps://script.google.com/macros/s/AKfycbw9mbB7-WfYdaKX02rXQWAhf23qirz5pfEoITp9Faz1cgrnUVrxrmedNt0sW8eWZXV3/exec";
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9mbB7-WfYdaKX02rXQWAhf23qirz5pfEoITp9Faz1cgrnUVrxrmedNt0sW8eWZXV3/exec";
 
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
