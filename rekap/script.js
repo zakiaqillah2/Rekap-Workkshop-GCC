@@ -1,4 +1,3 @@
-// Mapping Folder Google Drive Resmi Per Departemen (RAB & Realisasi Anggaran)
 const FOLDER_MAP = {
     "CONTER": {
         "RAB": "1ycHYO1rTHGfQ8lmOCY1CcED-MKy6VZ8U",
@@ -59,7 +58,6 @@ window.onload = function() {
     });
 };
 
-/* ------------------- FUNGSI PERPINDAHAN TAB NAVIGASI ------------------- */
 function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
@@ -72,7 +70,6 @@ function switchTab(tabId, btnElement) {
     }
 }
 
-/* ------------------- HELPER FORMAT NAMA FILE ------------------- */
 function getFileNameFormat(extension) {
     const draft = listDraft.find(d => d.id === currentDraftId);
     const rawName = draft && draft.nama ? draft.nama : 'Rekapan_Keuangan_GCC';
@@ -80,7 +77,6 @@ function getFileNameFormat(extension) {
     return `${safeName}.${extension}`;
 }
 
-/* ------------------- NOTIFIKASI TOAST ------------------- */
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
@@ -94,7 +90,6 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3200);
 }
 
-/* ------------------- DARK MODE ------------------- */
 function initTheme() {
     const savedTheme = localStorage.getItem('gcc_theme');
     if (savedTheme === 'dark') {
@@ -124,7 +119,6 @@ function hitungSubtotal(jenis) {
     return total;
 }
 
-/* ------------------- LIGHTBOX MODAL NOTA ------------------- */
 function openModal(dataUrl, title) {
     const modal = document.getElementById('imageModal');
     const img = document.getElementById('modalImage');
@@ -173,7 +167,6 @@ function hapusNota(realIndex) {
     }
 }
 
-/* ------------------- KALKULATOR SIMULASI HTM ------------------- */
 function hitungSimulasiHTM() {
     const summary = updateSummary();
     const targetPeserta = parseFloat(document.getElementById('simPeserta').value) || 0;
@@ -198,7 +191,6 @@ function hitungSimulasiHTM() {
     }
 }
 
-/* ------------------- CHARTS / GRAFIK ------------------- */
 function initCharts() {
     const ctxComp = document.getElementById('chartComparison').getContext('2d');
     chartComp = new Chart(ctxComp, {
@@ -252,7 +244,6 @@ function updateCharts(totalMasuk, totalKeluar, kelompokDivisi) {
     chartDiv.update();
 }
 
-/* ------------------- TEMPLAT WORD & IMPOR ------------------- */
 async function downloadTemplateWord() {
     const { docx } = window;
     const borderStandard = { style: docx.BorderStyle.SINGLE, size: 1, color: "000000" };
@@ -285,7 +276,7 @@ async function downloadTemplateWord() {
     const doc = new docx.Document({
         sections: [{
             children: [
-                new docx.Paragraph({ children: [new docx.TextRun({ text: "TEMPLAT REKAPAN KEUANGAN GCC", bold: true, size: 24 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 150 } }),
+                new docx.Paragraph({ children: [new docx.TextRun({ text: "TEMPLAT KEUANGAN GCC", bold: true, size: 24 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 150 } }),
                 new docx.Table({ borders: borders, rows: templateRows, width: { size: 100, type: docx.WidthType.PERCENTAGE } })
             ]
         }]
@@ -360,7 +351,6 @@ async function imporDokumen(event) {
     }
 }
 
-/* ------------------- HISTORY & DRAFT ------------------- */
 function simpanStateKeHistory() {
     undoStack.push({ transaksi: JSON.parse(JSON.stringify(transaksi)), jumlahPeserta: document.getElementById('jumlahPeserta').value || 0 });
     redoStack = [];
@@ -485,7 +475,6 @@ function hapusDraftAktif() {
     }
 }
 
-/* ------------------- TRANSAKSI ------------------- */
 async function tambahTransaksi(jenis) {
     const isMasuk = jenis === 'Masuk';
     const divEl = document.getElementById(isMasuk ? 'divisiMasuk' : 'divisiKeluar');
@@ -663,23 +652,54 @@ function updateTampilan() {
     updateCharts(summary.totalMasuk, summary.totalKeluar, kelompokDivisi);
 }
 
-/* ------------------- GENERATOR BLOB FILE ------------------- */
+/* ------------------- GENERATOR BLOB FILE (PDF & WORD) ------------------- */
 async function generateFileBlob(formatType) {
     const summary = updateSummary();
+    const draft = listDraft.find(d => d.id === currentDraftId);
+    const namaDraft = draft && draft.nama ? draft.nama : 'KEGIATAN';
+
+    const kelompokDivisi = {};
+    transaksi.forEach(t => {
+        const divName = (t.divisi || 'UMUM').toUpperCase();
+        if (!kelompokDivisi[divName]) kelompokDivisi[divName] = [];
+        kelompokDivisi[divName].push(t);
+    });
+
+    const transaksiBerlampiran = transaksi.filter(t => t.notaData && t.notaData.dataUrl);
 
     if (formatType === 'xlsx') {
         const dataExcel = [];
-        dataExcel.push(["LAPORAN REKAPAN KEUANGAN GAMATIKA CODING CLUB"]);
-        dataExcel.push(["Total Peserta", summary.totalPeserta + " Orang"]);
-        dataExcel.push(["Total Masuk", summary.totalMasuk]);
-        dataExcel.push(["Total Keluar", summary.totalKeluar]);
-        dataExcel.push(["Saldo Akhir", summary.saldoAkhir]);
+        dataExcel.push([`${namaDraft.toUpperCase()}`]);
         dataExcel.push([]);
-        dataExcel.push(["Divisi", "No", "Jenis", "Keterangan", "Harga Satuan", "Jumlah", "Total Nominal", "Catatan"]);
+        dataExcel.push(["RINGKASAN KEGIATAN"]);
+        dataExcel.push(["• Total Peserta Hadir", "", summary.totalPeserta + " Orang"]);
+        dataExcel.push(["• Total Uang Masuk", "", summary.totalMasuk]);
+        dataExcel.push(["• Total Uang Keluar", "", summary.totalKeluar]);
+        dataExcel.push(["• Sisa Saldo Akhir", "", summary.saldoAkhir, "(Uang Masuk - Uang Keluar)"]);
+        dataExcel.push([]);
+        dataExcel.push(["RINCIAN TRANSAKSI"]);
+        dataExcel.push(["No", "Jenis", "Keterangan", "Harga Satuan", "Jumlah", "Total Nominal"]);
 
-        transaksi.forEach((t, idx) => {
-            dataExcel.push([t.divisi, idx + 1, t.jenis, t.keterangan, t.harga, t.qty, t.totalNominal, t.catatan]);
-        });
+        let globalNo = 1;
+        for (const [divName, items] of Object.entries(kelompokDivisi)) {
+            dataExcel.push([divName]);
+            items.forEach(t => {
+                dataExcel.push([globalNo++, t.jenis, t.keterangan, t.harga, t.qty, t.totalNominal]);
+            });
+        }
+
+        dataExcel.push([]);
+        dataExcel.push(["Total Uang Masuk", "", "", "", "", summary.totalMasuk]);
+        dataExcel.push(["Total Uang Keluar", "", "", "", "", summary.totalKeluar]);
+        dataExcel.push(["Total Akhir (Uang Masuk - Uang Keluar)", "", "", "", "", summary.saldoAkhir]);
+
+        if (transaksiBerlampiran.length > 0) {
+            dataExcel.push([]);
+            dataExcel.push(["LAMPIRAN BUKTI NOTA / TRANSAKSI"]);
+            transaksiBerlampiran.forEach((t, idx) => {
+                dataExcel.push([`Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}`]);
+            });
+        }
 
         const ws = XLSX.utils.aoa_to_sheet(dataExcel);
         const wb = XLSX.utils.book_new();
@@ -690,39 +710,112 @@ async function generateFileBlob(formatType) {
 
     if (formatType === 'pdf') {
         const element = document.createElement('div');
-        element.style.padding = '15px'; element.style.fontFamily = "'Times New Roman', serif";
+        element.style.width = '100%';
+        element.style.padding = '15px';
+        element.style.fontFamily = "'Times New Roman', serif";
+        element.style.color = '#000';
+        element.style.fontSize = '11pt';
+        element.style.background = '#ffffff';
 
         let html = `
-            <div style="text-align: center;">
-                <img src="${GCC_LOGO_URL}" style="height: 55px;" crossorigin="anonymous"><br>
-                <h2 style="margin: 10px 0;">LAPORAN KEUANGAN GAMATIKA CODING CLUB</h2>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img src="${GCC_LOGO_URL}" style="height: 45px; width: 45px; object-fit: contain; margin-bottom: 4px; display: inline-block;" crossorigin="anonymous"><br>
+                <h3 style="margin: 0; text-transform: uppercase;"> ${namaDraft}</h3>
             </div>
-            <p><b>• Total Peserta:</b> ${summary.totalPeserta} Orang</p>
-            <p><b>• Total Uang Masuk:</b> ${formatRupiah(summary.totalMasuk)}</p>
-            <p><b>• Total Uang Keluar:</b> ${formatRupiah(summary.totalKeluar)}</p>
-            <p><b>• Saldo Akhir:</b> ${formatRupiah(summary.saldoAkhir)}</p>
-            <br>
+            
+            <div style="margin-bottom: 15px;">
+                <h4 style="margin: 0 0 6px 0; text-transform: uppercase;">RINGKASAN KEGIATAN</h4>
+                <table style="width: 100%; border: none; font-size: 11pt; border-collapse: collapse;">
+                    <tr style="border: none;"><td style="width: 190px; border: none; padding: 2px 0 2px 5px; font-weight: bold;">• Total Peserta Hadir</td><td style="width: 15px; border: none; padding: 2px 0;">:</td><td style="border: none; padding: 2px 0;">${summary.totalPeserta} Orang</td></tr>
+                    <tr style="border: none;"><td style="border: none; padding: 2px 0 2px 5px; font-weight: bold;">• Total Uang Masuk</td><td style="width: 15px; border: none; padding: 2px 0;">:</td><td style="border: none; padding: 2px 0;">${formatRupiah(summary.totalMasuk)}</td></tr>
+                    <tr style="border: none;"><td style="border: none; padding: 2px 0 2px 5px; font-weight: bold;">• Total Uang Keluar</td><td style="width: 15px; border: none; padding: 2px 0;">:</td><td style="border: none; padding: 2px 0;">${formatRupiah(summary.totalKeluar)}</td></tr>
+                    <tr style="border: none;"><td style="border: none; padding: 2px 0 2px 5px; font-weight: bold;">• Sisa Saldo Akhir</td><td style="width: 15px; border: none; padding: 2px 0;">:</td><td style="border: none; padding: 2px 0;">${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)</td></tr>
+                </table>
+            </div>
+
+            <h4 style="margin: 0 0 6px 0; text-transform: uppercase;">RINCIAN TRANSAKSI</h4>
             <table border="1" style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                <thead><tr><th>No</th><th>Divisi</th><th>Jenis</th><th>Keterangan</th><th>Harga</th><th>Qty</th><th>Total</th></tr></thead>
-                <tbody>`;
+                <thead>
+                    <tr style="background-color: #4b5563; color: #ffffff;">
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 35px;">No</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 65px;">Jenis</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center;">Keterangan</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center;">Harga Satuan</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 50px;">Jumlah</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center;">Total Nominal</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
 
-        transaksi.forEach((t, i) => {
-            html += `<tr>
-                <td style="text-align:center;">${i+1}</td>
-                <td>${t.divisi}</td>
-                <td>${t.jenis}</td>
-                <td>${t.keterangan}</td>
-                <td>${formatRupiah(t.harga)}</td>
-                <td style="text-align:center;">${t.qty}</td>
-                <td>${formatRupiah(t.totalNominal)}</td>
-            </tr>`;
-        });
+        for (const [divName, items] of Object.entries(kelompokDivisi)) {
+            html += `<tr><td colspan="6" style="background-color: #fafafa; font-weight: bold; padding: 6px 6px 6px 12px;"><b>${divName}</b></td></tr>`;
+            items.forEach((t, i) => {
+                html += `
+                    <tr>
+                        <td style="padding: 5px 5px 5px 12px; text-align: center;">${i + 1}</td>
+                        <td style="padding: 5px 5px 5px 12px; text-align: center;">${t.jenis}</td>
+                        <td style="padding: 5px 5px 5px 12px;">${t.keterangan}</td>
+                        <td style="padding: 5px 5px 5px 12px; text-align: left;">${formatRupiah(t.harga)}</td>
+                        <td style="padding: 5px 5px 5px 12px; text-align: center;">${t.qty}</td>
+                        <td style="padding: 5px 5px 5px 12px; text-align: left;">${formatRupiah(t.totalNominal)}</td>
+                    </tr>
+                `;
+            });
+        }
 
-        html += `</tbody></table>`;
+        html += `
+                </tbody>
+            </table>
+            
+            <table border="1" style="width: 100%; border-collapse: collapse; margin-top: -1px; font-size: 10pt; font-weight: bold;">
+                <tr>
+                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Uang Masuk</td>
+                    <td style="padding: 6px 6px 6px 12px; text-align: left; width: 150px; font-weight: bold;">${formatRupiah(summary.totalMasuk)}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Uang Keluar</td>
+                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">${formatRupiah(summary.totalKeluar)}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Akhir (Uang Masuk - Uang Keluar)</td>
+                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">${formatRupiah(summary.saldoAkhir)}</td>
+                </tr>
+            </table>
+        `;
+
+        if (transaksiBerlampiran.length > 0) {
+            html += `
+                <div style="page-break-before: always; margin-top: 20px;">
+                    <h4 style="text-align: left; text-transform: uppercase; margin-bottom: 15px;">LAMPIRAN BUKTI NOTA & TRANSAKSI</h4>
+            `;
+            transaksiBerlampiran.forEach((t, idx) => {
+                html += `
+                    <div style="margin-bottom: 25px;">
+                        <p style="font-weight: bold; margin-bottom: 5px; text-align: left;">Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}</p>
+                        <div style="text-align: left; width: 100%;">
+                            <img src="${t.notaData.dataUrl}" style="max-width: 350px; max-height: 350px; object-fit: contain; border: 1px solid #ccc; padding: 4px; display: inline-block;" crossorigin="anonymous">
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
         element.innerHTML = html;
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'fixed';
+        wrapper.style.left = '-9999px';
+        wrapper.style.top = '0';
+        wrapper.style.width = '800px';
+        wrapper.appendChild(element);
+        document.body.appendChild(wrapper);
 
-        const opt = { margin: 10, filename: getFileNameFormat('pdf'), html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4' } };
-        return await html2pdf().set(opt).from(element).output('blob');
+        const opt = { margin: 10, filename: getFileNameFormat('pdf'), html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4' } };
+        const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+        
+        document.body.removeChild(wrapper);
+        return pdfBlob;
     }
 
     if (formatType === 'docx') {
@@ -730,51 +823,110 @@ async function generateFileBlob(formatType) {
         const borderStandard = { style: docx.BorderStyle.SINGLE, size: 1, color: "000000" };
         const borders = { top: borderStandard, bottom: borderStandard, left: borderStandard, right: borderStandard, insideHorizontal: borderStandard, insideVertical: borderStandard };
 
+        const cellLeftIndent = 36;
+        const createCell = (text, isHeader = false, align = docx.AlignmentType.LEFT, bold = false, colSpan = 1) => {
+            return new docx.TableCell({
+                columnSpan: colSpan,
+                margins: { left: cellLeftIndent, right: cellLeftIndent, top: 100, bottom: 100 },
+                children: [new docx.Paragraph({ children: [new docx.TextRun({ text: text, bold: isHeader || bold })], alignment: align })]
+            });
+        };
+
         const tableRows = [
             new docx.TableRow({
                 children: [
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "No", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Jenis", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Keterangan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Harga Satuan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Jumlah", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: "Total Nominal", bold: true, alignment: docx.AlignmentType.CENTER })] })
+                    createCell("No", true, docx.AlignmentType.CENTER),
+                    createCell("Jenis", true, docx.AlignmentType.CENTER),
+                    createCell("Keterangan", true, docx.AlignmentType.CENTER),
+                    createCell("Harga Satuan", true, docx.AlignmentType.CENTER),
+                    createCell("Jumlah", true, docx.AlignmentType.CENTER),
+                    createCell("Total Nominal", true, docx.AlignmentType.CENTER)
                 ]
             })
         ];
 
-        transaksi.forEach((t, index) => {
+        for (const [divName, items] of Object.entries(kelompokDivisi)) {
             tableRows.push(new docx.TableRow({
                 children: [
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: String(index + 1), alignment: docx.AlignmentType.CENTER })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: t.jenis })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: t.keterangan })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(t.harga) })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: String(t.qty), alignment: docx.AlignmentType.CENTER })] }),
-                    new docx.TableCell({ children: [new docx.Paragraph({ text: formatRupiah(t.totalNominal) })] })
+                    new docx.TableCell({
+                        columnSpan: 6,
+                        margins: { left: cellLeftIndent, right: cellLeftIndent, top: 100, bottom: 100 },
+                        children: [new docx.Paragraph({ children: [new docx.TextRun({ text: divName, bold: true })] })]
+                    })
                 ]
             }));
+
+            items.forEach((t, index) => {
+                tableRows.push(new docx.TableRow({
+                    children: [
+                        createCell(String(index + 1), false, docx.AlignmentType.CENTER),
+                        createCell(t.jenis, false, docx.AlignmentType.CENTER),
+                        createCell(t.keterangan, false, docx.AlignmentType.LEFT),
+                        createCell(formatRupiah(t.harga), false, docx.AlignmentType.LEFT),
+                        createCell(String(t.qty), false, docx.AlignmentType.CENTER),
+                        createCell(formatRupiah(t.totalNominal), false, docx.AlignmentType.LEFT)
+                    ]
+                }));
+            });
+        }
+
+        tableRows.push(
+            new docx.TableRow({ children: [createCell("Total Uang Masuk", false, docx.AlignmentType.LEFT, true, 5), createCell(formatRupiah(summary.totalMasuk), false, docx.AlignmentType.LEFT, true)] }),
+            new docx.TableRow({ children: [createCell("Total Uang Keluar", false, docx.AlignmentType.LEFT, true, 5), createCell(formatRupiah(summary.totalKeluar), false, docx.AlignmentType.LEFT, true)] }),
+            new docx.TableRow({ children: [createCell("Total Akhir (Uang Masuk - Uang Keluar)", false, docx.AlignmentType.LEFT, true, 5), createCell(formatRupiah(summary.saldoAkhir), false, docx.AlignmentType.LEFT, true)] })
+        );
+
+        const summaryTable = new docx.Table({
+            borders: { top: { style: docx.BorderStyle.NONE }, bottom: { style: docx.BorderStyle.NONE }, left: { style: docx.BorderStyle.NONE }, right: { style: docx.BorderStyle.NONE }, insideHorizontal: { style: docx.BorderStyle.NONE }, insideVertical: { style: docx.BorderStyle.NONE } },
+            rows: [
+                new docx.TableRow({ children: [new docx.TableCell({ margins: { left: cellLeftIndent }, children: [new docx.Paragraph("• Total Peserta Hadir")], width: { size: 35, type: docx.WidthType.PERCENTAGE } }), new docx.TableCell({ children: [new docx.Paragraph(":")], width: { size: 5, type: docx.WidthType.PERCENTAGE } }), new docx.TableCell({ children: [new docx.Paragraph(`${summary.totalPeserta} Orang`)], width: { size: 60, type: docx.WidthType.PERCENTAGE } })] }),
+                new docx.TableRow({ children: [new docx.TableCell({ margins: { left: cellLeftIndent }, children: [new docx.Paragraph("• Total Uang Masuk")] }), new docx.TableCell({ children: [new docx.Paragraph(":")] }), new docx.TableCell({ children: [new docx.Paragraph(formatRupiah(summary.totalMasuk))] })] }),
+                new docx.TableRow({ children: [new docx.TableCell({ margins: { left: cellLeftIndent }, children: [new docx.Paragraph("• Total Uang Keluar")] }), new docx.TableCell({ children: [new docx.Paragraph(":")] }), new docx.TableCell({ children: [new docx.Paragraph(formatRupiah(summary.totalKeluar))] })] }),
+                new docx.TableRow({ children: [new docx.TableCell({ margins: { left: cellLeftIndent }, children: [new docx.Paragraph("• Sisa Saldo Akhir")] }), new docx.TableCell({ children: [new docx.Paragraph(":")] }), new docx.TableCell({ children: [new docx.Paragraph(`${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)`)] })] })
+            ]
         });
+
+        const docChildren = [
+            new docx.Paragraph({ children: [new docx.TextRun({ text: `${namaDraft.toUpperCase()}`, bold: true, size: 24 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 150 } }),
+            new docx.Paragraph({ children: [new docx.TextRun({ text: "RINGKASAN KEGIATAN", bold: true, size: 20 })], spacing: { after: 100 } }),
+            summaryTable,
+            new docx.Paragraph({ children: [new docx.TextRun({ text: "RINCIAN TRANSAKSI", bold: true, size: 20 })], spacing: { before: 200, after: 100 } }),
+            new docx.Table({ borders: borders, rows: tableRows, width: { size: 100, type: docx.WidthType.PERCENTAGE } })
+        ];
+
+        if (transaksiBerlampiran.length > 0) {
+            docChildren.push(new docx.Paragraph({ children: [new docx.TextRun({ text: "LAMPIRAN BUKTI NOTA & TRANSAKSI", bold: true, size: 22 })], alignment: docx.AlignmentType.LEFT, spacing: { before: 300, after: 150 } }));
+            
+            for (const [idx, t] of transaksiBerlampiran.entries()) {
+                docChildren.push(new docx.Paragraph({ children: [new docx.TextRun({ text: `Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}`, bold: true })], alignment: docx.AlignmentType.LEFT, spacing: { after: 100 } }));
+                try {
+                    const base64Data = t.notaData.dataUrl.split(',')[1];
+                    const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                    docChildren.push(new docx.Paragraph({
+                        children: [
+                            new docx.ImageRun({
+                                data: imageBuffer,
+                                transformation: { width: 300, height: 200 }
+                            })
+                        ],
+                        alignment: docx.AlignmentType.LEFT,
+                        spacing: { after: 200 }
+                    }));
+                } catch (e) {
+                    console.error("Gagal merender gambar ke Word", e);
+                }
+            }
+        }
 
         const transaksiLight = transaksi.map(t => ({ ...t, notaData: null }));
         const metadataString = encodeURIComponent(JSON.stringify({ jumlahPeserta: document.getElementById('jumlahPeserta').value || 0, transaksi: transaksiLight }));
+        docChildren.push(new docx.Paragraph({ children: [new docx.TextRun({ text: `GCC_DATA_START:::${metadataString}:::GCC_DATA_END`, color: "FFFFFF", size: 2 })] }));
 
-        const doc = new docx.Document({
-            sections: [{
-                children: [
-                    new docx.Paragraph({ children: [new docx.TextRun({ text: "LAPORAN KEUANGAN GAMATIKA CODING CLUB", bold: true, size: 28 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 200 } }),
-                    new docx.Paragraph({ children: [new docx.TextRun({ text: `Total Peserta: ${summary.totalPeserta} Orang | Total Masuk: ${formatRupiah(summary.totalMasuk)} | Total Keluar: ${formatRupiah(summary.totalKeluar)} | Saldo Akhir: ${formatRupiah(summary.saldoAkhir)}`, bold: true, size: 20 })], spacing: { after: 200 } }),
-                    new docx.Table({ borders: borders, rows: tableRows, width: { size: 100, type: docx.WidthType.PERCENTAGE } }),
-                    new docx.Paragraph({ children: [new docx.TextRun({ text: `GCC_DATA_START:::${metadataString}:::GCC_DATA_END`, color: "FFFFFF", size: 2 })] })
-                ]
-            }]
-        });
-
+        const doc = new docx.Document({ sections: [{ children: docChildren }] });
         return await docx.Packer.toBlob(doc);
     }
 }
 
-/* ------------------- EKSPOR LOKAL ------------------- */
 async function exportToExcel() {
     const fileName = getFileNameFormat('xlsx');
     const blob = await generateFileBlob('xlsx');
@@ -796,7 +948,6 @@ async function exportToWord() {
     showToast(`📄 File ${fileName} berhasil di-download!`, "success");
 }
 
-/* ------------------- UPLOAD KE GOOGLE DRIVE (TERINTEGRASI) ------------------- */
 async function uploadKeDrive(formatType) {
     const dept = document.getElementById('driveDeptSelect').value;
     const category = document.getElementById('driveCategorySelect').value;
@@ -809,14 +960,14 @@ async function uploadKeDrive(formatType) {
         return;
     }
 
-    showToast(`⏳ Mengunggah ${fileName} ke Drive [${dept} - ${category}]...`, "info");
+    showToast(`⏳ Menyiapkan dan mengunggah ${fileName} ke Drive...`, "info");
 
     try {
         const fileBlob = await generateFileBlob(formatType);
 
         const reader = new FileReader();
         reader.readAsDataURL(fileBlob);
-        reader.onloadend = async function () {
+        reader.onloadend = function () {
             const base64Data = reader.result.split(',')[1];
 
             const payload = {
@@ -826,16 +977,24 @@ async function uploadKeDrive(formatType) {
                 fileData: base64Data
             };
 
-            // URL Google Apps Script Jack yang sudah dihubungkan
             const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxLUACdcostC9HPUtRpHcVHvqqhOPLABRwOfBmJYf_J_csZAEzgzQti37APW2xbDDw/exec";
 
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(payload)
-            });
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = GOOGLE_SCRIPT_URL;
+            form.target = '_blank';
 
-            showToast(`✅ Berhasil! File "${fileName}" dikirim ke Google Drive ${dept} (${category})`, "success");
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'data';
+            input.value = JSON.stringify(payload);
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            showToast(`✅ Berhasil mengirim "${fileName}" ke Google Drive!`, "success");
         };
     } catch (err) {
         console.error(err);
