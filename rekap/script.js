@@ -736,13 +736,13 @@ async function generateFileBlob(formatType) {
             <h4 style="margin: 0 0 6px 0; text-transform: uppercase;">RINCIAN TRANSAKSI</h4>
             <table border="1" style="width: 100%; border-collapse: collapse; font-size: 10pt;">
                 <thead>
-                    <tr style="background-color: #4b5563; color: #ffffff;">
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 35px; color: #ffffff;">No</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 65px; color: #ffffff;">Jenis</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #ffffff;">Keterangan</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #ffffff;">Harga Satuan</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 50px; color: #ffffff;">Jumlah</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #ffffff;">Total Nominal</th>
+                    <tr style="background-color: #ffffff; color: #000000;">
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 35px; color: #000000;">No</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 65px; color: #000000;">Jenis</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #000000;">Keterangan</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #000000;">Harga Satuan</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 50px; color: #000000;">Jumlah</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #000000;">Total Nominal</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -770,15 +770,15 @@ async function generateFileBlob(formatType) {
             
             <table border="1" style="width: 100%; border-collapse: collapse; margin-top: -1px; font-size: 10pt; font-weight: bold;">
                 <tr>
-                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Uang Masuk</td>
-                    <td style="padding: 6px 6px 6px 12px; text-align: left; width: 150px; font-weight: bold;">${formatRupiah(summary.totalMasuk)}</td>
+                    <td colspan="5" style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Uang Masuk</td>
+                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">${formatRupiah(summary.totalMasuk)}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Uang Keluar</td>
+                    <td colspan="5" style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Uang Keluar</td>
                     <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">${formatRupiah(summary.totalKeluar)}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Akhir (Uang Masuk - Uang Keluar)</td>
+                    <td colspan="5" style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Akhir (Uang Masuk - Uang Keluar)</td>
                     <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">${formatRupiah(summary.saldoAkhir)}</td>
                 </tr>
             </table>
