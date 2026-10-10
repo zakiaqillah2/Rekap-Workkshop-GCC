@@ -305,7 +305,7 @@ async function imporDokumen(event) {
             if (Array.isArray(decodedJson.transaksi)) transaksi = decodedJson.transaksi;
             simpanKeStorage(false);
             updateTampilan();
-            showToast("🎉 Data draf dipulihkan dari file Word!", "success");
+            showToast("🎉 Data draf & lampiran berhasil dipulihkan dari file Word!", "success");
             return;
         }
 
@@ -669,7 +669,7 @@ async function generateFileBlob(formatType) {
 
     if (formatType === 'xlsx') {
         const dataExcel = [];
-        dataExcel.push([`${namaDraft.toUpperCase()}`]);
+        dataExcel.push([`LAPORAN REKAPAN KEUANGAN ${namaDraft.toUpperCase()}`]);
         dataExcel.push([]);
         dataExcel.push(["RINGKASAN KEGIATAN"]);
         dataExcel.push(["• Total Peserta Hadir", "", summary.totalPeserta + " Orang"]);
@@ -720,7 +720,7 @@ async function generateFileBlob(formatType) {
         let html = `
             <div style="text-align: center; margin-bottom: 15px;">
                 <img src="${GCC_LOGO_URL}" style="height: 45px; width: 45px; object-fit: contain; margin-bottom: 4px; display: inline-block;" crossorigin="anonymous"><br>
-                <h3 style="margin: 0; text-transform: uppercase;">${namaDraft}</h3>
+                <h3 style="margin: 0; text-transform: uppercase;">LAPORAN REKAPAN KEUANGAN ${namaDraft}</h3>
             </div>
             
             <div style="margin-bottom: 15px;">
@@ -887,7 +887,7 @@ async function generateFileBlob(formatType) {
         });
 
         const docChildren = [
-            new docx.Paragraph({ children: [new docx.TextRun({ text: `${namaDraft.toUpperCase()}`, bold: true, size: 24 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 150 } }),
+            new docx.Paragraph({ children: [new docx.TextRun({ text: `LAPORAN REKAPAN KEUANGAN ${namaDraft.toUpperCase()}`, bold: true, size: 24 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 150 } }),
             new docx.Paragraph({ children: [new docx.TextRun({ text: "RINGKASAN KEGIATAN", bold: true, size: 20 })], spacing: { after: 100 } }),
             summaryTable,
             new docx.Paragraph({ children: [new docx.TextRun({ text: "RINCIAN TRANSAKSI", bold: true, size: 20 })], spacing: { before: 200, after: 100 } }),
@@ -918,8 +918,7 @@ async function generateFileBlob(formatType) {
             }
         }
 
-        const transaksiLight = transaksi.map(t => ({ ...t, notaData: null }));
-        const metadataString = encodeURIComponent(JSON.stringify({ jumlahPeserta: document.getElementById('jumlahPeserta').value || 0, transaksi: transaksiLight }));
+        const metadataString = encodeURIComponent(JSON.stringify({ jumlahPeserta: document.getElementById('jumlahPeserta').value || 0, transaksi: transaksi }));
         docChildren.push(new docx.Paragraph({ children: [new docx.TextRun({ text: `GCC_DATA_START:::${metadataString}:::GCC_DATA_END`, color: "FFFFFF", size: 2 })] }));
 
         const doc = new docx.Document({ sections: [{ children: docChildren }] });
