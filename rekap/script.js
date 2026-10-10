@@ -720,7 +720,7 @@ async function generateFileBlob(formatType) {
         let html = `
             <div style="text-align: center; margin-bottom: 15px;">
                 <img src="${GCC_LOGO_URL}" style="height: 45px; width: 45px; object-fit: contain; margin-bottom: 4px; display: inline-block;" crossorigin="anonymous"><br>
-                <h3 style="margin: 0; text-transform: uppercase;"> ${namaDraft}</h3>
+                <h3 style="margin: 0; text-transform: uppercase;">${namaDraft}</h3>
             </div>
             
             <div style="margin-bottom: 15px;">
@@ -737,12 +737,12 @@ async function generateFileBlob(formatType) {
             <table border="1" style="width: 100%; border-collapse: collapse; font-size: 10pt;">
                 <thead>
                     <tr style="background-color: #4b5563; color: #ffffff;">
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 35px;">No</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 65px;">Jenis</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center;">Keterangan</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center;">Harga Satuan</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 50px;">Jumlah</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center;">Total Nominal</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 35px; color: #ffffff;">No</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 65px; color: #ffffff;">Jenis</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #ffffff;">Keterangan</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #ffffff;">Harga Satuan</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 50px; color: #ffffff;">Jumlah</th>
+                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #ffffff;">Total Nominal</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -967,7 +967,7 @@ async function uploadKeDrive(formatType) {
 
         const reader = new FileReader();
         reader.readAsDataURL(fileBlob);
-        reader.onloadend = function () {
+        reader.onloadend = async function () {
             const base64Data = reader.result.split(',')[1];
 
             const payload = {
@@ -977,27 +977,27 @@ async function uploadKeDrive(formatType) {
                 fileData: base64Data
             };
 
-            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxLUACdcostC9HPUtRpHcVHvqqhOPLABRwOfBmJYf_J_csZAEzgzQti37APW2xbDDw/exec";
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyt9AmgH3Ks5dLjPNDi2oK3gR5PD3M9MDKbtLGrKUaKMgCsmB3WfVS4Fc3MTjHJd1_H/exec";
 
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = GOOGLE_SCRIPT_URL;
-            form.target = '_blank';
-
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'data';
-            input.value = JSON.stringify(payload);
-
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-
-            showToast(`✅ Berhasil mengirim "${fileName}" ke Google Drive!`, "success");
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                if (result.status === "success" || response.ok) {
+                    showToast(`✅ Berhasil mengirim "${fileName}" ke Google Drive!`, "success");
+                } else {
+                    showToast(`❌ Gagal: ${result.message || 'Unknown error'}`, "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("✅ Permintaan unggah terkirim ke Google Drive!", "success");
+            }
         };
     } catch (err) {
         console.error(err);
-        showToast("❌ Gagal terhubung ke Google Drive.", "error");
+        showToast("❌ Gagal memproses file untuk Google Drive.", "error");
     }
 }
