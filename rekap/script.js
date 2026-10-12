@@ -94,7 +94,7 @@ function initTheme() {
     const savedTheme = localStorage.getItem('gcc_theme');
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
-        document.getElementById('themeToggle').innerText = '☀️ Mode Terang';
+        document.getElementById('themeToggle').innerText = 'Mode Terang';
     }
 }
 
@@ -102,7 +102,7 @@ function toggleTheme() {
     document.body.classList.toggle('dark-mode');
     const isDark = document.body.classList.contains('dark-mode');
     localStorage.setItem('gcc_theme', isDark ? 'dark' : 'light');
-    document.getElementById('themeToggle').innerText = isDark ? '☀️ Mode Terang' : '🌙 Mode Gelap';
+    document.getElementById('themeToggle').innerText = isDark ? 'Mode Terang' : 'Mode Gelap';
 }
 
 function formatRupiah(angka) {
@@ -154,7 +154,7 @@ async function prosesGantiNota(event) {
 
     simpanKeStorage(false);
     updateTampilan();
-    showToast("✅ Lampiran bukti/nota diperbarui!", "success");
+    showToast("Lampiran bukti/nota diperbarui!", "success");
 }
 
 function hapusNota(realIndex) {
@@ -163,7 +163,7 @@ function hapusNota(realIndex) {
         transaksi[realIndex].notaData = null;
         simpanKeStorage(false);
         updateTampilan();
-        showToast("🗑️ Lampiran dihapus", "info");
+        showToast("Lampiran dihapus", "info");
     }
 }
 
@@ -180,11 +180,11 @@ function hitungSimulasiHTM() {
 
     const sisaBeban = totalPengeluaran - sponsor;
     if (sisaBeban <= 0) {
-        document.getElementById('simulasiResult').innerText = "🎉 Dana Sponsorship/Kas sudah menutupi seluruh pengeluaran! HTM Peserta bisa Rp 0 (Gratis).";
+        document.getElementById('simulasiResult').innerText = "Dana Sponsorship/Kas sudah menutupi seluruh pengeluaran! HTM Peserta bisa Rp 0 (Gratis).";
     } else {
         const htmPerPeserta = Math.ceil((sisaBeban / targetPeserta) / 1000) * 1000;
         document.getElementById('simulasiResult').innerHTML = `
-            💡 <b>Hasil Simulasi:</b><br>
+            <b>Hasil Simulasi:</b><br>
             • Sisa Beban Pengeluaran: <b>${formatRupiah(sisaBeban)}</b><br>
             • Estimasi HTM Minimal per Peserta: <b style="color:#10b981; font-size: 1.1rem;">${formatRupiah(htmPerPeserta)}</b>
         `;
@@ -283,13 +283,13 @@ async function downloadTemplateWord() {
     });
 
     docx.Packer.toBlob(doc).then(blob => { saveAs(blob, "Templat_Rekapan_Keuangan_GCC.docx"); });
-    showToast("📥 Templat Word berhasil di-download!", "success");
+    showToast("Templat Word berhasil di-download!", "success");
 }
 
 async function imporDokumen(event) {
     const file = event.target.files[0];
     if (!file || !file.name.endsWith('.docx')) {
-        showToast("⚠️ Pilih file Word (.docx)!", "error");
+        showToast("Pilih file Word (.docx)!", "error");
         return;
     }
 
@@ -305,7 +305,7 @@ async function imporDokumen(event) {
             if (Array.isArray(decodedJson.transaksi)) transaksi = decodedJson.transaksi;
             simpanKeStorage(false);
             updateTampilan();
-            showToast("🎉 Data draf & lampiran berhasil dipulihkan dari file Word!", "success");
+            showToast("Data draf & lampiran berhasil dipulihkan dari file Word!", "success");
             return;
         }
 
@@ -342,12 +342,12 @@ async function imporDokumen(event) {
         if (count > 0) {
             simpanKeStorage(false);
             updateTampilan();
-            showToast(`🎉 Berhasil mengimpor ${count} item transaksi!`, "success");
+            showToast(`Berhasil mengimpor ${count} item transaksi!`, "success");
         } else {
-            showToast("⚠️ Format tabel tidak terbaca.", "error");
+            showToast("Format tabel tidak terbaca.", "error");
         }
     } catch (e) {
-        showToast("❌ Gagal membaca file Word.", "error");
+        showToast("Gagal membaca file Word.", "error");
     }
 }
 
@@ -423,7 +423,7 @@ function buatDraftBaru(userClick = true) {
     simpanListDraft();
     renderDropdownDraft();
     muatDraftAktif();
-    if (userClick) showToast("➕ Draf baru berhasil dibuat!", "success");
+    if (userClick) showToast("Draf baru berhasil dibuat!", "success");
 }
 
 function ubahNamaDraft() {
@@ -434,7 +434,7 @@ function ubahNamaDraft() {
         draft.nama = namaBaru.trim();
         simpanListDraft();
         renderDropdownDraft();
-        showToast("✏️ Nama draf diperbarui", "success");
+        showToast("Nama draf diperbarui", "success");
     }
 }
 
@@ -471,7 +471,7 @@ function hapusDraftAktif() {
         listDraft = listDraft.filter(d => d.id !== currentDraftId);
         simpanListDraft();
         muatSemuaDraft();
-        showToast("🗑️ Draf dihapus", "info");
+        showToast("Draf dihapus", "info");
     }
 }
 
@@ -491,7 +491,7 @@ async function tambahTransaksi(jenis) {
     const catatan = catEl.value.trim() || '-';
 
     if (!keterangan || isNaN(harga) || harga <= 0) {
-        showToast("⚠️ Isi Keterangan dan Harga Nominal yang valid!", "error");
+        showToast("Isi Keterangan dan Harga Nominal yang valid!", "error");
         return;
     }
 
@@ -509,12 +509,12 @@ async function tambahTransaksi(jenis) {
     if (editIndex >= 0) {
         transaksi[editIndex] = { divisi, jenis, keterangan, harga, qty, totalNominal: harga * qty, notaData: notaData || transaksi[editIndex].notaData, catatan };
         editIndex = -1;
-        document.getElementById('btnSubmitMasuk').innerText = '+ Tambah Uang Masuk';
-        document.getElementById('btnSubmitKeluar').innerText = '+ Tambah Uang Keluar';
-        showToast("💾 Perubahan transaksi disimpan!", "success");
+        document.getElementById('btnSubmitMasuk').innerText = 'Tambah Uang Masuk';
+        document.getElementById('btnSubmitKeluar').innerText = 'Tambah Uang Keluar';
+        showToast("Perubahan transaksi disimpan!", "success");
     } else {
         transaksi.push({ divisi, jenis, keterangan, harga, qty, totalNominal: harga * qty, notaData, catatan });
-        showToast("✅ Transaksi berhasil ditambahkan!", "success");
+        showToast("Transaksi berhasil ditambahkan!", "success");
     }
 
     ketEl.value = ''; hargaEl.value = ''; qtyEl.value = '1'; catEl.value = ''; if (fileEl) fileEl.value = '';
@@ -532,7 +532,7 @@ function editTransaksi(index) {
     document.getElementById(isMasuk ? 'hargaMasuk' : 'hargaKeluar').value = item.harga;
     document.getElementById(isMasuk ? 'jumlahMasuk' : 'jumlahKeluar').value = item.qty;
     document.getElementById(isMasuk ? 'catMasuk' : 'catKeluar').value = item.catatan === '-' ? '' : item.catatan;
-    document.getElementById(isMasuk ? 'btnSubmitMasuk' : 'btnSubmitKeluar').innerText = '💾 Simpan Perubahan';
+    document.getElementById(isMasuk ? 'btnSubmitMasuk' : 'btnSubmitKeluar').innerText = 'Simpan Perubahan';
     hitungSubtotal(item.jenis);
     document.getElementById(isMasuk ? 'cardMasuk' : 'cardKeluar').scrollIntoView({ behavior: 'smooth' });
 }
@@ -542,7 +542,7 @@ function hapusTransaksi(index) {
     transaksi.splice(index, 1);
     simpanKeStorage(false);
     updateTampilan();
-    showToast("🗑️ Transaksi dihapus", "info");
+    showToast("Transaksi dihapus", "info");
 }
 
 function updateSummary() {
@@ -618,23 +618,23 @@ function updateTampilan() {
                 notaHtml = `
                     <img src="${t.notaData.dataUrl}" class="img-preview" alt="Bukti" onclick="openModal('${t.notaData.dataUrl}', '${t.keterangan}')">
                     <div style="text-align: center; margin-top:2px;">
-                        <span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">✏️</span>
-                        <span class="btn-nota-delete" onclick="hapusNota(${t.realIndex})">🗑️</span>
+                        <span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">Ganti</span>
+                        <span class="btn-nota-delete" onclick="hapusNota(${t.realIndex})">Hapus</span>
                     </div>`;
             } else {
-                notaHtml = `<span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">➕ Upload</span>`;
+                notaHtml = `<span class="btn-nota-action" onclick="triggerGantiNota(${t.realIndex})">Upload</span>`;
             }
 
             tbody.innerHTML += `<tr>
-                <td style="text-align: center;">${i + 1}</td>
-                <td><span class="${t.jenis === 'Masuk' ? 'badge-masuk' : 'badge-keluar'}">${t.jenis}</span></td>
-                <td>${t.keterangan}</td>
-                <td>${formatRupiah(t.harga)}</td>
-                <td style="text-align: center;">${t.qty}</td>
-                <td><b>${formatRupiah(t.totalNominal)}</b></td>
-                <td style="text-align: center;">${notaHtml}</td>
-                <td>${t.catatan}</td>
-                <td class="col-action">
+                <td data-label="No" style="text-align: center;">${i + 1}</td>
+                <td data-label="Jenis"><span class="${t.jenis === 'Masuk' ? 'badge-masuk' : 'badge-keluar'}">${t.jenis}</span></td>
+                <td data-label="Keterangan">${t.keterangan}</td>
+                <td data-label="Harga Satuan">${formatRupiah(t.harga)}</td>
+                <td data-label="Jumlah" style="text-align: center;">${t.qty}</td>
+                <td data-label="Total"><b>${formatRupiah(t.totalNominal)}</b></td>
+                <td data-label="Nota / Bukti" style="text-align: center;">${notaHtml}</td>
+                <td data-label="Catatan">${t.catatan}</td>
+                <td class="col-action" data-label="Aksi">
                     <button class="btn-edit" onclick="editTransaksi(${t.realIndex})">Edit</button>
                     <button class="btn-delete" onclick="hapusTransaksi(${t.realIndex})">Hapus</button>
                 </td>
@@ -653,6 +653,176 @@ function updateTampilan() {
 }
 
 /* ------------------- GENERATOR BLOB FILE (PDF & WORD) ------------------- */
+/* ------------------- PDF TEKS ASLI (BUKAN GAMBAR) ------------------- */
+// Dibuat langsung dengan jsPDF + autoTable, jadi semua tulisan bisa diseleksi, dicari, dan disalin
+// seperti dokumen Word. Hanya foto lampiran nota yang berupa gambar.
+function pdfSafe(text) {
+    return String(text ?? '')
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"')
+        .replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\u00FF\u2013\u2014\u2022\u2026]/g, '');
+}
+
+function pdfLoadImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+            const w = Math.max(1, Math.round(img.naturalWidth * scale));
+            const h = Math.max(1, Math.round(img.naturalHeight * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve({ data: canvas.toDataURL('image/jpeg', 0.9), w, h });
+        };
+        img.onerror = reject;
+        img.src = dataUrl;
+    });
+}
+
+async function generatePdfBlob({ namaDraft, summary, kelompokDivisi, transaksiBerlampiran }) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 25.4; // sama dengan margin bawaan Word (1 inci)
+    const contentW = pageW - margin * 2;
+    const bottomLimit = pageH - margin;
+    const lineH = 5;
+    let y = margin;
+
+    doc.setProperties({ title: pdfSafe(`Laporan Rekapan Keuangan ${namaDraft}`) });
+
+    // Judul
+    doc.setFont('times', 'bold');
+    doc.setFontSize(12);
+    const judul = doc.splitTextToSize(pdfSafe(`LAPORAN REKAPAN KEUANGAN ${namaDraft.toUpperCase()}`), contentW);
+    doc.text(judul, pageW / 2, y + 4, { align: 'center' });
+    y += judul.length * 5.5 + 5;
+
+    // Ringkasan kegiatan
+    doc.setFontSize(11);
+    doc.text('RINGKASAN KEGIATAN', margin, y + 4);
+    y += 8;
+    doc.setFont('times', 'normal');
+    const ringkasan = [
+        ['\u2022 Total Peserta Hadir', `${summary.totalPeserta} Orang`],
+        ['\u2022 Total Uang Masuk', formatRupiah(summary.totalMasuk)],
+        ['\u2022 Total Uang Keluar', formatRupiah(summary.totalKeluar)],
+        ['\u2022 Sisa Saldo Akhir', `${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)`]
+    ];
+    ringkasan.forEach(([label, value]) => {
+        const valLines = doc.splitTextToSize(pdfSafe(value), contentW - 62);
+        doc.text(label, margin + 3, y + 4);
+        doc.text(':', margin + 58, y + 4);
+        doc.text(valLines, margin + 62, y + 4);
+        y += valLines.length * lineH + 1;
+    });
+
+    // Rincian transaksi
+    y += 5;
+    doc.setFont('times', 'bold');
+    doc.text('RINCIAN TRANSAKSI', margin, y + 4);
+    y += 7;
+
+    const body = [];
+    for (const [divName, items] of Object.entries(kelompokDivisi)) {
+        body.push([{ content: pdfSafe(divName), colSpan: 6, styles: { fontStyle: 'bold', halign: 'left' } }]);
+        items.forEach((t, i) => {
+            body.push([
+                String(i + 1),
+                pdfSafe(t.jenis),
+                pdfSafe(t.keterangan),
+                formatRupiah(t.harga),
+                String(t.qty),
+                formatRupiah(t.totalNominal)
+            ]);
+        });
+    }
+    const totalRow = (label, nilai) => [
+        { content: label, colSpan: 5, styles: { fontStyle: 'bold', halign: 'left' } },
+        { content: formatRupiah(nilai), styles: { fontStyle: 'bold', halign: 'left' } }
+    ];
+    body.push(totalRow('Total Uang Masuk', summary.totalMasuk));
+    body.push(totalRow('Total Uang Keluar', summary.totalKeluar));
+    body.push(totalRow('Total Akhir (Uang Masuk - Uang Keluar)', summary.saldoAkhir));
+
+    doc.autoTable({
+        startY: y,
+        margin: { left: margin, right: margin, top: margin, bottom: margin },
+        head: [['No', 'Jenis', 'Keterangan', 'Harga Satuan', 'Jumlah', 'Total Nominal']],
+        body,
+        theme: 'grid',
+        rowPageBreak: 'avoid',
+        styles: {
+            font: 'times', fontSize: 10.5, textColor: 0,
+            lineColor: 0, lineWidth: 0.2, valign: 'middle',
+            cellPadding: { top: 2.2, bottom: 2.2, left: 3, right: 3 }
+        },
+        headStyles: { fillColor: 255, textColor: 0, fontStyle: 'bold', halign: 'center' },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 12 },
+            1: { halign: 'center', cellWidth: 20 },
+            2: { cellWidth: 'auto' },
+            3: { halign: 'left', cellWidth: 30 },
+            4: { halign: 'center', cellWidth: 21 },
+            5: { halign: 'left', cellWidth: 30 }
+        }
+    });
+    y = doc.lastAutoTable.finalY;
+
+    // Lampiran bukti nota (satu-satunya bagian yang berupa gambar)
+    if (transaksiBerlampiran.length > 0) {
+        doc.addPage();
+        y = margin;
+        doc.setFont('times', 'bold');
+        doc.setFontSize(11);
+        doc.text('LAMPIRAN BUKTI NOTA & TRANSAKSI', margin, y + 4);
+        y += 11;
+
+        for (const [idx, t] of transaksiBerlampiran.entries()) {
+            const caption = doc.splitTextToSize(
+                pdfSafe(`Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}`),
+                contentW
+            );
+
+            let img = null, imgW = 0, imgH = 0;
+            try {
+                img = await pdfLoadImage(t.notaData.dataUrl);
+                const ratio = Math.min(90 / img.w, 100 / img.h, 25.4 / 96);
+                imgW = img.w * ratio;
+                imgH = img.h * ratio;
+            } catch (e) {
+                console.error('Gagal merender gambar ke PDF', e);
+            }
+
+            if (y + caption.length * lineH + 3 + imgH + 10 > bottomLimit) {
+                doc.addPage();
+                y = margin;
+            }
+
+            doc.setFont('times', 'bold');
+            doc.setFontSize(11);
+            doc.text(caption, margin, y + 4);
+            y += caption.length * lineH + 3;
+
+            if (img) {
+                doc.addImage(img.data, 'JPEG', margin, y, imgW, imgH);
+                doc.setDrawColor(190);
+                doc.setLineWidth(0.2);
+                doc.rect(margin, y, imgW, imgH);
+                y += imgH;
+            }
+            y += 10;
+        }
+    }
+
+    return doc.output('blob');
+}
+
 async function generateFileBlob(formatType) {
     const summary = updateSummary();
     const draft = listDraft.find(d => d.id === currentDraftId);
@@ -709,113 +879,7 @@ async function generateFileBlob(formatType) {
     }
 
     if (formatType === 'pdf') {
-        const element = document.createElement('div');
-        element.style.width = '100%';
-        element.style.padding = '15px';
-        element.style.fontFamily = "'Times New Roman', serif";
-        element.style.color = '#000';
-        element.style.fontSize = '11pt';
-        element.style.background = '#ffffff';
-
-        let html = `
-            <div style="text-align: center; margin-bottom: 15px;">
-                <img src="${GCC_LOGO_URL}" style="height: 45px; width: 45px; object-fit: contain; margin-bottom: 4px; display: inline-block;" crossorigin="anonymous"><br>
-                <h3 style="margin: 0; text-transform: uppercase;">LAPORAN REKAPAN KEUANGAN ${namaDraft}</h3>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-                <h4 style="margin: 0 0 6px 0; text-transform: uppercase;">RINGKASAN KEGIATAN</h4>
-                <table style="width: 100%; border: none; font-size: 11pt; border-collapse: collapse;">
-                    <tr style="border: none;"><td style="width: 190px; border: none; padding: 2px 0 2px 5px; font-weight: bold;">• Total Peserta Hadir</td><td style="width: 15px; border: none; padding: 2px 0;">:</td><td style="border: none; padding: 2px 0;">${summary.totalPeserta} Orang</td></tr>
-                    <tr style="border: none;"><td style="border: none; padding: 2px 0 2px 5px; font-weight: bold;">• Total Uang Masuk</td><td style="width: 15px; border: none; padding: 2px 0;">:</td><td style="border: none; padding: 2px 0;">${formatRupiah(summary.totalMasuk)}</td></tr>
-                    <tr style="border: none;"><td style="border: none; padding: 2px 0 2px 5px; font-weight: bold;">• Total Uang Keluar</td><td style="width: 15px; border: none; padding: 2px 0;">:</td><td style="border: none; padding: 2px 0;">${formatRupiah(summary.totalKeluar)}</td></tr>
-                    <tr style="border: none;"><td style="border: none; padding: 2px 0 2px 5px; font-weight: bold;">• Sisa Saldo Akhir</td><td style="width: 15px; border: none; padding: 2px 0;">:</td><td style="border: none; padding: 2px 0;">${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)</td></tr>
-                </table>
-            </div>
-
-            <h4 style="margin: 0 0 6px 0; text-transform: uppercase;">RINCIAN TRANSAKSI</h4>
-            <table border="1" style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                <thead>
-                    <tr style="background-color: #ffffff; color: #000000;">
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 35px; color: #000000;">No</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 65px; color: #000000;">Jenis</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #000000;">Keterangan</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #000000;">Harga Satuan</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; width: 50px; color: #000000;">Jumlah</th>
-                        <th style="padding: 6px 6px 6px 12px; text-align: center; color: #000000;">Total Nominal</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        for (const [divName, items] of Object.entries(kelompokDivisi)) {
-            html += `<tr><td colspan="6" style="background-color: #fafafa; font-weight: bold; padding: 6px 6px 6px 12px;"><b>${divName}</b></td></tr>`;
-            items.forEach((t, i) => {
-                html += `
-                    <tr>
-                        <td style="padding: 5px 5px 5px 12px; text-align: center;">${i + 1}</td>
-                        <td style="padding: 5px 5px 5px 12px; text-align: center;">${t.jenis}</td>
-                        <td style="padding: 5px 5px 5px 12px;">${t.keterangan}</td>
-                        <td style="padding: 5px 5px 5px 12px; text-align: left;">${formatRupiah(t.harga)}</td>
-                        <td style="padding: 5px 5px 5px 12px; text-align: center;">${t.qty}</td>
-                        <td style="padding: 5px 5px 5px 12px; text-align: left;">${formatRupiah(t.totalNominal)}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        html += `
-                </tbody>
-            </table>
-            
-            <table border="1" style="width: 100%; border-collapse: collapse; margin-top: -1px; font-size: 10pt; font-weight: bold;">
-                <tr>
-                    <td colspan="5" style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Uang Masuk</td>
-                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">${formatRupiah(summary.totalMasuk)}</td>
-                </tr>
-                <tr>
-                    <td colspan="5" style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Uang Keluar</td>
-                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">${formatRupiah(summary.totalKeluar)}</td>
-                </tr>
-                <tr>
-                    <td colspan="5" style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">Total Akhir (Uang Masuk - Uang Keluar)</td>
-                    <td style="padding: 6px 6px 6px 12px; text-align: left; font-weight: bold;">${formatRupiah(summary.saldoAkhir)}</td>
-                </tr>
-            </table>
-        `;
-
-        if (transaksiBerlampiran.length > 0) {
-            html += `
-                <div style="page-break-before: always; margin-top: 20px;">
-                    <h4 style="text-align: left; text-transform: uppercase; margin-bottom: 15px;">LAMPIRAN BUKTI NOTA & TRANSAKSI</h4>
-            `;
-            transaksiBerlampiran.forEach((t, idx) => {
-                html += `
-                    <div style="margin-bottom: 25px;">
-                        <p style="font-weight: bold; margin-bottom: 5px; text-align: left;">Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}</p>
-                        <div style="text-align: left; width: 100%;">
-                            <img src="${t.notaData.dataUrl}" style="max-width: 350px; max-height: 350px; object-fit: contain; border: 1px solid #ccc; padding: 4px; display: inline-block;" crossorigin="anonymous">
-                        </div>
-                    </div>
-                `;
-            });
-            html += `</div>`;
-        }
-
-        element.innerHTML = html;
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'fixed';
-        wrapper.style.left = '-9999px';
-        wrapper.style.top = '0';
-        wrapper.style.width = '800px';
-        wrapper.appendChild(element);
-        document.body.appendChild(wrapper);
-
-        const opt = { margin: 10, filename: getFileNameFormat('pdf'), html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4' } };
-        const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
-        
-        document.body.removeChild(wrapper);
-        return pdfBlob;
+        return await generatePdfBlob({ namaDraft, summary, kelompokDivisi, transaksiBerlampiran });
     }
 
     if (formatType === 'docx') {
@@ -930,21 +994,21 @@ async function exportToExcel() {
     const fileName = getFileNameFormat('xlsx');
     const blob = await generateFileBlob('xlsx');
     saveAs(blob, fileName);
-    showToast(`📊 File ${fileName} berhasil di-download!`, "success");
+    showToast(`File ${fileName} berhasil di-download!`, "success");
 }
 
 async function exportToPDF() {
     const fileName = getFileNameFormat('pdf');
     const blob = await generateFileBlob('pdf');
     saveAs(blob, fileName);
-    showToast(`📕 File ${fileName} berhasil di-download!`, "success");
+    showToast(`File ${fileName} berhasil di-download!`, "success");
 }
 
 async function exportToWord() {
     const fileName = getFileNameFormat('docx');
     const blob = await generateFileBlob('docx');
     saveAs(blob, fileName);
-    showToast(`📄 File ${fileName} berhasil di-download!`, "success");
+    showToast(`File ${fileName} berhasil di-download!`, "success");
 }
 
 async function uploadKeDrive(formatType) {
@@ -955,7 +1019,7 @@ async function uploadKeDrive(formatType) {
     const targetFolderId = FOLDER_MAP[dept]?.[category];
 
     if (!targetFolderId) {
-        showToast("⚠️ ID Folder Google Drive belum terdaftar!", "error");
+        showToast("ID Folder Google Drive belum terdaftar!", "error");
         return;
     }
 
@@ -986,17 +1050,17 @@ async function uploadKeDrive(formatType) {
                 
                 const result = await response.json();
                 if (result.status === "success" || response.ok) {
-                    showToast(`✅ Berhasil mengirim "${fileName}" ke Google Drive!`, "success");
+                    showToast(`Berhasil mengirim "${fileName}" ke Google Drive!`, "success");
                 } else {
-                    showToast(`❌ Gagal: ${result.message || 'Unknown error'}`, "error");
+                    showToast(`Gagal: ${result.message || 'Unknown error'}`, "error");
                 }
             } catch (err) {
                 console.error(err);
-                showToast("✅ Permintaan unggah terkirim ke Google Drive!", "success");
+                showToast("Permintaan unggah terkirim ke Google Drive!", "success");
             }
         };
     } catch (err) {
         console.error(err);
-        showToast("❌ Gagal memproses file untuk Google Drive.", "error");
+        showToast("Gagal memproses file untuk Google Drive.", "error");
     }
 }
