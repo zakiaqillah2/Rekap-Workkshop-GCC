@@ -70,6 +70,17 @@
         </div>
     </div>
 
+    <!-- Pratinjau Kuitansi -->
+    <div id="kuitansiModal" class="kw-overlay" onclick="if (event.target === this) tutupKuitansi()">
+        <div class="kw-dialog" role="dialog" aria-modal="true" aria-label="Pratinjau kuitansi">
+            <div class="kw-actions">
+                <button type="button" class="btn-mini primary" onclick="cetakKuitansi()">Cetak / Simpan PDF</button>
+                <button type="button" class="btn-mini" onclick="tutupKuitansi()">Tutup</button>
+            </div>
+            <div id="kwSheet"></div>
+        </div>
+    </div>
+
     <!-- Tombol kembali ke atas -->
     <button id="btnKeAtas" class="btn-ke-atas" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" aria-label="Kembali ke atas">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -316,6 +327,7 @@
                     <option value="ALL">Semua Jenis</option>
                     <option value="Masuk">Hanya Uang Masuk</option>
                     <option value="Keluar">Hanya Uang Keluar</option>
+                    <option value="NONOTA">Keluar tanpa nota</option>
                 </select>
                 <select id="sortTransaksi" onchange="updateTampilan()" aria-label="Urutkan transaksi">
                     <option value="default">Urutan Input</option>
@@ -441,6 +453,18 @@
                     <div class="chart-wrapper">
                         <canvas id="chartTop"></canvas>
                     </div>
+                </div>
+            </div>
+
+            <!-- Rekap per Divisi & Aktivitas Terakhir -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h4>Rekap per Divisi</h4>
+                    <div id="rekapDivisiList" class="rekap-list"></div>
+                </div>
+                <div class="chart-card">
+                    <h4>Aktivitas Terakhir</h4>
+                    <ul id="aktivitasList" class="aktivitas-list"></ul>
                 </div>
             </div>
 
@@ -588,6 +612,54 @@
                     </div>
                 </div>
 
+                <!-- Pembuat Kuitansi -->
+                <div class="tool-card tool-wide">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></svg></span>
+                        <div>
+                            <h3>Pembuat Kuitansi</h3>
+                            <p>Buat kuitansi rapi lengkap dengan terbilang otomatis, lalu cetak atau simpan sebagai PDF. Bisa diisi otomatis dari transaksi yang sudah dicatat.</p>
+                        </div>
+                    </div>
+                    <div class="kw-grid">
+                        <div class="form-group">
+                            <label for="kwSumber">Isi dari transaksi (opsional):</label>
+                            <select id="kwSumber" onchange="kuitansiIsiDariTransaksi()"><option value="">— Isi manual —</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="kwJenis">Jenis kuitansi:</label>
+                            <select id="kwJenis">
+                                <option value="terima">Penerimaan uang (telah terima dari)</option>
+                                <option value="bayar">Pembayaran (telah dibayarkan kepada)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="kwNama">Nama pihak terkait:</label>
+                            <input type="text" id="kwNama" placeholder="mis. Budi Santoso / Toko Maju Jaya">
+                        </div>
+                        <div class="form-group">
+                            <label for="kwUntuk">Untuk pembayaran:</label>
+                            <input type="text" id="kwUntuk" placeholder="mis. Konsumsi kegiatan">
+                        </div>
+                        <div class="form-group">
+                            <label for="kwNominal">Nominal (Rp):</label>
+                            <input type="number" id="kwNominal" min="0" placeholder="mis. 1500000" oninput="kuitansiTerbilangLive()">
+                            <div class="terbilang-text" id="kwTerbilang"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="kwTanggal">Tanggal:</label>
+                            <input type="date" id="kwTanggal">
+                        </div>
+                        <div class="form-group">
+                            <label for="kwBendahara">Nama bendahara (penandatangan):</label>
+                            <input type="text" id="kwBendahara" placeholder="Nama bendahara">
+                        </div>
+                    </div>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini primary" onclick="bukaKuitansi()">Pratinjau &amp; Cetak Kuitansi</button>
+                    </div>
+                </div>
+
                 <!-- Backup & Restore -->
                 <div class="tool-card tool-wide">
                     <div class="tool-head">
@@ -645,6 +717,11 @@
                         </select>
                     </div>
                 </div>
+
+                <label class="drive-opt">
+                    <input type="checkbox" id="driveKonversi" checked>
+                    <span>Simpan juga sebagai Google Docs / Google Sheets agar langsung bisa dibuka dan diedit. File PDF tetap berupa PDF.</span>
+                </label>
 
                 <div class="export-group export-drive">
                     <button class="btn-word" onclick="uploadKeDrive('docx')">Upload Word (.docx)</button>
