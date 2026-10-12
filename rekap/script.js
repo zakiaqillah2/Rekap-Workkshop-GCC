@@ -78,46 +78,230 @@ function hapusNota(realIndex) {
     }
 }
 
+/* ---------------------------------------------------------------------
+   PEMBANTU WORD (.docx)
+   Supaya tampilan sama di Microsoft Word, Google Docs, LibreOffice, Pages,
+   pratinjau Drive, dsb., dokumen dibuat dengan aturan berikut:
+   - lebar tabel & kolom memakai satuan tetap (DXA), BUKAN persen
+     (persen sering dibaca salah oleh Google Docs sehingga tabel menciut)
+   - setiap sel punya lebar sendiri dan tata letak tabel dikunci ("fixed")
+   - font, ukuran kertas (A4) dan margin (1 inci) ditetapkan eksplisit
+   - baris tabel tidak terpotong antar halaman, judul kolom berulang
+   - gambar nota dijaga rasio aslinya (tidak gepeng) dan memakai tipe jpg
+   - data cadangan untuk fitur Impor disimpan di properti dokumen,
+     bukan sebagai teks tersembunyi yang tampil sebagai tulisan acak
+   --------------------------------------------------------------------- */
+const DOCX_FONT = 'Times New Roman';
+const DOCX_LEBAR_ISI = 9026;                              // A4 (11906) dikurangi margin 2 x 1440
+const DOCX_KOLOM_RINCIAN = [560, 900, 2966, 1800, 1000, 1800]; // jumlah = 9026
+const DOCX_UKURAN_POTONGAN = 30000;
+
+function docxBorders(docx, tampak) {
+    const b = tampak
+        ? { style: docx.BorderStyle.SINGLE, size: 4, color: '000000' }
+        : { style: docx.BorderStyle.NONE, size: 0, color: 'auto' };
+    return { top: b, bottom: b, left: b, right: b };
+}
+
+function docxSel(docx, teks, lebar, o = {}) {
+    return new docx.TableCell({
+        width: { size: lebar, type: docx.WidthType.DXA },
+        columnSpan: o.span || 1,
+        borders: docxBorders(docx, o.garis !== false),
+        margins: { top: o.padV ?? 80, bottom: o.padV ?? 80, left: 100, right: 100 },
+        verticalAlign: docx.VerticalAlign.CENTER,
+        children: [new docx.Paragraph({
+            alignment: o.rata || docx.AlignmentType.LEFT,
+            keepNext: !!o.keepNext,
+            children: [new docx.TextRun({ text: String(teks ?? ''), bold: !!o.tebal })]
+        })]
+    });
+}
+
+function docxBaris(docx, sel, o = {}) {
+    return new docx.TableRow({ cantSplit: true, tableHeader: !!o.header, children: sel });
+}
+
+function docxBuatTabel(docx, kolom, baris, bergaris = true) {
+    const total = kolom.reduce((a, b) => a + b, 0);
+    const b = docxBorders(docx, bergaris);
+    return new docx.Table({
+        width: { size: total, type: docx.WidthType.DXA },
+        columnWidths: kolom,
+        layout: docx.TableLayoutType.FIXED,
+        borders: { top: b.top, bottom: b.bottom, left: b.left, right: b.right, insideHorizontal: b.top, insideVertical: b.top },
+        rows: baris
+    });
+}
+
+function docxGayaDasar() {
+    return { default: { document: { run: { font: DOCX_FONT, size: 22 } } } };
+}
+
+function docxHalaman() {
+    return { page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } };
+}
+
+/* Data cadangan dipecah jadi potongan agar tiap properti tidak terlalu panjang */
+function docxPropertiData(teks) {
+    const hasil = [];
+    for (let i = 0, n = 0; i < teks.length; i += DOCX_UKURAN_POTONGAN, n++) {
+        hasil.push({ name: 'GCC_DATA_' + String(n).padStart(4, '0'), value: teks.slice(i, i + DOCX_UKURAN_POTONGAN) });
+    }
+    return hasil;
+}
+
+/* Membaca kembali data cadangan dari properti dokumen (file Word hasil ekspor versi ini) */
+async function bacaDataGCCDariDocx(arrayBuffer) {
+    if (typeof JSZip === 'undefined') return null;
+    try {
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const berkas = zip.file('docProps/custom.xml');
+        if (!berkas) return null;
+        const xml = await berkas.async('string');
+        const dok = new DOMParser().parseFromString(xml, 'application/xml');
+        const potongan = Array.from(dok.getElementsByTagName('property'))
+            .map(p => ({ nama: p.getAttribute('name') || '', isi: p.textContent || '' }))
+            .filter(p => /^GCC_DATA_\d+$/.test(p.nama))
+            .sort((a, b) => a.nama.localeCompare(b.nama));
+        if (!potongan.length) return null;
+        return JSON.parse(decodeURIComponent(potongan.map(p => p.isi).join('').replace(/\s+/g, '')));
+    } catch (e) {
+        console.error('Gagal membaca data cadangan dari properti dokumen', e);
+        return null;
+    }
+}
+
+async function docxGambar(docx, dataUrl) {
+    const img = await pdfLoadImage(dataUrl);               // dinormalkan ke JPEG + ukuran asli
+    const skala = Math.min(1, 480 / img.w, 560 / img.h);   // muat di halaman, rasio tetap
+    const biner = atob(img.data.split(',')[1]);
+    const bytes = new Uint8Array(biner.length);
+    for (let i = 0; i < biner.length; i++) bytes[i] = biner.charCodeAt(i);
+    return new docx.ImageRun({
+        type: 'jpg',
+        data: bytes,
+        transformation: { width: Math.max(1, Math.round(img.w * skala)), height: Math.max(1, Math.round(img.h * skala)) }
+    });
+}
+
+async function generateDocxBlob({ namaDraft, summary, kelompokDivisi, transaksiBerlampiran, metadata }) {
+    const { docx } = window;
+    const A = docx.AlignmentType;
+    const W = DOCX_KOLOM_RINCIAN;
+    const lebarLabel = DOCX_LEBAR_ISI - W[5];
+
+    // Tabel ringkasan (tanpa garis, kolom tetap)
+    const kolomRingkas = [3000, 300, DOCX_LEBAR_ISI - 3300];
+    const dataRingkas = [
+        ['\u2022 Total Peserta Hadir', `${summary.totalPeserta} Orang`],
+        ['\u2022 Total Uang Masuk', formatRupiah(summary.totalMasuk)],
+        ['\u2022 Total Uang Keluar', formatRupiah(summary.totalKeluar)],
+        ['\u2022 Sisa Saldo Akhir', `${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)`]
+    ];
+    const tabelRingkas = docxBuatTabel(docx, kolomRingkas, dataRingkas.map(([l, v]) => docxBaris(docx, [
+        docxSel(docx, l, kolomRingkas[0], { garis: false, padV: 40 }),
+        docxSel(docx, ':', kolomRingkas[1], { garis: false, padV: 40 }),
+        docxSel(docx, v, kolomRingkas[2], { garis: false, padV: 40 })
+    ])), false);
+
+    // Tabel rincian transaksi
+    const judulKolom = ['No', 'Jenis', 'Keterangan', 'Harga Satuan', 'Jumlah', 'Total Nominal'];
+    const baris = [docxBaris(docx, judulKolom.map((h, i) => docxSel(docx, h, W[i], { rata: A.CENTER, tebal: true })), { header: true })];
+
+    for (const [namaDivisi, items] of Object.entries(kelompokDivisi)) {
+        baris.push(docxBaris(docx, [docxSel(docx, namaDivisi, DOCX_LEBAR_ISI, { tebal: true, span: 6, keepNext: true })]));
+        items.forEach((t, i) => {
+            baris.push(docxBaris(docx, [
+                docxSel(docx, String(i + 1), W[0], { rata: A.CENTER }),
+                docxSel(docx, t.jenis, W[1], { rata: A.CENTER }),
+                docxSel(docx, t.keterangan, W[2]),
+                docxSel(docx, formatRupiah(t.harga), W[3]),
+                docxSel(docx, String(t.qty), W[4], { rata: A.CENTER }),
+                docxSel(docx, formatRupiah(t.totalNominal), W[5])
+            ]));
+        });
+    }
+    [['Total Uang Masuk', summary.totalMasuk],
+     ['Total Uang Keluar', summary.totalKeluar],
+     ['Total Akhir (Uang Masuk - Uang Keluar)', summary.saldoAkhir]].forEach(([label, nilai]) => {
+        baris.push(docxBaris(docx, [
+            docxSel(docx, label, lebarLabel, { tebal: true, span: 5 }),
+            docxSel(docx, formatRupiah(nilai), W[5], { tebal: true })
+        ]));
+    });
+    const tabelRincian = docxBuatTabel(docx, W, baris, true);
+
+    const anak = [
+        new docx.Paragraph({ alignment: A.CENTER, spacing: { after: 200 }, children: [new docx.TextRun({ text: `LAPORAN REKAPAN KEUANGAN ${namaDraft.toUpperCase()}`, bold: true, size: 24 })] }),
+        new docx.Paragraph({ spacing: { after: 100 }, keepNext: true, children: [new docx.TextRun({ text: 'RINGKASAN KEGIATAN', bold: true, size: 22 })] }),
+        tabelRingkas,
+        new docx.Paragraph({ spacing: { before: 280, after: 100 }, keepNext: true, children: [new docx.TextRun({ text: 'RINCIAN TRANSAKSI', bold: true, size: 22 })] }),
+        tabelRincian
+    ];
+
+    // Lampiran bukti nota: mulai di halaman baru, judul selalu menempel dengan gambarnya
+    if (transaksiBerlampiran.length > 0) {
+        anak.push(new docx.Paragraph({ pageBreakBefore: true, spacing: { after: 200 }, keepNext: true, children: [new docx.TextRun({ text: 'LAMPIRAN BUKTI NOTA & TRANSAKSI', bold: true, size: 22 })] }));
+        for (const [idx, t] of transaksiBerlampiran.entries()) {
+            anak.push(new docx.Paragraph({
+                keepNext: true, spacing: { before: idx ? 240 : 0, after: 100 },
+                children: [new docx.TextRun({ text: `Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}`, bold: true })]
+            }));
+            try {
+                anak.push(new docx.Paragraph({ alignment: A.LEFT, spacing: { after: 120 }, children: [await docxGambar(docx, t.notaData.dataUrl)] }));
+            } catch (e) {
+                console.error('Gagal merender gambar ke Word', e);
+                anak.push(new docx.Paragraph({ children: [new docx.TextRun({ text: '(Gambar nota tidak dapat ditampilkan)', italics: true })] }));
+            }
+        }
+    }
+
+    const doc = new docx.Document({
+        creator: 'GAMATIKA Coding Club',
+        title: `Laporan Rekapan Keuangan ${namaDraft}`,
+        customProperties: docxPropertiData(metadata),
+        styles: docxGayaDasar(),
+        sections: [{ properties: docxHalaman(), children: anak }]
+    });
+    return await docx.Packer.toBlob(doc);
+}
+
 async function downloadTemplateWord() {
     const { docx } = window;
-    const borderStandard = { style: docx.BorderStyle.SINGLE, size: 1, color: "000000" };
-    const borders = { top: borderStandard, bottom: borderStandard, left: borderStandard, right: borderStandard, insideHorizontal: borderStandard, insideVertical: borderStandard };
+    const A = docx.AlignmentType;
+    const W = [560, 1300, 2666, 1700, 1300, 1500];           // jumlah = 9026
+    const judul = ['No', 'Jenis (Masuk/Keluar)', 'Keterangan', 'Harga Satuan (Rp)', 'Jumlah (Qty)', 'Total Nominal (Rp)'];
 
-    const templateRows = [
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "No", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Jenis (Masuk/Keluar)", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Keterangan", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Harga Satuan (Rp)", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Jumlah (Qty)", bold: true, alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Total Nominal (Rp)", bold: true, alignment: docx.AlignmentType.CENTER })] })
-            ]
-        }),
-        new docx.TableRow({ children: [new docx.TableCell({ columnSpan: 6, children: [new docx.Paragraph({ text: "CONTER", bold: true })] })] }),
-        new docx.TableRow({
-            children: [
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Masuk" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "Dana Kas GCC" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "1000000" })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "1", alignment: docx.AlignmentType.CENTER })] }),
-                new docx.TableCell({ children: [new docx.Paragraph({ text: "1000000" })] })
-            ]
-        })
+    const baris = [
+        docxBaris(docx, judul.map((h, i) => docxSel(docx, h, W[i], { rata: A.CENTER, tebal: true })), { header: true }),
+        docxBaris(docx, [docxSel(docx, 'CONTER', DOCX_LEBAR_ISI, { tebal: true, span: 6, keepNext: true })]),
+        docxBaris(docx, [
+            docxSel(docx, '1', W[0], { rata: A.CENTER }),
+            docxSel(docx, 'Masuk', W[1], { rata: A.CENTER }),
+            docxSel(docx, 'Dana Kas GCC', W[2]),
+            docxSel(docx, '1000000', W[3]),
+            docxSel(docx, '1', W[4], { rata: A.CENTER }),
+            docxSel(docx, '1000000', W[5])
+        ])
     ];
 
     const doc = new docx.Document({
+        creator: 'GAMATIKA Coding Club',
+        title: 'Templat Keuangan GCC',
+        styles: docxGayaDasar(),
         sections: [{
+            properties: docxHalaman(),
             children: [
-                new docx.Paragraph({ children: [new docx.TextRun({ text: "TEMPLAT KEUANGAN GCC", bold: true, size: 24 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 150 } }),
-                new docx.Table({ borders: borders, rows: templateRows, width: { size: 100, type: docx.WidthType.PERCENTAGE } })
+                new docx.Paragraph({ alignment: A.CENTER, spacing: { after: 200 }, children: [new docx.TextRun({ text: 'TEMPLAT KEUANGAN GCC', bold: true, size: 24 })] }),
+                docxBuatTabel(docx, W, baris, true)
             ]
         }]
     });
 
-    docx.Packer.toBlob(doc).then(blob => { saveAs(blob, "Templat_Rekapan_Keuangan_GCC.docx"); });
-    showToast("Templat Word berhasil di-download!", "success");
+    const blob = await docx.Packer.toBlob(doc);
+    saveAs(blob, 'Templat_Rekapan_Keuangan_GCC.docx');
+    showToast('Templat Word berhasil di-download!', 'success');
 }
 
 async function imporDokumen(event) {
@@ -129,11 +313,15 @@ async function imporDokumen(event) {
 
     try {
         const arrayBuffer = await file.arrayBuffer();
-        const rawTextResult = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-        const matchData = rawTextResult.value.match(/GCC_DATA_START:::(.*?):::GCC_DATA_END/s);
+        let decodedJson = await bacaDataGCCDariDocx(arrayBuffer);
+        if (!decodedJson) {
+            // Kompatibel dengan file Word lama yang datanya disimpan sebagai teks penanda
+            const rawTextResult = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+            const matchData = rawTextResult.value.match(/GCC_DATA_START:::(.*?):::GCC_DATA_END/s);
+            if (matchData && matchData[1]) decodedJson = JSON.parse(decodeURIComponent(matchData[1].replace(/\s+/g, '')));
+        }
 
-        if (matchData && matchData[1]) {
-            const decodedJson = JSON.parse(decodeURIComponent(matchData[1].replace(/\s+/g, '')));
+        if (decodedJson) {
             simpanStateKeHistory();
             if (decodedJson.jumlahPeserta !== undefined) document.getElementById('jumlahPeserta').value = decodedJson.jumlahPeserta;
             if (Array.isArray(decodedJson.transaksi)) transaksi = decodedJson.transaksi.map(rapikanTransaksi).filter(Boolean);
@@ -452,6 +640,133 @@ async function generatePdfBlob({ namaDraft, summary, kelompokDivisi, transaksiBe
     return doc.output('blob');
 }
 
+/* ---------------------------------------------------------------------
+   EXCEL (.xlsx) — dibuat dengan ExcelJS agar rapi di Excel, Google Sheets,
+   LibreOffice, dan pratinjau Drive: lebar kolom pas, teks panjang dibungkus,
+   garis tabel, format Rupiah (angka tetap angka sehingga bisa dijumlah),
+   dan pengaturan cetak A4.
+   --------------------------------------------------------------------- */
+async function generateXlsxBlob({ namaDraft, summary, kelompokDivisi, transaksiBerlampiran }) {
+    if (typeof ExcelJS === 'undefined') throw new Error('Library ExcelJS belum termuat');
+
+    const FONT = 'Times New Roman';
+    const FMT_RP = '"Rp" #,##0;-"Rp" #,##0';
+    const garis = { style: 'thin', color: { argb: 'FF000000' } };
+    const kotak = { top: garis, left: garis, bottom: garis, right: garis };
+    const LEBAR = [6, 12, 44, 18, 10, 20];                  // A..F
+    const JML_KOLOM = LEBAR.length;
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'GAMATIKA Coding Club';
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet('Rekapan Keuangan', { views: [{ showGridLines: false }] });
+    LEBAR.forEach((lebar, i) => { ws.getColumn(i + 1).width = lebar; });
+    ws.pageSetup = {
+        paperSize: 9, orientation: 'portrait',
+        fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+        margins: { left: 0.7, right: 0.7, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 }
+    };
+    ws.headerFooter.oddFooter = '&CHalaman &P dari &N';
+
+    const gaya = (sel, o = {}) => {
+        sel.font = { name: FONT, size: o.ukuran || 11, bold: !!o.tebal };
+        sel.alignment = { horizontal: o.rata || 'left', vertical: 'middle', wrapText: o.bungkus !== false };
+        if (o.fmt) sel.numFmt = o.fmt;
+        if (o.garis) sel.border = kotak;
+        if (o.isi) sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: o.isi } };
+    };
+    const tinggiTeks = (teks, lebarKarakter, minimal = 20) =>
+        Math.max(minimal, Math.ceil(String(teks || '').length / lebarKarakter) * 15 + 5);
+
+    let n = 0;
+    const barisBaru = () => ws.getRow(++n);
+
+    // Satu sel lebar yang digabung dari kolom `dari` sampai `sampai`
+    const gabung = (teks, o = {}, dari = 1, sampai = JML_KOLOM) => {
+        const r = barisBaru();
+        if (sampai > dari) ws.mergeCells(r.number, dari, r.number, sampai);
+        for (let c = dari; c <= sampai; c++) gaya(r.getCell(c), o);
+        r.getCell(dari).value = teks;
+        if (o.tinggi) r.height = o.tinggi;
+        return r;
+    };
+
+    // Judul & ringkasan
+    gabung(`LAPORAN REKAPAN KEUANGAN ${namaDraft.toUpperCase()}`, { tebal: true, ukuran: 13, rata: 'center', tinggi: tinggiTeks(namaDraft, 60, 26) });
+    barisBaru();
+    gabung('RINGKASAN KEGIATAN', { tebal: true });
+
+    const ringkas = (label, nilai, fmt) => {
+        const r = barisBaru();
+        ws.mergeCells(r.number, 1, r.number, 3);
+        ws.mergeCells(r.number, 4, r.number, 6);
+        [1, 2, 3].forEach(c => gaya(r.getCell(c)));
+        [4, 5, 6].forEach(c => gaya(r.getCell(c), { fmt }));
+        r.getCell(1).value = label;
+        r.getCell(4).value = nilai;
+        r.height = 20;
+    };
+    ringkas('\u2022 Total Peserta Hadir', `${summary.totalPeserta} Orang`);
+    ringkas('\u2022 Total Uang Masuk', Number(summary.totalMasuk) || 0, FMT_RP);
+    ringkas('\u2022 Total Uang Keluar', Number(summary.totalKeluar) || 0, FMT_RP);
+    ringkas('\u2022 Sisa Saldo Akhir (Uang Masuk - Uang Keluar)', Number(summary.saldoAkhir) || 0, FMT_RP);
+    barisBaru();
+
+    // Tabel rincian
+    gabung('RINCIAN TRANSAKSI', { tebal: true });
+    const head = barisBaru();
+    ['No', 'Jenis', 'Keterangan', 'Harga Satuan', 'Jumlah', 'Total Nominal'].forEach((h, i) => {
+        const c = head.getCell(i + 1);
+        c.value = h;
+        gaya(c, { tebal: true, rata: 'center', garis: true, isi: 'FFF2F2F2' });
+    });
+    head.height = 22;
+    const barisJudulTabel = head.number;
+
+    for (const [namaDivisi, items] of Object.entries(kelompokDivisi)) {
+        gabung(namaDivisi, { tebal: true, garis: true, isi: 'FFFAFAFA', tinggi: 20 });
+        items.forEach((t, i) => {
+            const r = barisBaru();
+            const rataKolom = ['center', 'center', 'left', 'right', 'center', 'right'];
+            [i + 1, t.jenis, t.keterangan, Number(t.harga) || 0, Number(t.qty) || 0, Number(t.totalNominal) || 0].forEach((v, k) => {
+                const c = r.getCell(k + 1);
+                c.value = v;
+                gaya(c, { garis: true, rata: rataKolom[k], fmt: (k === 3 || k === 5) ? FMT_RP : undefined });
+            });
+            r.height = tinggiTeks(t.keterangan, 40);
+        });
+    }
+
+    [['Total Uang Masuk', summary.totalMasuk],
+     ['Total Uang Keluar', summary.totalKeluar],
+     ['Total Akhir (Uang Masuk - Uang Keluar)', summary.saldoAkhir]].forEach(([label, nilai]) => {
+        const r = barisBaru();
+        ws.mergeCells(r.number, 1, r.number, 5);
+        for (let c = 1; c <= 5; c++) gaya(r.getCell(c), { tebal: true, garis: true });
+        gaya(r.getCell(6), { tebal: true, garis: true, rata: 'right', fmt: FMT_RP });
+        r.getCell(1).value = label;
+        r.getCell(6).value = Number(nilai) || 0;
+        r.height = 22;
+    });
+
+    // Daftar lampiran (teks)
+    if (transaksiBerlampiran.length > 0) {
+        barisBaru();
+        gabung('LAMPIRAN BUKTI NOTA / TRANSAKSI', { tebal: true });
+        transaksiBerlampiran.forEach((t, idx) => {
+            const teks = `Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}`;
+            gabung(teks, { tinggi: tinggiTeks(teks, 100) });
+        });
+    }
+
+    // Judul kolom tabel ikut tercetak di tiap halaman bila tabel panjang
+    ws.pageSetup.printTitlesRow = `${barisJudulTabel}:${barisJudulTabel}`;
+
+    const buffer = await wb.xlsx.writeBuffer();
+    return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
 async function generateFileBlob(formatType) {
     const summary = updateSummary();
     const draft = listDraft.find(d => d.id === currentDraftId);
@@ -467,44 +782,7 @@ async function generateFileBlob(formatType) {
     const transaksiBerlampiran = transaksi.filter(t => t.notaData && t.notaData.dataUrl);
 
     if (formatType === 'xlsx') {
-        const dataExcel = [];
-        dataExcel.push([`LAPORAN REKAPAN KEUANGAN ${namaDraft.toUpperCase()}`]);
-        dataExcel.push([]);
-        dataExcel.push(["RINGKASAN KEGIATAN"]);
-        dataExcel.push(["• Total Peserta Hadir", "", summary.totalPeserta + " Orang"]);
-        dataExcel.push(["• Total Uang Masuk", "", summary.totalMasuk]);
-        dataExcel.push(["• Total Uang Keluar", "", summary.totalKeluar]);
-        dataExcel.push(["• Sisa Saldo Akhir", "", summary.saldoAkhir, "(Uang Masuk - Uang Keluar)"]);
-        dataExcel.push([]);
-        dataExcel.push(["RINCIAN TRANSAKSI"]);
-        dataExcel.push(["No", "Jenis", "Keterangan", "Harga Satuan", "Jumlah", "Total Nominal"]);
-
-        let globalNo = 1;
-        for (const [divName, items] of Object.entries(kelompokDivisi)) {
-            dataExcel.push([divName]);
-            items.forEach(t => {
-                dataExcel.push([globalNo++, t.jenis, t.keterangan, t.harga, t.qty, t.totalNominal]);
-            });
-        }
-
-        dataExcel.push([]);
-        dataExcel.push(["Total Uang Masuk", "", "", "", "", summary.totalMasuk]);
-        dataExcel.push(["Total Uang Keluar", "", "", "", "", summary.totalKeluar]);
-        dataExcel.push(["Total Akhir (Uang Masuk - Uang Keluar)", "", "", "", "", summary.saldoAkhir]);
-
-        if (transaksiBerlampiran.length > 0) {
-            dataExcel.push([]);
-            dataExcel.push(["LAMPIRAN BUKTI NOTA / TRANSAKSI"]);
-            transaksiBerlampiran.forEach((t, idx) => {
-                dataExcel.push([`Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}`]);
-            });
-        }
-
-        const ws = XLSX.utils.aoa_to_sheet(dataExcel);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Rekapan Keuangan");
-        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        return new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        return await generateXlsxBlob({ namaDraft, summary, kelompokDivisi, transaksiBerlampiran });
     }
 
     if (formatType === 'pdf') {
@@ -512,110 +790,12 @@ async function generateFileBlob(formatType) {
     }
 
     if (formatType === 'docx') {
-        const { docx } = window;
-        const borderStandard = { style: docx.BorderStyle.SINGLE, size: 1, color: "000000" };
-        const borders = { top: borderStandard, bottom: borderStandard, left: borderStandard, right: borderStandard, insideHorizontal: borderStandard, insideVertical: borderStandard };
-
-        const cellLeftIndent = 36;
-        const createCell = (text, isHeader = false, align = docx.AlignmentType.LEFT, bold = false, colSpan = 1) => {
-            return new docx.TableCell({
-                columnSpan: colSpan,
-                margins: { left: cellLeftIndent, right: cellLeftIndent, top: 100, bottom: 100 },
-                children: [new docx.Paragraph({ children: [new docx.TextRun({ text: text, bold: isHeader || bold })], alignment: align })]
-            });
-        };
-
-        const tableRows = [
-            new docx.TableRow({
-                children: [
-                    createCell("No", true, docx.AlignmentType.CENTER),
-                    createCell("Jenis", true, docx.AlignmentType.CENTER),
-                    createCell("Keterangan", true, docx.AlignmentType.CENTER),
-                    createCell("Harga Satuan", true, docx.AlignmentType.CENTER),
-                    createCell("Jumlah", true, docx.AlignmentType.CENTER),
-                    createCell("Total Nominal", true, docx.AlignmentType.CENTER)
-                ]
-            })
-        ];
-
-        for (const [divName, items] of Object.entries(kelompokDivisi)) {
-            tableRows.push(new docx.TableRow({
-                children: [
-                    new docx.TableCell({
-                        columnSpan: 6,
-                        margins: { left: cellLeftIndent, right: cellLeftIndent, top: 100, bottom: 100 },
-                        children: [new docx.Paragraph({ children: [new docx.TextRun({ text: divName, bold: true })] })]
-                    })
-                ]
-            }));
-
-            items.forEach((t, index) => {
-                tableRows.push(new docx.TableRow({
-                    children: [
-                        createCell(String(index + 1), false, docx.AlignmentType.CENTER),
-                        createCell(t.jenis, false, docx.AlignmentType.CENTER),
-                        createCell(t.keterangan, false, docx.AlignmentType.LEFT),
-                        createCell(formatRupiah(t.harga), false, docx.AlignmentType.LEFT),
-                        createCell(String(t.qty), false, docx.AlignmentType.CENTER),
-                        createCell(formatRupiah(t.totalNominal), false, docx.AlignmentType.LEFT)
-                    ]
-                }));
-            });
-        }
-
-        tableRows.push(
-            new docx.TableRow({ children: [createCell("Total Uang Masuk", false, docx.AlignmentType.LEFT, true, 5), createCell(formatRupiah(summary.totalMasuk), false, docx.AlignmentType.LEFT, true)] }),
-            new docx.TableRow({ children: [createCell("Total Uang Keluar", false, docx.AlignmentType.LEFT, true, 5), createCell(formatRupiah(summary.totalKeluar), false, docx.AlignmentType.LEFT, true)] }),
-            new docx.TableRow({ children: [createCell("Total Akhir (Uang Masuk - Uang Keluar)", false, docx.AlignmentType.LEFT, true, 5), createCell(formatRupiah(summary.saldoAkhir), false, docx.AlignmentType.LEFT, true)] })
-        );
-
-        const summaryTable = new docx.Table({
-            borders: { top: { style: docx.BorderStyle.NONE }, bottom: { style: docx.BorderStyle.NONE }, left: { style: docx.BorderStyle.NONE }, right: { style: docx.BorderStyle.NONE }, insideHorizontal: { style: docx.BorderStyle.NONE }, insideVertical: { style: docx.BorderStyle.NONE } },
-            rows: [
-                new docx.TableRow({ children: [new docx.TableCell({ margins: { left: cellLeftIndent }, children: [new docx.Paragraph("• Total Peserta Hadir")], width: { size: 35, type: docx.WidthType.PERCENTAGE } }), new docx.TableCell({ children: [new docx.Paragraph(":")], width: { size: 5, type: docx.WidthType.PERCENTAGE } }), new docx.TableCell({ children: [new docx.Paragraph(`${summary.totalPeserta} Orang`)], width: { size: 60, type: docx.WidthType.PERCENTAGE } })] }),
-                new docx.TableRow({ children: [new docx.TableCell({ margins: { left: cellLeftIndent }, children: [new docx.Paragraph("• Total Uang Masuk")] }), new docx.TableCell({ children: [new docx.Paragraph(":")] }), new docx.TableCell({ children: [new docx.Paragraph(formatRupiah(summary.totalMasuk))] })] }),
-                new docx.TableRow({ children: [new docx.TableCell({ margins: { left: cellLeftIndent }, children: [new docx.Paragraph("• Total Uang Keluar")] }), new docx.TableCell({ children: [new docx.Paragraph(":")] }), new docx.TableCell({ children: [new docx.Paragraph(formatRupiah(summary.totalKeluar))] })] }),
-                new docx.TableRow({ children: [new docx.TableCell({ margins: { left: cellLeftIndent }, children: [new docx.Paragraph("• Sisa Saldo Akhir")] }), new docx.TableCell({ children: [new docx.Paragraph(":")] }), new docx.TableCell({ children: [new docx.Paragraph(`${formatRupiah(summary.saldoAkhir)} (Uang Masuk - Uang Keluar)`)] })] })
-            ]
-        });
-
-        const docChildren = [
-            new docx.Paragraph({ children: [new docx.TextRun({ text: `LAPORAN REKAPAN KEUANGAN ${namaDraft.toUpperCase()}`, bold: true, size: 24 })], alignment: docx.AlignmentType.CENTER, spacing: { after: 150 } }),
-            new docx.Paragraph({ children: [new docx.TextRun({ text: "RINGKASAN KEGIATAN", bold: true, size: 20 })], spacing: { after: 100 } }),
-            summaryTable,
-            new docx.Paragraph({ children: [new docx.TextRun({ text: "RINCIAN TRANSAKSI", bold: true, size: 20 })], spacing: { before: 200, after: 100 } }),
-            new docx.Table({ borders: borders, rows: tableRows, width: { size: 100, type: docx.WidthType.PERCENTAGE } })
-        ];
-
-        if (transaksiBerlampiran.length > 0) {
-            docChildren.push(new docx.Paragraph({ children: [new docx.TextRun({ text: "LAMPIRAN BUKTI NOTA & TRANSAKSI", bold: true, size: 22 })], alignment: docx.AlignmentType.LEFT, spacing: { before: 300, after: 150 } }));
-            
-            for (const [idx, t] of transaksiBerlampiran.entries()) {
-                docChildren.push(new docx.Paragraph({ children: [new docx.TextRun({ text: `Lampiran ${idx + 1}: ${t.keterangan} (${t.divisi}) - Total: ${formatRupiah(t.totalNominal)}`, bold: true })], alignment: docx.AlignmentType.LEFT, spacing: { after: 100 } }));
-                try {
-                    const base64Data = t.notaData.dataUrl.split(',')[1];
-                    const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-                    docChildren.push(new docx.Paragraph({
-                        children: [
-                            new docx.ImageRun({
-                                data: imageBuffer,
-                                transformation: { width: 300, height: 200 }
-                            })
-                        ],
-                        alignment: docx.AlignmentType.LEFT,
-                        spacing: { after: 200 }
-                    }));
-                } catch (e) {
-                    console.error("Gagal merender gambar ke Word", e);
-                }
-            }
-        }
-
-        const metadataString = encodeURIComponent(JSON.stringify({ jumlahPeserta: document.getElementById('jumlahPeserta').value || 0, transaksi: transaksi, budgets: (getDraftAktif() || {}).budgets || {} }));
-        docChildren.push(new docx.Paragraph({ children: [new docx.TextRun({ text: `GCC_DATA_START:::${metadataString}:::GCC_DATA_END`, color: "FFFFFF", size: 2 })] }));
-
-        const doc = new docx.Document({ sections: [{ children: docChildren }] });
-        return await docx.Packer.toBlob(doc);
+        const metadata = encodeURIComponent(JSON.stringify({
+            jumlahPeserta: document.getElementById('jumlahPeserta').value || 0,
+            transaksi: transaksi,
+            budgets: (getDraftAktif() || {}).budgets || {}
+        }));
+        return await generateDocxBlob({ namaDraft, summary, kelompokDivisi, transaksiBerlampiran, metadata });
     }
 }
 
