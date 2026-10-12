@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0b0716">
     <title>Rekapan Keuangan - GAMATIKA Coding Club</title>
 
     <!-- Favicon Logo GCC -->
@@ -30,6 +31,12 @@
 </head>
 <body>
 
+    <!-- Garis kemajuan scroll di paling atas layar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- Kanvas konfeti perayaan -->
+    <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
     <!-- Elemen Bola Cahaya Bergerak Dekoratif -->
     <div class="bg-blobs">
         <div class="blob blob-1"></div>
@@ -47,6 +54,27 @@
         <div class="modal-caption" id="modalCaption"></div>
     </div>
 
+    <!-- Palet Perintah (Ctrl + K) -->
+    <div id="cmdPalette" class="cmd-overlay">
+        <div class="cmd-box" role="dialog" aria-modal="true" aria-label="Palet perintah">
+            <div class="cmd-input-wrap">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" id="cmdInput" placeholder="Ketik perintah, mis. grafik, tema, draf baru..." autocomplete="off" spellcheck="false">
+                <kbd>Esc</kbd>
+            </div>
+            <ul id="cmdList" class="cmd-list"></ul>
+            <div class="cmd-footer">
+                <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> pilih</span>
+                <span><kbd>Enter</kbd> jalankan</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tombol kembali ke atas -->
+    <button id="btnKeAtas" class="btn-ke-atas" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" aria-label="Kembali ke atas">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+
     <!-- ================= NAVBAR UTAMA (PC & MOBILE) ================= -->
     <header class="navbar-main">
         <div class="nav-brand">
@@ -59,12 +87,18 @@
 
         <!-- Navigasi Horizontal (Tampil Sempurna di PC) -->
         <nav class="desktop-nav">
-            <button class="nav-tab active" onclick="switchTab('tab-pencatatan', this)">Pencatatan</button>
-            <button class="nav-tab" onclick="switchTab('tab-analisis', this)">Analisis & Grafik</button>
-            <button class="nav-tab" onclick="switchTab('tab-gdrive', this)">Google Drive</button>
+            <button class="nav-tab active" data-tab="tab-pencatatan" onclick="switchTab('tab-pencatatan', this)">Pencatatan</button>
+            <button class="nav-tab" data-tab="tab-analisis" onclick="switchTab('tab-analisis', this)">Analisis &amp; Grafik</button>
+            <button class="nav-tab" data-tab="tab-tools" onclick="switchTab('tab-tools', this)">Tools</button>
+            <button class="nav-tab" data-tab="tab-gdrive" onclick="switchTab('tab-gdrive', this)">Google Drive</button>
         </nav>
 
         <div class="nav-right-pc">
+            <button class="btn-palette" onclick="openPalette()" title="Palet perintah (Ctrl + K)">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <span class="pal-label">Cari perintah</span>
+                <kbd class="pal-kbd">Ctrl K</kbd>
+            </button>
             <button id="themeToggle" class="btn-theme" onclick="toggleTheme()" title="Ubah Tema">Mode Gelap</button>
         </div>
 
@@ -76,10 +110,12 @@
 
     <!-- Dropdown / Drawer Menu Navigasi HP -->
     <div id="mobileMenuDropdown" class="mobile-dropdown-menu">
-        <button class="mobile-menu-item active" onclick="switchTabMobile('tab-pencatatan', this)">Pencatatan</button>
-        <button class="mobile-menu-item" onclick="switchTabMobile('tab-analisis', this)">Analisis & Grafik</button>
-        <button class="mobile-menu-item" onclick="switchTabMobile('tab-gdrive', this)">Google Drive</button>
+        <button class="mobile-menu-item active" data-tab="tab-pencatatan" onclick="switchTabMobile('tab-pencatatan', this)">Pencatatan</button>
+        <button class="mobile-menu-item" data-tab="tab-analisis" onclick="switchTabMobile('tab-analisis', this)">Analisis &amp; Grafik</button>
+        <button class="mobile-menu-item" data-tab="tab-tools" onclick="switchTabMobile('tab-tools', this)">Tools</button>
+        <button class="mobile-menu-item" data-tab="tab-gdrive" onclick="switchTabMobile('tab-gdrive', this)">Google Drive</button>
         <div class="mobile-menu-divider"></div>
+        <button class="mobile-menu-item" onclick="toggleMobileMenu(); openPalette();">Cari Perintah</button>
         <button class="mobile-menu-item theme-toggle-mobile" onclick="toggleTheme(); toggleMobileMenu();">Ubah Tema Layar</button>
     </div>
 
@@ -88,6 +124,21 @@
 
         <!-- ================= TAB 1: PENCATATAN ================= -->
         <div id="tab-pencatatan" class="tab-content active">
+
+            <!-- Banner Sambutan Dinamis -->
+            <section class="hero" id="heroBanner">
+                <div class="hero-text">
+                    <p class="hero-greeting" id="heroGreeting">Selamat datang</p>
+                    <h2 class="hero-title" id="heroTitle">Rekapan Keuangan</h2>
+                    <p class="hero-sub" id="heroSub">Belum ada transaksi</p>
+                    <p class="hero-hints"><kbd>Ctrl</kbd><kbd>K</kbd> palet perintah <span class="dot-sep"></span> <kbd>Ctrl</kbd><kbd>Z</kbd> urungkan</p>
+                </div>
+                <div class="hero-status kosong" id="heroStatus">
+                    <span class="status-dot"></span>
+                    <span id="heroStatusText">Belum ada transaksi</span>
+                </div>
+            </section>
+
             <!-- Bar Pilihan Draf -->
             <div class="draft-bar">
                 <label for="selectDraft">Pilih Draf Kegiatan:</label>
@@ -109,13 +160,13 @@
                 <input type="file" id="fileImportDoc" accept=".docx" onchange="imporDokumen(event)">
             </div>
 
-            <input type="file" id="fileNotaHidden" accept="image/*" style="display: none;" onchange="prosesGantiNota(event)">
+            <input type="file" id="fileNotaHidden" class="hidden-input" accept="image/*" onchange="prosesGantiNota(event)">
 
             <!-- Informasi Jumlah Peserta -->
             <div class="info-card">
-                <div class="form-group" style="margin-bottom: 0;">
+                <div class="form-group">
                     <label for="jumlahPeserta">Jumlah Total Peserta / Sasaran Kegiatan:</label>
-                    <input type="number" id="jumlahPeserta" value="0" min="0" onchange="simpanStateKeHistory(); simpanKeStorage(); updateSummary();">
+                    <input type="number" id="jumlahPeserta" value="0" min="0" onchange="ubahPeserta()">
                 </div>
             </div>
 
@@ -138,7 +189,16 @@
                             <span class="calc-operator">×</span>
                             <input type="number" id="jumlahMasuk" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Masuk')">
                         </div>
+                        <div class="chip-row" data-jenis="Masuk" aria-label="Tambah nominal cepat">
+                            <button type="button" class="chip" data-add="5000">+5rb</button>
+                            <button type="button" class="chip" data-add="10000">+10rb</button>
+                            <button type="button" class="chip" data-add="25000">+25rb</button>
+                            <button type="button" class="chip" data-add="50000">+50rb</button>
+                            <button type="button" class="chip" data-add="100000">+100rb</button>
+                            <button type="button" class="chip chip-clear" data-add="clear">Hapus</button>
+                        </div>
                         <div class="calc-subtotal" id="subtotalMasuk">Total Item: Rp 0</div>
+                        <div class="terbilang-text" id="terbilangMasuk"></div>
                     </div>
                     <div class="form-group">
                         <label>Upload Bukti Terima / Transfer (Foto/Gambar):</label>
@@ -168,7 +228,16 @@
                             <span class="calc-operator">×</span>
                             <input type="number" id="jumlahKeluar" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Keluar')">
                         </div>
+                        <div class="chip-row" data-jenis="Keluar" aria-label="Tambah nominal cepat">
+                            <button type="button" class="chip" data-add="5000">+5rb</button>
+                            <button type="button" class="chip" data-add="10000">+10rb</button>
+                            <button type="button" class="chip" data-add="25000">+25rb</button>
+                            <button type="button" class="chip" data-add="50000">+50rb</button>
+                            <button type="button" class="chip" data-add="100000">+100rb</button>
+                            <button type="button" class="chip chip-clear" data-add="clear">Hapus</button>
+                        </div>
                         <div class="calc-subtotal" id="subtotalKeluar">Total Item: Rp 0</div>
+                        <div class="terbilang-text" id="terbilangKeluar"></div>
                     </div>
                     <div class="form-group">
                         <label>Upload File Nota / Kuitansi (Foto/Gambar):</label>
@@ -204,11 +273,11 @@
                 </div>
                 <div class="summary-item">
                     <h4>Total Uang Masuk</h4>
-                    <p id="dispMasuk" style="color: #10b981;">Rp 0</p>
+                    <p id="dispMasuk" class="text-masuk">Rp 0</p>
                 </div>
                 <div class="summary-item">
                     <h4>Total Uang Keluar</h4>
-                    <p id="dispKeluar" style="color: #f43f5e;">Rp 0</p>
+                    <p id="dispKeluar" class="text-keluar">Rp 0</p>
                 </div>
                 <div class="summary-item">
                     <h4>Sisa Saldo Akhir</h4>
@@ -226,7 +295,7 @@
             </div>
 
             <div class="filter-bar">
-                <input type="text" id="searchKeyword" placeholder="Cari transaksi / barang..." oninput="updateTampilan()">
+                <input type="text" id="searchKeyword" placeholder="Cari transaksi / barang / catatan..." oninput="updateTampilan()">
                 <select id="filterDivisi" onchange="updateTampilan()">
                     <option value="ALL">Semua Divisi</option>
                 </select>
@@ -235,26 +304,33 @@
                     <option value="Masuk">Hanya Uang Masuk</option>
                     <option value="Keluar">Hanya Uang Keluar</option>
                 </select>
+                <select id="sortTransaksi" onchange="updateTampilan()" aria-label="Urutkan transaksi">
+                    <option value="default">Urutan Input</option>
+                    <option value="nominal-desc">Nominal Terbesar</option>
+                    <option value="nominal-asc">Nominal Terkecil</option>
+                    <option value="nama-asc">Keterangan A-Z</option>
+                </select>
             </div>
+            <p class="result-count" id="resultCount"></p>
 
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 35px; text-align: center;">No</th>
-                            <th style="width: 75px;">Jenis</th>
+                            <th class="col-no">No</th>
+                            <th class="col-jenis">Jenis</th>
                             <th>Keterangan</th>
                             <th>Harga Satuan</th>
-                            <th style="width: 60px; text-align: center;">Jumlah</th>
+                            <th class="col-qty">Jumlah</th>
                             <th>Total Nominal</th>
-                            <th style="width: 120px; text-align: center;">Lampiran Nota / Bukti</th>
+                            <th class="col-nota">Lampiran Nota / Bukti</th>
                             <th>Catatan</th>
-                            <th style="width: 90px;" class="col-action">Aksi</th>
+                            <th class="col-action">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tabelBody">
                         <tr>
-                            <td colspan="9" style="text-align: center; color: #888;">Belum ada transaksi di draf ini.</td>
+                            <td colspan="9" class="empty-row">Belum ada transaksi di draf ini.</td>
                         </tr>
                     </tbody>
                     <tfoot id="tabelFoot">
@@ -283,6 +359,40 @@
                 </div>
             </div>
 
+            <!-- Kartu Wawasan Otomatis -->
+            <div class="stat-grid">
+                <div class="stat-tile">
+                    <span class="stat-label">Biaya per Peserta</span>
+                    <strong class="stat-value" id="statBiaya">—</strong>
+                    <span class="stat-sub" id="statBiayaSub">Isi jumlah peserta dulu</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Pengeluaran Terbesar</span>
+                    <strong class="stat-value" id="statTerbesar">—</strong>
+                    <span class="stat-sub" id="statTerbesarSub">Belum ada pengeluaran</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Jumlah Transaksi</span>
+                    <strong class="stat-value" id="statJumlah">0</strong>
+                    <span class="stat-sub" id="statJumlahSub">0 masuk · 0 keluar</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Kelengkapan Nota</span>
+                    <strong class="stat-value" id="statNota">—</strong>
+                    <span class="stat-sub" id="statNotaSub">Belum ada pengeluaran</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Divisi Terboros</span>
+                    <strong class="stat-value" id="statBoros">—</strong>
+                    <span class="stat-sub" id="statBorosSub">Belum ada pengeluaran</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Rata-rata Pengeluaran</span>
+                    <strong class="stat-value" id="statRata">—</strong>
+                    <span class="stat-sub" id="statRataSub">per transaksi keluar</span>
+                </div>
+            </div>
+
             <div class="charts-grid">
                 <div class="chart-card">
                     <h4>Analisis Masuk vs Keluar</h4>
@@ -298,8 +408,46 @@
                 </div>
             </div>
 
-            <div class="calc-widget" style="margin-top: 20px;">
-                <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 12px;">Simulator Kalkulator Target HTM Peserta</h3>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h4>Pergerakan Saldo Berjalan</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="chartSaldo"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h4>5 Pengeluaran Terbesar</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="chartTop"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cek Kesiapan Laporan -->
+            <div class="health-card">
+                <div class="health-ring">
+                    <svg viewBox="0 0 100 100" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="healthGrad" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#5b6cff"/>
+                                <stop offset="50%" stop-color="#9b5cf6"/>
+                                <stop offset="100%" stop-color="#ec5fa8"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="ring-bg" cx="50" cy="50" r="42"/>
+                        <circle class="ring-arc" id="healthArc" cx="50" cy="50" r="42"/>
+                    </svg>
+                    <span class="health-score" id="healthScore">0%</span>
+                </div>
+                <div class="health-body">
+                    <h4>Kesiapan Laporan (LPJ)</h4>
+                    <p class="health-verdict" id="healthVerdict">Perlu dilengkapi</p>
+                    <ul class="health-list" id="healthList"></ul>
+                </div>
+            </div>
+
+            <div class="calc-widget calc-sim">
+                <h3>Simulator Kalkulator Target HTM Peserta</h3>
                 <div class="grid-calc">
                     <div class="form-group">
                         <label>Estimasi Target Peserta:</label>
@@ -316,15 +464,146 @@
             </div>
         </div>
 
-        <!-- ================= TAB 3: GOOGLE DRIVE ================= -->
+        <!-- ================= TAB 3: TOOLS ================= -->
+        <div id="tab-tools" class="tab-content">
+            <div class="info-card tools-intro">
+                <h3>Kotak Perkakas Bendahara</h3>
+                <p>Alat bantu praktis untuk mengatur pagu, menghitung cepat, membuat terbilang kuitansi, membagikan ringkasan, dan mengamankan data.</p>
+            </div>
+
+            <div class="tools-grid">
+
+                <!-- Pagu Anggaran -->
+                <div class="tool-card tool-wide">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h15a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7z"/><path d="M3 7l2-3h11"/><circle cx="17" cy="14" r="1.2"/></svg></span>
+                        <div>
+                            <h3>Pagu Anggaran per Divisi</h3>
+                            <p>Tentukan batas pengeluaran tiap divisi. Web akan memberi peringatan otomatis saat pagu hampir habis atau terlampaui.</p>
+                        </div>
+                    </div>
+                    <div class="budget-form">
+                        <input type="text" id="budgetDivisi" list="listDivisi" placeholder="Nama divisi, mis. MEDIA">
+                        <input type="number" id="budgetNominal" placeholder="Pagu (Rp)" min="0" step="50000">
+                        <button class="btn-new" onclick="simpanBudget()">Simpan Pagu</button>
+                    </div>
+                    <div id="budgetSuggest" class="budget-suggest"></div>
+                    <div id="budgetList" class="budget-list"></div>
+                </div>
+
+                <!-- Kalkulator -->
+                <div class="tool-card">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></span>
+                        <div>
+                            <h3>Kalkulator Cepat</h3>
+                            <p>Bisa diketik lewat keyboard. Hasilnya dapat langsung dikirim ke form.</p>
+                        </div>
+                    </div>
+                    <div class="calc-display">
+                        <div class="calc-expr" id="calcExpr">&nbsp;</div>
+                        <div class="calc-out" id="calcResult">0</div>
+                    </div>
+                    <div class="calc-keys" id="calcKeys">
+                        <button type="button" class="calc-key fn" data-key="C">C</button>
+                        <button type="button" class="calc-key fn" data-key="DEL">&larr;</button>
+                        <button type="button" class="calc-key fn" data-key="%" title="Bagi 100">%</button>
+                        <button type="button" class="calc-key op" data-key="/">÷</button>
+                        <button type="button" class="calc-key" data-key="7">7</button>
+                        <button type="button" class="calc-key" data-key="8">8</button>
+                        <button type="button" class="calc-key" data-key="9">9</button>
+                        <button type="button" class="calc-key op" data-key="*">×</button>
+                        <button type="button" class="calc-key" data-key="4">4</button>
+                        <button type="button" class="calc-key" data-key="5">5</button>
+                        <button type="button" class="calc-key" data-key="6">6</button>
+                        <button type="button" class="calc-key op" data-key="-">−</button>
+                        <button type="button" class="calc-key" data-key="1">1</button>
+                        <button type="button" class="calc-key" data-key="2">2</button>
+                        <button type="button" class="calc-key" data-key="3">3</button>
+                        <button type="button" class="calc-key op" data-key="+">+</button>
+                        <button type="button" class="calc-key" data-key="0">0</button>
+                        <button type="button" class="calc-key" data-key="000">000</button>
+                        <button type="button" class="calc-key" data-key=".">,</button>
+                        <button type="button" class="calc-key eq" data-key="=">=</button>
+                    </div>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini" onclick="calcKirim('Masuk')">Pakai sebagai Harga Masuk</button>
+                        <button type="button" class="btn-mini" onclick="calcKirim('Keluar')">Pakai sebagai Harga Keluar</button>
+                    </div>
+                </div>
+
+                <!-- Terbilang -->
+                <div class="tool-card">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h16"/></svg></span>
+                        <div>
+                            <h3>Terbilang Kuitansi</h3>
+                            <p>Ubah angka menjadi tulisan rupiah untuk kuitansi dan LPJ.</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="terbilangInput">Nominal (Rp):</label>
+                        <input type="number" id="terbilangInput" placeholder="mis. 1500000" min="0" oninput="updateTerbilangTool()">
+                    </div>
+                    <div class="terbilang-out kosong" id="terbilangOutput">Masukkan nominal untuk melihat terbilangnya.</div>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini" onclick="salinTerbilang()">Salin Teks</button>
+                    </div>
+                </div>
+
+                <!-- Ringkasan WhatsApp -->
+                <div class="tool-card tool-wide">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg></span>
+                        <div>
+                            <h3>Ringkasan untuk WhatsApp</h3>
+                            <p>Teks ringkas draf aktif yang siap dibagikan ke grup pengurus. Isi diperbarui otomatis.</p>
+                        </div>
+                    </div>
+                    <textarea id="waPreview" rows="10" readonly aria-label="Pratinjau ringkasan WhatsApp"></textarea>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini primary" onclick="salinRingkasan()">Salin Ringkasan</button>
+                        <button type="button" class="btn-mini wa" onclick="bukaWhatsApp()">Kirim via WhatsApp</button>
+                    </div>
+                </div>
+
+                <!-- Backup & Restore -->
+                <div class="tool-card tool-wide">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span>
+                        <div>
+                            <h3>Cadangan &amp; Pemulihan Data</h3>
+                            <p>Semua draf tersimpan di browser perangkat ini. Unduh cadangan secara berkala agar data aman jika browser dibersihkan.</p>
+                        </div>
+                    </div>
+                    <div class="storage-meter">
+                        <div class="storage-label">
+                            <span>Penyimpanan browser terpakai</span>
+                            <span id="storageText">0 KB</span>
+                        </div>
+                        <div class="storage-track"><div class="storage-fill" id="storageFill"></div></div>
+                    </div>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini primary" onclick="backupSemuaDraf()">Unduh Cadangan (.json)</button>
+                        <label class="btn-mini btn-file">Pulihkan dari Cadangan
+                            <input type="file" id="fileRestore" class="hidden-input" accept=".json,application/json" onchange="restoreDraf(event)">
+                        </label>
+                        <button type="button" class="btn-mini" onclick="exportCSV()">Ekspor CSV Draf Aktif</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= TAB 4: GOOGLE DRIVE ================= -->
         <div id="tab-gdrive" class="tab-content">
-            <div class="card" style="border-top: 5px solid #4285F4;">
+            <div class="card card-drive">
                 <h3>Upload Rekapan ke Google Drive GCC</h3>
-                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
+                <p class="drive-desc">
                     File hasil rekapan akan tersimpan otomatis ke folder target Google Drive resmi departemen.
                 </p>
-                
-                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+
+                <div class="grid grid-drive">
                     <div class="form-group">
                         <label>Pilih Departemen / Divisi:</label>
                         <select id="driveDeptSelect">
@@ -336,7 +615,7 @@
                             <option value="PPSDM">PPSDM</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Kategori Dokumen:</label>
                         <select id="driveCategorySelect">
@@ -346,7 +625,7 @@
                     </div>
                 </div>
 
-                <div class="export-group" style="margin-top: 15px;">
+                <div class="export-group export-drive">
                     <button class="btn-word" onclick="uploadKeDrive('docx')">Upload Word (.docx)</button>
                     <button class="btn-pdf" onclick="uploadKeDrive('pdf')">Upload PDF (.pdf)</button>
                     <button class="btn-excel" onclick="uploadKeDrive('xlsx')">Upload Excel (.xlsx)</button>
@@ -356,28 +635,10 @@
 
     </div>
 
-    <!-- Script Menu HP -->
-    <script>
-        function toggleMobileMenu() {
-            const dropdown = document.getElementById('mobileMenuDropdown');
-            dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
-        }
+    <footer class="site-footer">
+        Keuangan GCC &middot; GAMATIKA Coding Club
+    </footer>
 
-        function switchTabMobile(tabId, btnElement) {
-            switchTab(tabId, btnElement);
-            document.getElementById('mobileMenuDropdown').style.display = 'none';
-            document.querySelectorAll('.mobile-menu-item').forEach(item => item.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
-        }
-
-        window.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('mobileMenuDropdown');
-            const menuBtn = document.querySelector('.mobile-menu-btn');
-            if (dropdown && menuBtn && !dropdown.contains(e.target) && !menuBtn.contains(e.target)) {
-                dropdown.style.display = 'none';
-            }
-        });
-    </script>
     <script src="script.js"></script>
 </body>
 </html>
