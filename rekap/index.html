@@ -15,8 +15,9 @@
     <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-    <!-- Library html2pdf untuk PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Library jsPDF + AutoTable untuk PDF teks asli -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <!-- Library Mammoth.js untuk Impor Word -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -41,7 +42,7 @@
 
     <!-- Modal Lightbox Bukti/Nota -->
     <div id="imageModal" class="modal-lightbox" onclick="closeModal()">
-        <span class="modal-close">&times;</span>
+        <span class="modal-close">Tutup</span>
         <img id="modalImage" class="modal-content" alt="Preview Nota/Bukti">
         <div class="modal-caption" id="modalCaption"></div>
     </div>
@@ -58,13 +59,13 @@
 
         <!-- Navigasi Horizontal (Tampil Sempurna di PC) -->
         <nav class="desktop-nav">
-            <button class="nav-tab active" onclick="switchTab('tab-pencatatan', this)">📝 Pencatatan</button>
-            <button class="nav-tab" onclick="switchTab('tab-analisis', this)">📊 Analisis & Grafik</button>
-            <button class="nav-tab" onclick="switchTab('tab-gdrive', this)">☁️ Google Drive</button>
+            <button class="nav-tab active" onclick="switchTab('tab-pencatatan', this)">Pencatatan</button>
+            <button class="nav-tab" onclick="switchTab('tab-analisis', this)">Analisis & Grafik</button>
+            <button class="nav-tab" onclick="switchTab('tab-gdrive', this)">Google Drive</button>
         </nav>
 
         <div class="nav-right-pc">
-            <button id="themeToggle" class="btn-theme" onclick="toggleTheme()" title="Ubah Tema">🌙 Mode Gelap</button>
+            <button id="themeToggle" class="btn-theme" onclick="toggleTheme()" title="Ubah Tema">Mode Gelap</button>
         </div>
 
         <!-- Tombol Titik Tiga / Menu Hamburger (Khusus HP) -->
@@ -75,11 +76,11 @@
 
     <!-- Dropdown / Drawer Menu Navigasi HP -->
     <div id="mobileMenuDropdown" class="mobile-dropdown-menu">
-        <button class="mobile-menu-item active" onclick="switchTabMobile('tab-pencatatan', this)">📝 Pencatatan</button>
-        <button class="mobile-menu-item" onclick="switchTabMobile('tab-analisis', this)">📊 Analisis & Grafik</button>
-        <button class="mobile-menu-item" onclick="switchTabMobile('tab-gdrive', this)">☁️ Google Drive</button>
+        <button class="mobile-menu-item active" onclick="switchTabMobile('tab-pencatatan', this)">Pencatatan</button>
+        <button class="mobile-menu-item" onclick="switchTabMobile('tab-analisis', this)">Analisis & Grafik</button>
+        <button class="mobile-menu-item" onclick="switchTabMobile('tab-gdrive', this)">Google Drive</button>
         <div class="mobile-menu-divider"></div>
-        <button class="mobile-menu-item theme-toggle-mobile" onclick="toggleTheme(); toggleMobileMenu();">🌙 Ubah Tema Layar</button>
+        <button class="mobile-menu-item theme-toggle-mobile" onclick="toggleTheme(); toggleMobileMenu();">Ubah Tema Layar</button>
     </div>
 
     <!-- Container Konten Utama -->
@@ -89,21 +90,21 @@
         <div id="tab-pencatatan" class="tab-content active">
             <!-- Bar Pilihan Draf -->
             <div class="draft-bar">
-                <label for="selectDraft">📂 Pilih Draf Kegiatan:</label>
+                <label for="selectDraft">Pilih Draf Kegiatan:</label>
                 <select id="selectDraft" onchange="gantiDraft()"></select>
-                <button class="btn-new" onclick="buatDraftBaru()">➕ Draf Baru</button>
-                <button class="btn-rename" onclick="ubahNamaDraft()">✏️ Ubah Nama</button>
-                <button class="btn-reset" onclick="hapusDraftAktif()">🗑️ Hapus Draf</button>
+                <button class="btn-new" onclick="buatDraftBaru()">Draf Baru</button>
+                <button class="btn-rename" onclick="ubahNamaDraft()">Ubah Nama</button>
+                <button class="btn-reset" onclick="hapusDraftAktif()">Hapus Draf</button>
             </div>
 
             <!-- Impor & Download Templat Word -->
             <div class="import-box">
                 <div class="import-box-header">
                     <div>
-                        <p class="import-title">📥 Impor Dokumen Word (.docx):</p>
+                        <p class="import-title">Impor Dokumen Word (.docx):</p>
                         <span id="importStatus" class="import-status">Gunakan file Word hasil ekspor web ini atau Templat Resmi.</span>
                     </div>
-                    <button onclick="downloadTemplateWord()" class="btn-template">📥 Download Templat Word</button>
+                    <button onclick="downloadTemplateWord()" class="btn-template">Download Templat Word</button>
                 </div>
                 <input type="file" id="fileImportDoc" accept=".docx" onchange="imporDokumen(event)">
             </div>
@@ -113,7 +114,7 @@
             <!-- Informasi Jumlah Peserta -->
             <div class="info-card">
                 <div class="form-group" style="margin-bottom: 0;">
-                    <label for="jumlahPeserta">👥 Jumlah Total Peserta / Sasaran Kegiatan:</label>
+                    <label for="jumlahPeserta">Jumlah Total Peserta / Sasaran Kegiatan:</label>
                     <input type="number" id="jumlahPeserta" value="0" min="0" onchange="simpanStateKeHistory(); simpanKeStorage(); updateSummary();">
                 </div>
             </div>
@@ -121,9 +122,9 @@
             <!-- Form Input Pemasukan & Pengeluaran -->
             <div class="grid">
                 <div class="card masuk" id="cardMasuk">
-                    <h3>💵 Input Uang Masuk</h3>
+                    <h3>Input Uang Masuk</h3>
                     <div class="form-group">
-                        <label>Pilih / Ketik Nama Divisi:</label>
+                        <label>Masukkan Nama Departemen/Divisi</label>
                         <input type="text" id="divisiMasuk" list="listDivisi" placeholder="misal: CONTER / Bendahara">
                     </div>
                     <div class="form-group">
@@ -147,13 +148,13 @@
                         <label>Catatan (Opsional):</label>
                         <input type="text" id="catMasuk" placeholder="misal: Transfer Bank BSI">
                     </div>
-                    <button class="btn-masuk" id="btnSubmitMasuk" onclick="tambahTransaksi('Masuk')">+ Tambah Uang Masuk</button>
+                    <button class="btn-masuk" id="btnSubmitMasuk" onclick="tambahTransaksi('Masuk')">Tambah Uang Masuk</button>
                 </div>
 
                 <div class="card keluar" id="cardKeluar">
-                    <h3>💸 Input Uang Keluar</h3>
+                    <h3>Input Uang Keluar</h3>
                     <div class="form-group">
-                        <label>Pilih / Ketik Nama Divisi:</label>
+                        <label>Masukkan Nama Departemen/Divisi</label>
                         <input type="text" id="divisiKeluar" list="listDivisi" placeholder="misal: MEDIA / PAKSIMA">
                     </div>
                     <div class="form-group">
@@ -177,7 +178,7 @@
                         <label>Catatan (Opsional):</label>
                         <input type="text" id="catKeluar" placeholder="misal: Nota Fisik Diserahkan">
                     </div>
-                    <button class="btn-keluar" id="btnSubmitKeluar" onclick="tambahTransaksi('Keluar')">+ Tambah Uang Keluar</button>
+                    <button class="btn-keluar" id="btnSubmitKeluar" onclick="tambahTransaksi('Keluar')">Tambah Uang Keluar</button>
                 </div>
             </div>
 
@@ -188,6 +189,11 @@
                 <option value="PAKSIMA">
                 <option value="PDK">
                 <option value="PPSDM">
+                <option value="Acara">
+                <option value="PDD">
+                <option value="Konsumsi">
+                <option value="Humas dan Kestari">
+                <option value="Perlengkapan dan Keamanan">
             </datalist>
 
             <!-- Summary Ringkas -->
@@ -214,13 +220,13 @@
             <div class="table-header-section">
                 <h2>Rincian Transaksi</h2>
                 <div class="history-controls">
-                    <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩️ Undo</button>
-                    <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
+                    <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Undo (Ctrl+Z)">Undo</button>
+                    <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Redo (Ctrl+Y)">Redo</button>
                 </div>
             </div>
 
             <div class="filter-bar">
-                <input type="text" id="searchKeyword" placeholder="🔍 Cari transaksi / barang..." oninput="updateTampilan()">
+                <input type="text" id="searchKeyword" placeholder="Cari transaksi / barang..." oninput="updateTampilan()">
                 <select id="filterDivisi" onchange="updateTampilan()">
                     <option value="ALL">Semua Divisi</option>
                 </select>
@@ -257,9 +263,9 @@
             </div>
 
             <div class="export-group">
-                <button class="btn-word" onclick="exportToWord()">📄 Download Word (.docx)</button>
-                <button class="btn-pdf" onclick="exportToPDF()">📕 Download PDF (.pdf)</button>
-                <button class="btn-excel" onclick="exportToExcel()">📊 Download Excel (.xlsx)</button>
+                <button class="btn-word" onclick="exportToWord()">Download Word (.docx)</button>
+                <button class="btn-pdf" onclick="exportToPDF()">Download PDF (.pdf)</button>
+                <button class="btn-excel" onclick="exportToExcel()">Download Excel (.xlsx)</button>
             </div>
         </div>
 
@@ -279,13 +285,13 @@
 
             <div class="charts-grid">
                 <div class="chart-card">
-                    <h4>📊 Analisis Masuk vs Keluar</h4>
+                    <h4>Analisis Masuk vs Keluar</h4>
                     <div class="chart-wrapper">
                         <canvas id="chartComparison"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
-                    <h4>🍩 Pengeluaran per Divisi</h4>
+                    <h4>Pengeluaran per Divisi</h4>
                     <div class="chart-wrapper">
                         <canvas id="chartDivisi"></canvas>
                     </div>
@@ -293,7 +299,7 @@
             </div>
 
             <div class="calc-widget" style="margin-top: 20px;">
-                <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 12px;">🧮 Simulator Kalkulator Target HTM Peserta</h3>
+                <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 12px;">Simulator Kalkulator Target HTM Peserta</h3>
                 <div class="grid-calc">
                     <div class="form-group">
                         <label>Estimasi Target Peserta:</label>
@@ -313,7 +319,7 @@
         <!-- ================= TAB 3: GOOGLE DRIVE ================= -->
         <div id="tab-gdrive" class="tab-content">
             <div class="card" style="border-top: 5px solid #4285F4;">
-                <h3>☁️ Upload Rekapan ke Google Drive GCC</h3>
+                <h3>Upload Rekapan ke Google Drive GCC</h3>
                 <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
                     File hasil rekapan akan tersimpan otomatis ke folder target Google Drive resmi departemen.
                 </p>
@@ -334,16 +340,16 @@
                     <div class="form-group">
                         <label>Kategori Dokumen:</label>
                         <select id="driveCategorySelect">
-                            <option value="RAB">📁 RAB (Rencana Anggaran Biaya)</option>
-                            <option value="Realisasi Anggaran">📁 Realisasi Anggaran</option>
+                            <option value="RAB">RAB (Rencana Anggaran Biaya)</option>
+                            <option value="Realisasi Anggaran">Realisasi Anggaran</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="export-group" style="margin-top: 15px;">
-                    <button class="btn-word" onclick="uploadKeDrive('docx')">☁️ Upload Word (.docx)</button>
-                    <button class="btn-pdf" onclick="uploadKeDrive('pdf')">☁️ Upload PDF (.pdf)</button>
-                    <button class="btn-excel" onclick="uploadKeDrive('xlsx')">☁️ Upload Excel (.xlsx)</button>
+                    <button class="btn-word" onclick="uploadKeDrive('docx')">Upload Word (.docx)</button>
+                    <button class="btn-pdf" onclick="uploadKeDrive('pdf')">Upload PDF (.pdf)</button>
+                    <button class="btn-excel" onclick="uploadKeDrive('xlsx')">Upload Excel (.xlsx)</button>
                 </div>
             </div>
         </div>
