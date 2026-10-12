@@ -111,6 +111,7 @@
     <!-- Dropdown / Drawer Menu Navigasi HP -->
     <div id="mobileMenuDropdown" class="mobile-dropdown-menu">
         <button class="mobile-menu-item active" data-tab="tab-pencatatan" onclick="switchTabMobile('tab-pencatatan', this)">Pencatatan</button>
+        <button class="mobile-menu-item" data-tab="tab-rincian" onclick="switchTabMobile('tab-rincian', this)">Rincian Transaksi</button>
         <button class="mobile-menu-item" data-tab="tab-analisis" onclick="switchTabMobile('tab-analisis', this)">Analisis &amp; Grafik</button>
         <button class="mobile-menu-item" data-tab="tab-tools" onclick="switchTabMobile('tab-tools', this)">Tools</button>
         <button class="mobile-menu-item" data-tab="tab-gdrive" onclick="switchTabMobile('tab-gdrive', this)">Google Drive</button>
@@ -285,6 +286,18 @@
                 </div>
             </div>
 
+            <!-- Kartu tautan ke halaman Rincian (hanya tampil di HP) -->
+            <div class="rincian-link" id="rincianLink">
+                <div class="rincian-link-text">
+                    <strong>Rincian Transaksi</strong>
+                    <span id="rincianLinkSub">Belum ada transaksi</span>
+                </div>
+                <button type="button" class="btn-new" onclick="switchTab('tab-rincian')">Buka Tabel</button>
+            </div>
+
+            <!-- Slot desktop: di PC, tabel tetap di halaman ini -->
+            <div id="rincianDesktopSlot">
+            <div id="rincianSection">
             <!-- Header & Filter Tabel Transaksi -->
             <div class="table-header-section">
                 <h2>Rincian Transaksi</h2>
@@ -343,6 +356,14 @@
                 <button class="btn-pdf" onclick="exportToPDF()">Download PDF (.pdf)</button>
                 <button class="btn-excel" onclick="exportToExcel()">Download Excel (.xlsx)</button>
             </div>
+            </div><!-- /#rincianSection -->
+            </div><!-- /#rincianDesktopSlot -->
+        </div>
+
+        <!-- ================= HALAMAN RINCIAN TRANSAKSI (khusus HP) ================= -->
+        <div id="tab-rincian" class="tab-content">
+            <button type="button" class="btn-back-rincian" onclick="switchTab('tab-pencatatan')">&larr; Kembali ke Pencatatan</button>
+            <div id="rincianMobileSlot"></div>
         </div>
 
         <!-- ================= TAB 2: ANALISIS & GRAFIK ================= -->
