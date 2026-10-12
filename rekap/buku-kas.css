@@ -44,14 +44,20 @@ color: var(--tinta) !important;
 display: none !important;
 }
 
-/* Penyesuaian khusus untuk wrapper grafik agar kotaknya konsisten */
+/* Penyesuaian khusus untuk wrapper grafik agar kotaknya konsisten dan batang chart berbentuk kotak tegas */
 .chart-wrapper, canvas {
 background: transparent !important;
 box-shadow: none !important;
 border: none !important;
+border-radius: 0 !important;
 }
 
-/* Styling Tabel & Baris Footer Total (Menyesuaikan dengan Kotak) */
+/* Memastikan bar pada Chart.js berbentuk kotak penuh (tidak rounded) sesuai permintaan */
+canvas {
+border-radius: 0px !important;
+}
+
+/* Styling Tabel & Baris Footer Total (Menyesuaikan agar kotaknya persis sama dengan sampingnya) */
 table {
 border-collapse: separate !important;
 border-spacing: 0;
@@ -71,7 +77,7 @@ font-weight: 600;
 box-shadow: none !important;
 }
 
-/* Tombol Ekspor/Aksi agar menyatu dengan gaya card */
+/* Tombol Ekspor/Aksi umum agar menyatu dengan gaya card */
 button, .btn-primary, .btn-secondary {
 background: var(--kartu) !important;
 border: 1.5px solid var(--tinta) !important;
@@ -85,4 +91,28 @@ transition: all 0.1s ease !important;
 button:hover, .btn-primary:hover, .btn-secondary:hover {
 transform: translate(-1px, -1px);
 box-shadow: 4px 4px 0 var(--tinta) !important;
+}
+
+/* STREAMING_CHUNK:Styling WhatsApp button, modal notification popup, and square shapes... /
+/ Tombol Kirim via WhatsApp khusus dengan warna hijau khas retro & logo /
+.btn-whatsapp, button[onclick="WhatsApp"], button.btn-wa {
+background: #25d366 !important;
+color: #ffffff !important;
+border: 1.5px solid var(--tinta) !important;
+box-shadow: 3px 3px 0 var(--garis) !important;
+}
+
+.btn-whatsapp:hover, button[onclick*="WhatsApp"]:hover {
+background: #1ebe57 !important;
+box-shadow: 4px 4px 0 var(--tinta) !important;
+}
+
+/* Notifikasi / Toast agar konsisten dengan gaya card kotak retro */
+.toast-container .toast, .toast {
+background: var(--kartu) !important;
+border: 1.5px solid var(--tinta) !important;
+border-radius: 6px !important;
+box-shadow: 4px 4px 0 var(--garis) !important;
+color: var(--tinta) !important;
+font-family: var(--sans) !important;
 }
