@@ -1,1564 +1,742 @@
-/* =====================================================================
-   KEUANGAN GCC — GAMATIKA Coding Club
-   Tema: gradasi teal → indigo → magenta (selaras dengan logo GCC)
-   Semua class/ID lama dipertahankan, hanya tampilan yang diperbarui.
-   ===================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-/* ---------- 1. VARIABEL TEMA ---------- */
-:root {
-    /* Palet brand (diambil dari logo) */
-    --brand-indigo: #5b6cff;
-    --brand-violet: #9b5cf6;
-    --brand-rose: #ec5fa8;
-    --brand-amber: #ffa23e;
-
-    /* Tema gelap = default */
-    --bg-main: #0b0716;
-    --text-main: #f8f5ff;
-    --text-muted: #aca5c9;
-    --text-label: #dcd6f2;
-    --text-placeholder: #766f9b;
-    --accent-text: #e9e3ff;
-    --card-glass: rgba(22, 14, 46, 0.68);
-    --card-border: rgba(200, 175, 255, 0.14);
-    --card-solid: rgba(40, 27, 76, 0.50);
-    --input-bg: rgba(13, 8, 32, 0.62);
-    --border-color: rgba(200, 175, 255, 0.16);
-    --row-hover: rgba(155, 92, 246, 0.10);
-    --dot-color: rgba(190, 165, 255, 0.16);
-    --wave-opacity: 0.45;
-    --blob-opacity: 0.60;
-    --blob-blend: screen;
-
-    --primary-gradient: linear-gradient(135deg, #5b6cff 0%, #9b5cf6 38%, #ec5fa8 70%, #ffa23e 100%);
-    --success-gradient: linear-gradient(135deg, #34d399 0%, #059669 100%);
-    --danger-gradient: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
-    --excel-gradient: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
-
-    --radius-xl: 28px;
-    --radius-lg: 18px;
-    --radius-md: 12px;
-    --shadow-glass: 0 30px 60px -15px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.45);
-    --shadow-card-hover: 0 22px 40px -14px rgba(155, 92, 246, 0.45);
-    --ease-flow: cubic-bezier(0.22, 1, 0.36, 1);
-    --gutter: 24px;
-}
-
-/* Tema terang (aktif saat body TIDAK punya class dark-mode) */
-body:not(.dark-mode) {
-    --bg-main: #f7f3ff;
-    --text-main: #1d1535;
-    --text-muted: #6d6592;
-    --text-label: #3b3160;
-    --text-placeholder: #a39cc6;
-    --accent-text: #5b3fd6;
-    --card-glass: rgba(255, 255, 255, 0.72);
-    --card-border: rgba(255, 255, 255, 0.95);
-    --card-solid: rgba(255, 255, 255, 0.82);
-    --input-bg: #f0eaff;
-    --border-color: rgba(120, 100, 210, 0.20);
-    --row-hover: rgba(155, 92, 246, 0.07);
-    --dot-color: rgba(150, 100, 240, 0.18);
-    --wave-opacity: 0.40;
-    --blob-opacity: 0.45;
-    --blob-blend: multiply;
-    --shadow-glass: 0 30px 60px -20px rgba(124, 58, 237, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    --shadow-card: 0 10px 28px -12px rgba(124, 58, 237, 0.25);
-    --shadow-card-hover: 0 22px 40px -16px rgba(155, 92, 246, 0.40);
-}
-
-/* ---------- 2. DASAR ---------- */
-html, body {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden !important;
-}
-
-html {
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: #9b5cf6 transparent;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    letter-spacing: -0.01em;
-    color-scheme: dark;
-    background-color: var(--bg-main);
-    background-image:
-        radial-gradient(900px 520px at 6% -8%, rgba(91, 108, 255, 0.20), transparent 60%),
-        radial-gradient(800px 520px at 100% 0%, rgba(236, 95, 168, 0.16), transparent 60%),
-        radial-gradient(900px 500px at 55% 115%, rgba(255, 162, 62, 0.13), transparent 60%);
-    background-attachment: fixed;
-    color: var(--text-main);
-    min-height: 100vh;
-    padding: 100px var(--gutter) 60px var(--gutter);
-    transition: background-color 0.4s ease, color 0.4s ease;
-    position: relative;
-    -webkit-font-smoothing: antialiased;
-}
-body:not(.dark-mode) { color-scheme: light; }
-
-button, input, select, textarea { font-family: inherit; }
-h1, h2, h3, h4 { font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
-
-::selection { background: rgba(155, 92, 246, 0.35); color: inherit; }
-::placeholder { color: var(--text-placeholder); opacity: 1; }
-
-option { background: #1a1230; color: #f8f5ff; }
-body:not(.dark-mode) option { background: #ffffff; color: #0f172a; }
-
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #5b6cff, #9b5cf6, #ec5fa8, #ffa23e);
-    border-radius: 10px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-}
-
-/* ---------- 3. LATAR BELAKANG MENGALIR ---------- */
-/* Pola titik halus */
-html::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1000;
-    pointer-events: none;
-    background-image: radial-gradient(var(--dot-color) 1.2px, transparent 1.2px);
-    background-size: 28px 28px;
-    -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 78%);
-    mask-image: radial-gradient(ellipse at center, #000 25%, transparent 78%);
-}
-
-/* Bola cahaya */
-.bg-blobs {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    z-index: -999;
-    overflow: hidden;
-    pointer-events: none;
-    filter: blur(70px);
-}
-
-.blob {
-    position: absolute;
-    border-radius: 50%;
-    opacity: var(--blob-opacity);
-    mix-blend-mode: var(--blob-blend);
-    animation: floatAnimation 18s infinite alternate ease-in-out;
-    will-change: transform;
-}
-
-.blob-1 { width: 460px; height: 460px; background: radial-gradient(circle, #8b9bff 0%, #5b6cff 100%); top: -90px; left: -90px; }
-.blob-2 { width: 520px; height: 520px; background: radial-gradient(circle, #f9a8d4 0%, #ec5fa8 100%); bottom: -110px; right: -90px; animation-delay: -6s; }
-.blob-3 { width: 400px; height: 400px; background: radial-gradient(circle, #fdba74 0%, #f59e0b 100%); top: 35%; left: 40%; animation-delay: -12s; }
-
-@keyframes floatAnimation {
-    0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
-    50%  { transform: translate(55px, -60px) scale(1.18) rotate(180deg); }
-    100% { transform: translate(-45px, 50px) scale(0.92) rotate(360deg); }
-}
-
-/* Gelombang di dasar layar (dua lapis, arah berlawanan) */
-body::before {
-    content: '';
-    position: fixed;
-    left: 0; bottom: 0;
-    width: 100%;
-    height: 170px;
-    z-index: -998;
-    pointer-events: none;
-    opacity: var(--wave-opacity);
-    background-repeat: repeat-x, repeat-x;
-    background-position: 0 bottom, 0 bottom;
-    background-size: 1600px 100%, 2400px 100%;
-    background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath fill='%235b6cff' fill-opacity='.55' d='M0,60 C200,20 400,20 600,60 S1000,100 1200,60 L1200,120 L0,120 Z'/%3E%3C/svg%3E"),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath fill='%23ec5fa8' fill-opacity='.45' d='M0,70 C200,110 400,110 600,70 S1000,30 1200,70 L1200,120 L0,120 Z'/%3E%3C/svg%3E");
-    animation: waveFlow 26s linear infinite;
-}
-
-@keyframes waveFlow {
-    to { background-position: -1600px bottom, 2400px bottom; }
-}
-
-/* ---------- 4. NAVBAR ---------- */
-.navbar-main {
-    position: fixed;
-    top: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - (var(--gutter) * 2));
-    max-width: none;
-    height: 70px;
-    background: var(--card-glass);
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 25px;
-    box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.35);
-    animation: navDrop 0.7s var(--ease-flow) both;
-}
-
-/* Garis cahaya mengalir di tepi bawah navbar */
-.navbar-main::after {
-    content: '';
-    position: absolute;
-    left: 24px; right: 24px; bottom: -1px;
-    height: 2px;
-    border-radius: 2px;
-    background: linear-gradient(90deg, transparent, #5b6cff, #9b5cf6, #ec5fa8, #ffa23e, transparent);
-    background-size: 200% 100%;
-    animation: gradientFlow 6s linear infinite;
-    opacity: 0.85;
-}
-
-@keyframes navDrop {
-    from { opacity: 0; transform: translate(-50%, -28px); }
-    to   { opacity: 1; transform: translate(-50%, 0); }
-}
-
-@keyframes gradientFlow {
-    0%   { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
-}
-
-.nav-brand { display: flex; align-items: center; gap: 12px; }
-
-.nav-logo {
-    width: 40px; height: 40px;
-    object-fit: contain;
-    border-radius: 50%;
-    filter: drop-shadow(0 4px 10px rgba(155, 92, 246, 0.45));
-    transition: transform 0.6s var(--ease-flow);
-}
-.nav-brand:hover .nav-logo { transform: rotate(360deg) scale(1.08); }
-
-.brand-info h1 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    line-height: 1.2;
-    color: var(--text-main);
-}
-.brand-info p { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
-
-.desktop-nav {
-    display: flex; gap: 6px;
-    background: var(--input-bg);
-    padding: 5px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-}
-
-.desktop-nav .nav-tab {
-    background: transparent; color: var(--text-muted);
-    border: none; padding: 9px 18px; border-radius: 9px;
-    font-weight: 700; font-size: 0.88rem; cursor: pointer;
-    transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.35s ease, transform 0.25s ease;
-}
-.desktop-nav .nav-tab:hover { color: var(--text-main); background: var(--row-hover); transform: none; }
-
-.desktop-nav .nav-tab.active {
-    background: var(--primary-gradient);
-    background-size: 200% 200%;
-    color: white;
-    box-shadow: 0 6px 18px rgba(155, 92, 246, 0.45);
-    animation: gradientShift 6s ease infinite;
-}
-
-@keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50%      { background-position: 100% 50%; }
-}
-
-.btn-theme {
-    background: var(--card-solid); color: var(--text-main);
-    border: 1px solid var(--border-color); padding: 9px 16px;
-    border-radius: var(--radius-md); font-weight: 700; font-size: 0.85rem; cursor: pointer;
-}
-.btn-theme:hover { border-color: #9b5cf6; box-shadow: 0 6px 16px -6px rgba(155, 92, 246, 0.6); }
-
-.mobile-menu-btn {
-    display: none; background: var(--card-solid); border: 1px solid var(--border-color);
-    width: 38px; height: 38px; border-radius: 10px; flex-direction: column;
-    justify-content: center; align-items: center; gap: 4px; cursor: pointer; padding: 0;
-}
-.mobile-menu-btn span { width: 18px; height: 2px; background: var(--text-main); border-radius: 2px; transition: width 0.25s ease; }
-.mobile-menu-btn:hover span:nth-child(2) { width: 12px; }
-.mobile-dropdown-menu { display: none; }
-
-/* ---------- 5. CONTAINER UTAMA ---------- */
-.container {
-    max-width: none; width: 100%; margin: 0;
-    background: var(--card-glass);
-    backdrop-filter: blur(22px) saturate(150%);
-    -webkit-backdrop-filter: blur(22px) saturate(150%);
-    border: 1px solid var(--card-border);
-    padding: 38px;
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-glass);
-    position: relative; overflow: hidden;
-    transition: background-color 0.4s ease, border-color 0.4s ease;
-}
-
-/* Garis atas dengan gradasi yang terus mengalir */
-.container::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
-    background: linear-gradient(90deg, #5b6cff, #9b5cf6, #ec5fa8, #ffa23e, #ec5fa8, #9b5cf6, #5b6cff);
-    background-size: 300% 100%;
-    animation: gradientFlow 9s linear infinite;
-    border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl);
-}
-
-/* Pendar lembut di sudut */
-.container::after {
-    content: ''; position: absolute; top: -140px; right: -140px;
-    width: 340px; height: 340px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(155, 92, 246, 0.18), transparent 70%);
-    pointer-events: none;
-}
-
-/* ---------- 6. TAB & ANIMASI MASUK BERURUTAN ---------- */
-.tab-content { display: none; position: relative; z-index: 1; }
-.tab-content.active { display: block; animation: fadeIn 0.45s var(--ease-flow); }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
-    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
-}
-
-@keyframes riseIn {
-    from { opacity: 0; transform: translateY(22px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.tab-content.active > * { animation: riseIn 0.6s var(--ease-flow) backwards; }
-.tab-content.active > *:nth-child(2)  { animation-delay: 0.05s; }
-.tab-content.active > *:nth-child(3)  { animation-delay: 0.10s; }
-.tab-content.active > *:nth-child(4)  { animation-delay: 0.15s; }
-.tab-content.active > *:nth-child(5)  { animation-delay: 0.20s; }
-.tab-content.active > *:nth-child(6)  { animation-delay: 0.25s; }
-.tab-content.active > *:nth-child(7)  { animation-delay: 0.30s; }
-.tab-content.active > *:nth-child(8)  { animation-delay: 0.35s; }
-.tab-content.active > *:nth-child(9)  { animation-delay: 0.40s; }
-.tab-content.active > *:nth-child(10) { animation-delay: 0.45s; }
-.tab-content.active > *:nth-child(n+11) { animation-delay: 0.50s; }
-
-/* ---------- 7. FORM ELEMEN ---------- */
-select, input[type="text"], input[type="number"] {
-    padding: 11px 14px; border-radius: var(--radius-md);
-    border: 1px solid var(--border-color); background: var(--input-bg);
-    color: var(--text-main); outline: none; font-size: 0.9rem;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
-}
-
-select:hover, input[type="text"]:hover, input[type="number"]:hover { border-color: rgba(155, 92, 246, 0.55); }
-
-select:focus, input:focus {
-    border-color: #9b5cf6;
-    box-shadow: 0 0 0 4px rgba(155, 92, 246, 0.22), 0 8px 20px -10px rgba(155, 92, 246, 0.6);
-}
-
-input[type="file"] {
-    width: 100%;
-    padding: 8px;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    background: var(--input-bg);
-    border: 1px dashed var(--border-color);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: border-color 0.25s ease;
-}
-input[type="file"]:hover { border-color: #9b5cf6; }
-input[type="file"]::file-selector-button {
-    margin-right: 12px;
-    padding: 8px 14px;
-    border: none;
-    border-radius: 9px;
-    background: var(--primary-gradient);
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: filter 0.2s ease;
-}
-input[type="file"]::file-selector-button:hover { filter: brightness(1.12); }
-
-/* ---------- 8. TOMBOL ---------- */
-button {
-    border: none; padding: 10px 18px; border-radius: var(--radius-md);
-    font-weight: 700; font-size: 0.9rem; cursor: pointer;
-    transition: transform 0.25s var(--ease-flow), box-shadow 0.3s ease, background-position 0.5s ease, background-color 0.25s ease, filter 0.25s ease, border-color 0.25s ease;
-}
-button:hover { transform: translateY(-2px); }
-button:active { transform: translateY(0) scale(0.97); }
-button:focus-visible { outline: 2px solid #b79bff; outline-offset: 2px; }
-
-/* Tombol bergradasi: gradasi bergeser + kilau menyapu saat hover */
-.btn-new, .btn-template, .btn-masuk, .btn-keluar, .btn-word, .btn-pdf, .btn-excel {
-    position: relative;
-    overflow: hidden;
-    background-size: 200% 200%;
-    background-position: 0% 50%;
-    box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.45);
-}
-.btn-new:hover, .btn-template:hover, .btn-masuk:hover, .btn-keluar:hover,
-.btn-word:hover, .btn-pdf:hover, .btn-excel:hover { background-position: 100% 50%; }
-
-.btn-new::after, .btn-template::after, .btn-masuk::after, .btn-keluar::after,
-.btn-word::after, .btn-pdf::after, .btn-excel::after {
-    content: '';
-    position: absolute; top: 0; left: 0;
-    width: 60%; height: 100%;
-    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-    transform: translateX(-130%) skewX(-18deg);
-    transition: transform 0.7s var(--ease-flow);
-    pointer-events: none;
-}
-.btn-new:hover::after, .btn-template:hover::after, .btn-masuk:hover::after, .btn-keluar:hover::after,
-.btn-word:hover::after, .btn-pdf:hover::after, .btn-excel:hover::after { transform: translateX(260%) skewX(-18deg); }
-
-.btn-new { background-image: var(--primary-gradient); color: white; box-shadow: 0 10px 22px -8px rgba(155, 92, 246, 0.7); }
-.btn-rename { background: var(--card-solid); color: var(--text-main); border: 1px solid var(--border-color); }
-.btn-rename:hover { border-color: #9b5cf6; }
-.btn-reset { background: rgba(244, 63, 94, 0.14); color: #ef4444; border: 1px solid rgba(244, 63, 94, 0.25); }
-.btn-reset:hover { background: rgba(244, 63, 94, 0.25); }
-
-.history-controls { display: flex; gap: 8px; }
-.btn-history {
-    background: var(--card-solid); color: var(--text-main) !important;
-    border: 1px solid var(--border-color); padding: 8px 14px;
-    border-radius: var(--radius-md); font-weight: 700; font-size: 0.85rem;
-    display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.3);
-}
-.btn-history:hover:not(:disabled) { border-color: #9b5cf6; }
-.btn-history:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-
-/* ---------- 9. BAR DRAF, IMPOR, INFO ---------- */
-.draft-bar {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
-    background: var(--card-solid); border: 1px solid var(--border-color);
-    padding: 16px 20px; border-radius: var(--radius-lg); margin-bottom: 24px;
-    box-shadow: var(--shadow-card);
-}
-.draft-bar label { font-weight: 700; font-size: 0.9rem; }
-.draft-bar select { flex: 1; min-width: 180px; }
-
-.import-box {
-    background: linear-gradient(135deg, rgba(91, 108, 255, 0.10) 0%, rgba(155, 92, 246, 0.10) 50%, rgba(236, 95, 168, 0.10) 100%);
-    border: 1.5px dashed rgba(155, 92, 246, 0.5); padding: 22px;
-    border-radius: var(--radius-lg); margin-bottom: 24px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-.import-box:hover { border-color: #9b5cf6; box-shadow: 0 14px 30px -16px rgba(155, 92, 246, 0.6); }
-.import-box-header { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 14px; }
-.import-title { font-weight: 800; font-size: 1rem; }
-.import-status { font-size: 0.82rem; color: var(--text-muted); }
-.btn-template { background-image: var(--success-gradient); color: white; flex-shrink: 0; }
-
-.info-card {
-    background: var(--card-solid); border: 1px solid var(--border-color);
-    padding: 20px; border-radius: var(--radius-lg); margin-bottom: 24px;
-    box-shadow: var(--shadow-card);
-}
-
-/* ---------- 10. KARTU INPUT ---------- */
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 24px; }
-
-.card {
-    background: var(--card-solid); border: 1px solid var(--border-color);
-    padding: 26px; border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-    transition: transform 0.4s var(--ease-flow), box-shadow 0.4s ease, border-color 0.3s ease;
-}
-.card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card-hover); }
-
-.card.masuk {
-    border-top: 5px solid #10b981;
-    background-image: radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.14), transparent 55%);
-}
-.card.keluar {
-    border-top: 5px solid #f43f5e;
-    background-image: radial-gradient(circle at 100% 0%, rgba(244, 63, 94, 0.14), transparent 55%);
-}
-.card h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 18px; }
-
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; font-size: 0.82rem; font-weight: 500; color: var(--text-label); margin-bottom: 6px; }
-.form-group input, .form-group select { width: 100%; }
-
-.calc-group { display: flex; align-items: center; gap: 10px; }
-.calc-group input { flex: 1; min-width: 0; }
-.calc-operator {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 30px; height: 30px; flex-shrink: 0;
-    border-radius: 50%; background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    color: var(--accent-text); font-weight: 800;
-}
-.calc-subtotal {
-    margin-top: 8px; font-size: 0.88rem; font-weight: 700; color: var(--accent-text);
-    padding: 7px 12px; border-radius: 10px;
-    background: rgba(155, 92, 246, 0.10); display: inline-block;
-}
-
-.btn-masuk { width: 100%; background-image: var(--success-gradient); color: white; padding: 13px; box-shadow: 0 12px 24px -10px rgba(16, 185, 129, 0.7); }
-.btn-keluar { width: 100%; background-image: var(--danger-gradient); color: white; padding: 13px; box-shadow: 0 12px 24px -10px rgba(244, 63, 94, 0.7); }
-
-/* ---------- 11. RINGKASAN ---------- */
-.summary-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
-
-.summary-item {
-    --accent: linear-gradient(90deg, #5b6cff, #9b5cf6);
-    --glow: rgba(91, 108, 255, 0.18);
-    position: relative; overflow: hidden;
-    background: var(--card-solid); border: 1px solid var(--border-color);
-    padding: 22px 16px 20px; border-radius: var(--radius-lg); text-align: center;
-    box-shadow: var(--shadow-card);
-    transition: transform 0.4s var(--ease-flow), box-shadow 0.4s ease;
-}
-.summary-item::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-    background: var(--accent);
-}
-.summary-item::after {
-    content: ''; position: absolute; top: -40px; right: -40px; width: 110px; height: 110px;
-    border-radius: 50%; background: radial-gradient(circle, var(--glow), transparent 70%);
-    pointer-events: none;
-}
-.summary-item:nth-child(2) { --accent: linear-gradient(90deg, #10b981, #34d399); --glow: rgba(16, 185, 129, 0.20); }
-.summary-item:nth-child(3) { --accent: linear-gradient(90deg, #f43f5e, #fb7185); --glow: rgba(244, 63, 94, 0.20); }
-.summary-item:nth-child(4) { --accent: linear-gradient(90deg, #5b6cff, #9b5cf6, #ec5fa8, #ffa23e); --glow: rgba(236, 95, 168, 0.18); }
-.summary-item:hover { transform: translateY(-5px); box-shadow: var(--shadow-card-hover); }
-
-.summary-item h4 { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
-.summary-item p { font-size: 1.35rem; font-weight: 800; font-family: 'Inter', sans-serif; position: relative; z-index: 1; }
-
-#dispSaldo { color: var(--text-main); }
-
-/* ---------- 12. TABEL ---------- */
-.table-header-section { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-.table-header-section h2 {
-    font-size: 1.3rem; font-weight: 800;
-    display: flex; align-items: center; gap: 12px;
-}
-.table-header-section h2::before {
-    content: ''; width: 6px; height: 26px; border-radius: 6px;
-    background: linear-gradient(180deg, #5b6cff, #9b5cf6, #ec5fa8, #ffa23e);
-}
-
-.filter-bar { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-.filter-bar input, .filter-bar select { width: 100%; }
-
-.table-responsive {
-    width: 100%; overflow-x: auto; border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color); background: var(--card-solid);
-    box-shadow: var(--shadow-card);
-}
-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
-th {
-    background: var(--input-bg); color: var(--text-muted); font-weight: 800;
-    padding: 15px 14px; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em;
-    border-bottom: 2px solid transparent;
-    border-image: linear-gradient(90deg, #5b6cff, #9b5cf6, #ec5fa8, #ffa23e) 1;
-    white-space: nowrap;
-}
-td { padding: 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; transition: background-color 0.25s ease; }
-tbody tr:not(.row-divisi-header):hover td { background: var(--row-hover); }
-tbody tr:last-child td { border-bottom: none; }
-
-.row-divisi-header td {
-    background-color: var(--input-bg);
-    background-image: linear-gradient(90deg, rgba(155, 92, 246, 0.20), rgba(91, 108, 255, 0.06) 55%, transparent);
-    font-weight: 700; font-size: 0.95rem;
-    border-left: 4px solid #9b5cf6;
-    letter-spacing: 0.02em;
-}
-
-.tfoot-summary td { font-weight: 800; padding: 14px; border-top: 1px solid var(--border-color); border-bottom: none; }
-.tfoot-summary td:first-child { text-align: right; color: var(--text-muted); }
-
-.badge-masuk, .badge-keluar {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.76rem;
-}
-.badge-masuk::before, .badge-keluar::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.badge-masuk  { background: rgba(16, 185, 129, 0.16); color: #10b981; }
-.badge-keluar { background: rgba(244, 63, 94, 0.16);  color: #f43f5e; }
-
-.btn-edit   { background: rgba(155, 92, 246, 0.18); color: var(--text-main); padding: 6px 12px; font-size: 0.8rem; }
-.btn-delete { background: rgba(244, 63, 94, 0.18);  color: #ef4444; padding: 6px 12px; font-size: 0.8rem; }
-.btn-edit:hover   { background: #9b5cf6; color: #fff; }
-.btn-delete:hover { background: #f43f5e; color: #fff; }
-
-.btn-nota-action, .btn-nota-delete {
-    display: inline-block; cursor: pointer; font-weight: 700; font-size: 0.78rem; margin: 2px 3px;
-    padding: 3px 10px; border-radius: 20px;
-    transition: background-color 0.25s ease, color 0.25s ease, transform 0.25s var(--ease-flow);
-}
-.btn-nota-action { color: var(--accent-text); background: rgba(155, 92, 246, 0.12); }
-.btn-nota-delete { color: #f43f5e; background: rgba(244, 63, 94, 0.12); }
-.btn-nota-action:hover { background: #9b5cf6; color: #fff; transform: translateY(-1px); }
-.btn-nota-delete:hover { background: #f43f5e; color: #fff; transform: translateY(-1px); }
-
-.img-preview {
-    width: 42px; height: 42px; object-fit: cover; border-radius: 8px; cursor: pointer;
-    border: 2px solid var(--border-color);
-    transition: transform 0.3s var(--ease-flow), border-color 0.3s ease, box-shadow 0.3s ease;
-}
-.img-preview:hover { transform: scale(1.18); border-color: #9b5cf6; box-shadow: 0 8px 18px -6px rgba(155, 92, 246, 0.7); }
-
-.export-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
-.btn-word  { background-image: var(--primary-gradient); color: white; padding: 15px; box-shadow: 0 12px 24px -10px rgba(155, 92, 246, 0.7); }
-.btn-pdf   { background-image: var(--danger-gradient);  color: white; padding: 15px; box-shadow: 0 12px 24px -10px rgba(244, 63, 94, 0.7); }
-.btn-excel { background-image: var(--excel-gradient);   color: white; padding: 15px; box-shadow: 0 12px 24px -10px rgba(34, 197, 94, 0.7); }
-
-/* ---------- 13. ANALISIS & GRAFIK ---------- */
-.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 24px; }
-.chart-card {
-    background: var(--card-solid); border: 1px solid var(--border-color);
-    padding: 24px; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
-    transition: transform 0.4s var(--ease-flow), box-shadow 0.4s ease;
-}
-.chart-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card-hover); }
-.chart-card h4 { font-size: 1rem; font-weight: 800; margin-bottom: 14px; }
-.chart-wrapper { position: relative; height: 240px; width: 100%; }
-
-.calc-widget {
-    background: var(--card-solid); border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-card);
-}
-.grid-calc { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.calc-result-box {
-    background: var(--input-bg); padding: 16px 18px; border-radius: var(--radius-md);
-    font-weight: 700; color: var(--accent-text); margin-top: 12px;
-    border-left: 4px solid #9b5cf6; line-height: 1.6;
-}
-
-.progress-label-group { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; font-size: 0.92rem; }
-.progress-track { height: 12px; background: var(--border-color); border-radius: 12px; overflow: hidden; }
-.progress-fill {
-    position: relative; overflow: hidden;
-    height: 100%; width: 0%;
-    background: var(--primary-gradient);
-    border-radius: 12px;
-    transition: width 1s var(--ease-flow);
-}
-/* Kilau yang berjalan di dalam progress bar */
-.progress-fill::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
-    transform: translateX(-100%);
-    animation: shimmer 2.2s ease-in-out infinite;
-}
-@keyframes shimmer { to { transform: translateX(100%); } }
-
-/* ---------- 14. TOAST ---------- */
-.toast-container {
-    position: fixed; top: 100px; right: 20px; z-index: 9999;
-    display: flex; flex-direction: column; gap: 10px;
-    pointer-events: none;
-}
-.toast {
-    pointer-events: auto;
-    background: var(--card-glass); color: var(--text-main);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--card-border);
-    border-left: 5px solid #9b5cf6; padding: 14px 20px; border-radius: var(--radius-md);
-    box-shadow: 0 18px 36px -12px rgba(0, 0, 0, 0.45); font-weight: 700;
-    animation: toastIn 0.5s var(--ease-flow) both, toastOut 0.4s ease 2.75s forwards;
-}
-@keyframes toastIn  { from { opacity: 0; transform: translateX(40px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
-@keyframes toastOut { to   { opacity: 0; transform: translateX(30px); } }
-
-/* ---------- 15. MODAL LIGHTBOX ---------- */
-.modal-lightbox {
-    display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%;
-    background: rgba(5, 8, 20, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    justify-content: center; align-items: center; flex-direction: column;
-    animation: modalFade 0.3s ease;
-}
-.modal-content {
-    max-width: 85%; max-height: 80%; object-fit: contain;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
-    animation: modalZoom 0.45s var(--ease-flow);
-}
-.modal-caption { color: white; margin-top: 16px; font-weight: 700; }
-.modal-close {
-    position: absolute; top: 22px; right: 28px; color: white; font-size: 0.85rem; font-weight: 700; cursor: pointer;
-    padding: 9px 20px; border-radius: 30px;
-    background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.28);
-    transition: background-color 0.25s ease, transform 0.3s var(--ease-flow);
-}
-.modal-close:hover { background: #f43f5e; border-color: #f43f5e; transform: translateY(-2px); }
-@keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes modalZoom { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
-
-/* ---------- 16. RESPONSIF ---------- */
-/* Tablet / laptop kecil: rapatkan navbar agar tidak sesak */
-@media (min-width: 769px) and (max-width: 1000px) {
-    .brand-info p { display: none; }
-    .desktop-nav .nav-tab { padding: 8px 11px; font-size: 0.8rem; }
-    .btn-theme { padding: 8px 12px; font-size: 0.78rem; }
-    .summary-box { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 768px) {
-    :root { --gutter: 10px; }
-    body { padding: 76px var(--gutter) 30px var(--gutter); }
-    body::before { height: 110px; }
-    .navbar-main { top: 8px; height: 54px; padding: 0 12px; border-radius: 14px; }
-    .navbar-main::after { left: 14px; right: 14px; }
-    .desktop-nav, .nav-right-pc { display: none !important; }
-    .mobile-menu-btn { display: flex; }
-    .brand-info h1 { font-size: 0.95rem; }
-    .brand-info p { font-size: 0.65rem; }
-    .nav-logo { width: 32px; height: 32px; }
-
-    .mobile-dropdown-menu {
-        display: none; position: fixed; top: 70px; right: 10px; width: 230px;
-        background: var(--card-glass); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
-        border: 1px solid var(--card-border); border-radius: 16px; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.45);
-        z-index: 9998; flex-direction: column; padding: 6px;
-        transform-origin: top right;
-        animation: dropIn 0.3s var(--ease-flow);
-    }
-    @keyframes dropIn { from { opacity: 0; transform: translateY(-8px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-    .mobile-menu-item {
-        background: transparent; color: var(--text-main); border: none;
-        padding: 12px 14px; border-radius: 10px; font-weight: 700; font-size: 0.88rem;
-        text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px;
-    }
-    .mobile-menu-item:hover { background: var(--row-hover); transform: none; }
-    .mobile-menu-item.active { background: var(--primary-gradient); color: white; }
-    .mobile-menu-divider { height: 1px; background: var(--border-color); margin: 4px 8px; }
-    .theme-toggle-mobile { color: var(--accent-text); }
-
-    .container { padding: 20px 12px; border-radius: var(--radius-lg); }
-    .container::after { display: none; }
-
-    /* Bar draf: label & dropdown penuh, 3 tombol sejajar */
-    .draft-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px; }
-    .draft-bar label, .draft-bar select { grid-column: 1 / -1; min-width: 0; }
-    .draft-bar button { padding: 10px 4px; font-size: 0.8rem; }
-
-    .import-box { padding: 14px; }
-    .import-box-header { flex-direction: column; align-items: stretch; gap: 8px; }
-    .btn-template { width: 100%; padding: 11px; font-size: 0.82rem; }
-    input[type="file"]::file-selector-button { padding: 7px 10px; margin-right: 8px; }
-
-    .grid, .charts-grid, .grid-calc, .filter-bar, .export-group { grid-template-columns: 1fr !important; gap: 14px; }
-    .card { padding: 20px 16px; }
-    .card:hover, .chart-card:hover, .summary-item:hover { transform: none; }
-    .chart-card { padding: 18px 14px; }
-    .calc-widget { padding: 18px 14px; }
-
-    .summary-box { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .summary-item { padding: 16px 8px 14px; }
-    .summary-item h4 { font-size: 0.66rem; }
-    .summary-item p { font-size: clamp(0.88rem, 3.9vw, 1.1rem); overflow-wrap: anywhere; }
-
-    .table-header-section h2 { font-size: 1.1rem; }
-    .history-controls { width: 100%; }
-    .history-controls .btn-history { flex: 1; justify-content: center; }
-
-    /* ---- Tabel berubah jadi kartu per transaksi ---- */
-    .table-responsive { overflow: visible; border: none; background: transparent; box-shadow: none; border-radius: 0; }
-    table, tbody, tfoot { display: block; width: 100%; }
-    thead { display: none; }
-    tbody tr, tfoot tr { display: block; }
-
-    tbody tr:not(.row-divisi-header) {
-        background: var(--card-solid);
-        border: 1px solid var(--border-color);
-        border-radius: 16px;
-        padding: 4px 14px;
-        margin-bottom: 12px;
-        box-shadow: var(--shadow-card);
-    }
-    tbody tr:not(.row-divisi-header):hover td { background: transparent; }
-
-    tbody td[data-label] {
-        display: flex; justify-content: space-between; align-items: center; gap: 14px;
-        padding: 10px 0; text-align: right !important;
-        border-bottom: 1px dashed var(--border-color);
-        word-break: break-word;
-    }
-    tbody td[data-label]:last-child { border-bottom: none; }
-    tbody td[data-label]::before {
-        content: attr(data-label);
-        flex-shrink: 0; text-align: left;
-        font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-        color: var(--text-muted);
-    }
-    tbody td[data-label="Aksi"] { justify-content: flex-end; gap: 8px; padding-top: 12px; }
-    tbody td[data-label="Aksi"]::before { margin-right: auto; }
-    tbody td[data-label="Aksi"] button { padding: 8px 16px; font-size: 0.82rem; }
-    tbody td[data-label="Nota / Bukti"] > div { display: flex; flex-direction: column; align-items: flex-end; }
-
-    .row-divisi-header { margin: 18px 0 10px; }
-    .row-divisi-header td { display: block; border-radius: 12px; padding: 12px 14px; border-bottom: none; }
-    tbody tr:last-child td[data-label]:not(:last-child) { border-bottom: 1px dashed var(--border-color); }
-
-    tbody tr td[colspan="9"]:not(.row-divisi-header td) { display: block; padding: 22px 10px; text-align: center; }
-
-    tfoot { margin-top: 6px; background: var(--card-solid); border: 1px solid var(--border-color); border-radius: 16px; padding: 4px 14px; }
-    .tfoot-summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .tfoot-summary td { display: block; padding: 12px 0; border-top: none; width: auto; }
-    .tfoot-summary td:first-child { text-align: left; }
-    .tfoot-summary + .tfoot-summary { border-top: 1px dashed var(--border-color); }
-
-    .toast-container { top: 72px; right: 10px; left: 10px; }
-    .modal-close { top: 14px; right: 14px; }
-}
-
-/* Hormati pengguna yang mematikan animasi di perangkatnya */
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
-}
-
-/* =====================================================================
-   TIPOGRAFI BAGIAN RINGKASAN, FILTER, TABEL & TOMBOL
-   (hanya font, ketebalan, ukuran, dan warna teks)
-   ===================================================================== */
-select, input[type="text"], input[type="number"] { font-size: 0.95rem; font-weight: 500; }
-::placeholder { font-weight: 400; }
-
-button { font-weight: 600; letter-spacing: -0.005em; }
-.btn-history { font-weight: 600; font-size: 0.9rem; }
-.btn-word, .btn-pdf, .btn-excel { font-weight: 600; font-size: 0.92rem; }
-.draft-bar label { font-weight: 500; color: var(--text-muted); }
-.import-title { font-weight: 600; }
-.import-status { font-weight: 400; }
-
-/* Kartu ringkasan */
-.summary-item h4 { font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em; color: var(--text-label); }
-.summary-item p { font-weight: 600; letter-spacing: -0.02em; }
-@media (min-width: 769px) { .summary-item p { font-size: 1.75rem; } }
-
-/* Judul tabel */
-.table-header-section h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; }
-
-/* Tabel */
-table { font-size: 0.95rem; }
-th { font-size: 0.9rem; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--text-muted); }
-td { font-weight: 400; }
-.row-divisi-header td { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; }
-
-.badge-masuk, .badge-keluar {
-    text-transform: uppercase; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
-    padding: 4px 10px; border-radius: 6px;
-}
-.badge-masuk::before, .badge-keluar::before { display: none; }
-
-/* Aksi: teks polos, tanpa latar */
-.btn-edit, .btn-delete,
-.btn-nota-action, .btn-nota-delete {
-    background: transparent; color: var(--text-muted);
-    font-size: 0.85rem; font-weight: 500; padding: 4px 8px;
-}
-.btn-edit:hover, .btn-nota-action:hover { background: transparent; color: var(--text-main); }
-.btn-delete:hover, .btn-nota-delete:hover { background: transparent; color: #ef4444; }
-.btn-nota-action:hover, .btn-nota-delete:hover { transform: none; }
-
-/* Baris total */
-.tfoot-summary td { font-size: 0.95rem; font-weight: 500; }
-.tfoot-summary td:first-child { color: var(--text-main); font-weight: 700; }
-.tfoot-summary:last-child td { font-weight: 700; }
-
-/* Label kartu di tampilan HP */
-tbody td[data-label]::before { font-weight: 600; }
-
-/* Badge Masuk/Keluar: hanya warna tulisan, tanpa latar */
-.badge-masuk, .badge-keluar { background: transparent; padding: 0; }
-
-/* =====================================================================
-   ★ TAMBAHAN BARU — fitur & tampilan tambahan
-   Dimuat setelah gaya lama, jadi aturan di bawah ini menyempurnakan
-   (atau menimpa seperlunya) aturan sebelumnya.
-   ===================================================================== */
-
-/* ---------- A. UTILITAS & IKON ---------- */
-.icon {
-    width: 18px; height: 18px; flex-shrink: 0;
-    fill: none; stroke: currentColor; stroke-width: 2;
-    stroke-linecap: round; stroke-linejoin: round;
-}
-.hidden-input { display: none; }
-.muted { color: var(--text-muted); font-size: 0.82rem; font-weight: 500; }
-.text-masuk { color: #10b981; }
-.text-keluar { color: #f43f5e; }
-.hasil-hijau { color: #10b981; font-size: 1.1rem; }
-.cell-center { text-align: center; }
-
-kbd {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 22px; padding: 2px 7px; margin: 0 2px;
-    font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600;
-    color: var(--text-muted); background: var(--input-bg);
-    border: 1px solid var(--border-color); border-bottom-width: 2px; border-radius: 6px;
-}
-
-/* Merapikan style yang sebelumnya inline di HTML */
-.info-card .form-group { margin-bottom: 0; }
-.card-drive { border-top: 5px solid #4285F4; }
-.drive-desc { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px; }
-.grid-drive { gap: 15px; margin-bottom: 15px; }
-.export-drive { margin-top: 15px; }
-.calc-sim { margin-top: 20px; }
-.calc-sim h3 { font-size: 1.05rem; font-weight: 800; margin-bottom: 12px; }
-.col-no { width: 35px; text-align: center; }
-.col-jenis { width: 75px; }
-.col-qty { width: 60px; text-align: center; }
-.col-nota { width: 120px; text-align: center; }
-.col-action { width: 170px; }
-.empty-row { text-align: center; color: var(--text-muted); padding: 28px 14px; }
-.nota-actions { text-align: center; margin-top: 2px; }
-.saldo-pos, #dispSaldo.saldo-pos { color: #10b981; }
-#dispSaldo.saldo-neg { color: #f43f5e; }
-.tfoot-saldo { background: var(--input-bg); }
-
-.ket-wrap { display: flex; flex-direction: column; gap: 2px; }
-.row-time { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; }
-
-/* ---------- B. GARIS SCROLL, KONFETI, TOMBOL KE ATAS ---------- */
-.scroll-progress {
-    position: fixed; top: 0; left: 0; width: 100%; height: 3px; z-index: 10002;
-    background: linear-gradient(90deg, #5b6cff, #9b5cf6, #ec5fa8, #ffa23e);
-    transform: scaleX(0); transform-origin: 0 50%;
-    pointer-events: none;
-}
-
-.confetti-canvas {
-    position: fixed; inset: 0; width: 100%; height: 100%;
-    z-index: 10003; pointer-events: none;
-}
-
-.btn-ke-atas {
-    position: fixed; right: 22px; bottom: 24px; z-index: 9000;
-    width: 46px; height: 46px; padding: 0; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--primary-gradient); color: #fff;
-    box-shadow: 0 14px 28px -10px rgba(155, 92, 246, 0.8);
-    opacity: 0; visibility: hidden; transform: translateY(14px);
-    transition: opacity 0.3s ease, transform 0.35s var(--ease-flow), visibility 0.3s;
-}
-.btn-ke-atas.show { opacity: 1; visibility: visible; transform: translateY(0); }
-.btn-ke-atas.show:hover { transform: translateY(-3px); }
-
-.site-footer {
-    text-align: center; margin-top: 26px;
-    font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
-}
-
-/* ---------- C. SOROT CAHAYA MENGIKUTI KURSOR ---------- */
-.card, .chart-card, .stat-tile, .tool-card, .health-card { position: relative; overflow: hidden; }
-.card::before, .chart-card::before, .stat-tile::before, .tool-card::before, .health-card::before {
-    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
-    background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(155, 92, 246, 0.16), transparent 70%);
-    transition: opacity 0.35s ease;
-}
-.card:hover::before, .chart-card:hover::before, .stat-tile:hover::before,
-.tool-card:hover::before, .health-card:hover::before { opacity: 1; }
-
-/* ---------- D. NAVBAR: TOMBOL PALET PERINTAH ---------- */
-.nav-right-pc { display: flex; align-items: center; gap: 10px; }
-.btn-palette {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 12px; font-size: 0.85rem; font-weight: 600;
-    color: var(--text-muted); background: var(--input-bg);
-    border: 1px solid var(--border-color); border-radius: var(--radius-md);
-}
-.btn-palette:hover { color: var(--text-main); border-color: #9b5cf6; }
-.btn-palette .pal-kbd { margin: 0 0 0 4px; }
-
-@media (max-width: 1180px) {
-    .btn-palette .pal-label, .btn-palette .pal-kbd { display: none; }
-    .btn-palette { padding: 9px 11px; }
-}
-@media (min-width: 769px) and (max-width: 1000px) {
-    .btn-palette { display: none; }
-    .desktop-nav .nav-tab { padding: 8px 9px; font-size: 0.78rem; }
-}
-
-/* ---------- E. BANNER SAMBUTAN ---------- */
-.hero {
-    position: relative; overflow: hidden;
-    display: flex; justify-content: space-between; align-items: center; gap: 20px;
-    padding: 26px 28px; margin-bottom: 24px;
-    border-radius: var(--radius-lg); border: 1px solid var(--border-color);
-    background:
-        linear-gradient(135deg, rgba(91, 108, 255, 0.18), rgba(155, 92, 246, 0.14) 45%, rgba(236, 95, 168, 0.14)),
-        var(--card-solid);
-    box-shadow: var(--shadow-card);
-}
-.hero::after {
-    content: ''; position: absolute; right: -70px; top: -70px; width: 240px; height: 240px;
-    border-radius: 50%; pointer-events: none;
-    background: radial-gradient(circle, rgba(255, 162, 62, 0.30), transparent 68%);
-}
-.hero-text { position: relative; z-index: 1; min-width: 0; }
-.hero-greeting { font-size: 0.88rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
-.hero-title {
-    font-size: clamp(1.4rem, 2.8vw, 2rem); font-weight: 800; line-height: 1.2; word-break: break-word;
-    background: var(--primary-gradient); background-size: 200% 200%;
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
-    animation: gradientShift 8s ease infinite;
-}
-.hero-sub { margin-top: 6px; font-size: 0.92rem; color: var(--text-label); font-weight: 500; }
-.hero-hints { margin-top: 12px; font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
-.dot-sep { width: 4px; height: 4px; border-radius: 50%; background: var(--text-placeholder); margin: 0 10px; display: inline-block; }
-
-.hero-status {
-    --c-rgb: 148, 163, 184;
-    position: relative; z-index: 1; flex-shrink: 0;
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 10px 18px; border-radius: 999px;
-    font-weight: 700; font-size: 0.92rem; white-space: nowrap;
-    color: rgb(var(--c-rgb)); background: rgba(var(--c-rgb), 0.12);
-    border: 1px solid rgba(var(--c-rgb), 0.35);
-}
-.hero-status.surplus { --c-rgb: 16, 185, 129; }
-.hero-status.defisit { --c-rgb: 244, 63, 94; }
-.hero-status.seimbang { --c-rgb: 245, 158, 11; }
-.status-dot { width: 10px; height: 10px; border-radius: 50%; background: rgb(var(--c-rgb)); }
-.hero-status:not(.kosong) .status-dot { animation: pulseDot 2s ease-out infinite; }
-@keyframes pulseDot {
-    0%   { box-shadow: 0 0 0 0 rgba(var(--c-rgb), 0.6); }
-    70%  { box-shadow: 0 0 0 10px rgba(var(--c-rgb), 0); }
-    100% { box-shadow: 0 0 0 0 rgba(var(--c-rgb), 0); }
-}
-
-/* ---------- F. FORM: CHIP NOMINAL & TERBILANG ---------- */
-.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.chip {
-    padding: 5px 12px; font-size: 0.78rem; font-weight: 600; border-radius: 999px;
-    color: var(--text-muted); background: var(--input-bg); border: 1px solid var(--border-color);
-}
-.chip:hover { color: var(--text-main); border-color: #9b5cf6; background: rgba(155, 92, 246, 0.14); transform: translateY(-1px); }
-.chip-clear { color: #ef4444; }
-.chip-clear:hover { color: #ef4444; border-color: #f43f5e; background: rgba(244, 63, 94, 0.12); }
-.terbilang-text { margin-top: 8px; font-size: 0.84rem; font-style: italic; color: var(--text-muted); line-height: 1.5; }
-.terbilang-text:empty { display: none; }
-
-/* ---------- G. FILTER, URUTAN, JUMLAH HASIL ---------- */
-.filter-bar { grid-template-columns: 2fr 1fr 1fr 1fr; }
-.result-count { margin: -4px 0 12px; font-size: 0.82rem; color: var(--text-muted); font-weight: 500; }
-.result-count:empty { display: none; }
-td .btn-edit + .btn-edit, td .btn-edit + .btn-delete { margin-left: 2px; }
-
-/* ---------- H. TOAST DENGAN IKON WARNA & TOMBOL AKSI ---------- */
-.toast { display: flex; align-items: center; gap: 12px; }
-.toast-dot { width: 9px; height: 9px; border-radius: 50%; background: #9b5cf6; flex-shrink: 0; }
-.toast.success { border-left-color: #10b981; }
-.toast.success .toast-dot { background: #10b981; }
-.toast.error { border-left-color: #f43f5e; }
-.toast.error .toast-dot { background: #f43f5e; }
-.toast.warn { border-left-color: #f59e0b; }
-.toast.warn .toast-dot { background: #f59e0b; }
-.toast.has-action { animation: toastIn 0.5s var(--ease-flow) both, toastOut 0.4s ease 4.8s forwards; }
-.toast-btn {
-    margin-left: 6px; padding: 5px 12px; font-size: 0.8rem; font-weight: 700; border-radius: 999px;
-    color: #fff; background: var(--primary-gradient); box-shadow: 0 6px 14px -6px rgba(155, 92, 246, 0.8);
-}
-
-/* ---------- I. ANALISIS: KARTU WAWASAN ---------- */
-.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
-.stat-tile {
-    --aksen: #9b5cf6;
-    display: flex; flex-direction: column; gap: 6px;
-    padding: 20px 22px 20px 26px; border-radius: var(--radius-lg);
-    background: var(--card-solid); border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-card);
-    transition: transform 0.4s var(--ease-flow), box-shadow 0.4s ease;
-}
-.stat-tile::after {
-    content: ''; position: absolute; left: 0; top: 18px; bottom: 18px; width: 4px;
-    border-radius: 0 4px 4px 0; background: var(--aksen);
-}
-.stat-tile:nth-child(1) { --aksen: #5b6cff; }
-.stat-tile:nth-child(2) { --aksen: #f43f5e; }
-.stat-tile:nth-child(3) { --aksen: #9b5cf6; }
-.stat-tile:nth-child(4) { --aksen: #10b981; }
-.stat-tile:nth-child(5) { --aksen: #ffa23e; }
-.stat-tile:nth-child(6) { --aksen: #ec5fa8; }
-.stat-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow-card-hover); }
-.stat-label { font-size: 0.76rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
-.stat-value { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; word-break: break-word; }
-.stat-sub { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; }
-
-/* ---------- J. ANALISIS: KESIAPAN LAPORAN ---------- */
-.health-card {
-    display: flex; align-items: center; gap: 28px;
-    padding: 26px 28px; margin-bottom: 24px; border-radius: var(--radius-lg);
-    background: var(--card-solid); border: 1px solid var(--border-color); box-shadow: var(--shadow-card);
-}
-.health-ring { position: relative; width: 132px; height: 132px; flex-shrink: 0; }
-.health-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.health-ring circle { fill: none; stroke-width: 9; }
-.ring-bg { stroke: var(--border-color); }
-.ring-arc {
-    stroke: url(#healthGrad); stroke-linecap: round;
-    stroke-dasharray: 263.9; stroke-dashoffset: 263.9;
-    transition: stroke-dashoffset 1s var(--ease-flow);
-}
-.health-score {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em;
-}
-.health-body { flex: 1; min-width: 0; }
-.health-body h4 { font-size: 1.05rem; font-weight: 800; }
-.health-verdict { margin: 2px 0 12px; font-size: 0.88rem; font-weight: 600; color: var(--accent-text); }
-.health-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; }
-.health-item { display: flex; align-items: flex-start; gap: 10px; }
-.health-item b { display: block; font-size: 0.9rem; font-weight: 600; }
-.health-item small { display: block; font-size: 0.78rem; color: var(--text-muted); font-weight: 400; margin-top: 1px; }
-.health-mark {
-    flex-shrink: 0; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 0.72rem; font-weight: 800; color: #fff; background: #94a3b8;
-}
-.health-item.ok .health-mark { background: var(--success-gradient); }
-.health-item.ok .health-mark::before { content: '✓'; }
-.health-item.bad .health-mark { background: var(--danger-gradient); }
-.health-item.bad .health-mark::before { content: '!'; }
-.health-item.skip .health-mark::before { content: '–'; }
-.health-item.skip b { color: var(--text-muted); }
-
-/* ---------- K. TAB TOOLS ---------- */
-.tools-intro h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
-.tools-intro p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.55; }
-
-.tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
-.tool-card {
-    padding: 24px; border-radius: var(--radius-lg);
-    background: var(--card-solid); border: 1px solid var(--border-color); box-shadow: var(--shadow-card);
-    transition: transform 0.4s var(--ease-flow), box-shadow 0.4s ease;
-}
-.tool-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
-.tool-wide { grid-column: 1 / -1; }
-.tool-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; }
-.tool-head h3 { font-size: 1.05rem; font-weight: 800; }
-.tool-head p { margin-top: 3px; font-size: 0.84rem; color: var(--text-muted); line-height: 1.5; }
-.tool-icon {
-    flex-shrink: 0; width: 42px; height: 42px; border-radius: 12px; color: #fff;
-    display: inline-flex; align-items: center; justify-content: center;
-    background: var(--primary-gradient);
-    box-shadow: 0 10px 20px -8px rgba(155, 92, 246, 0.7);
-}
-.tool-icon .icon { width: 20px; height: 20px; }
-.tool-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-
-.btn-mini {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 9px 16px; font-size: 0.84rem; font-weight: 600; cursor: pointer;
-    color: var(--text-main); background: var(--card-solid);
-    border: 1px solid var(--border-color); border-radius: var(--radius-md);
-}
-.btn-mini:hover { border-color: #9b5cf6; box-shadow: 0 8px 18px -10px rgba(155, 92, 246, 0.8); }
-.btn-mini.primary { color: #fff; border-color: transparent; background-image: var(--primary-gradient); }
-.btn-mini.wa { color: #fff; border-color: transparent; background-image: linear-gradient(135deg, #25d366 0%, #128c7e 100%); }
-.btn-file { margin: 0; }
-
-textarea {
-    width: 100%; padding: 12px 14px; border-radius: var(--radius-md);
-    border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main);
-    font-size: 0.9rem; line-height: 1.6; resize: vertical; outline: none;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
-}
-textarea:focus { border-color: #9b5cf6; box-shadow: 0 0 0 4px rgba(155, 92, 246, 0.22); }
-
-/* Pagu anggaran */
-.budget-form { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 12px; margin-bottom: 12px; }
-.budget-form input { width: 100%; }
-.budget-suggest { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.budget-suggest:empty { display: none; }
-.budget-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-.empty-note { grid-column: 1 / -1; font-size: 0.86rem; color: var(--text-muted); padding: 14px 16px; border-radius: var(--radius-md); background: var(--input-bg); border: 1px dashed var(--border-color); }
-
-.budget-item { padding: 14px 16px; border-radius: var(--radius-md); background: var(--input-bg); border: 1px solid var(--border-color); }
-.budget-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.budget-top strong { font-size: 0.95rem; font-weight: 700; }
-.budget-nums { margin-left: auto; font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
-.budget-del {
-    padding: 0; width: 24px; height: 24px; line-height: 1; font-size: 1.1rem; border-radius: 50%;
-    color: var(--text-muted); background: transparent;
-}
-.budget-del:hover { color: #fff; background: #f43f5e; transform: none; }
-.budget-bar { height: 10px; border-radius: 10px; overflow: hidden; background: var(--border-color); }
-.budget-bar span { display: block; height: 100%; width: 0; border-radius: 10px; background: var(--success-gradient); transition: width 0.9s var(--ease-flow); }
-.budget-item.warn .budget-bar span { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
-.budget-item.over .budget-bar span { background: var(--danger-gradient); }
-.budget-note { margin-top: 8px; font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
-.budget-item.warn .budget-note { color: #f59e0b; }
-.budget-item.over .budget-note { color: #f43f5e; font-weight: 700; }
-
-/* Kalkulator */
-.calc-display {
-    padding: 14px 16px; margin-bottom: 12px; text-align: right;
-    border-radius: var(--radius-md); background: var(--input-bg); border: 1px solid var(--border-color);
-}
-.calc-expr { min-height: 1.3em; font-size: 0.88rem; color: var(--text-muted); word-break: break-all; }
-.calc-out { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; word-break: break-all; }
-.calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.calc-key {
-    padding: 13px 0; font-size: 1.05rem; font-weight: 600;
-    color: var(--text-main); background: var(--card-solid); border: 1px solid var(--border-color);
-    border-radius: 12px;
-}
-.calc-key:hover { border-color: #9b5cf6; background: rgba(155, 92, 246, 0.12); }
-.calc-key.fn { color: var(--text-muted); }
-.calc-key.op { color: var(--accent-text); background: rgba(155, 92, 246, 0.14); }
-.calc-key.eq { color: #fff; border-color: transparent; background-image: var(--primary-gradient); }
-
-/* Terbilang */
-.terbilang-out {
-    padding: 14px 16px; border-radius: var(--radius-md); border-left: 4px solid #9b5cf6;
-    background: var(--input-bg); font-weight: 700; line-height: 1.6; color: var(--accent-text);
-}
-.terbilang-out.kosong { color: var(--text-muted); font-weight: 500; }
-
-/* Penyimpanan */
-.storage-meter { margin-bottom: 6px; }
-.storage-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; font-size: 0.84rem; font-weight: 600; }
-.storage-label span:last-child { color: var(--text-muted); font-weight: 500; }
-.storage-track { height: 10px; border-radius: 10px; overflow: hidden; background: var(--border-color); }
-.storage-fill { height: 100%; width: 0; border-radius: 10px; background: var(--primary-gradient); transition: width 0.8s var(--ease-flow); }
-.storage-fill.warn { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
-.storage-fill.over { background: var(--danger-gradient); }
-
-/* ---------- L. PALET PERINTAH ---------- */
-.cmd-overlay {
-    position: fixed; inset: 0; z-index: 10001; display: none;
-    align-items: flex-start; justify-content: center; padding: 12vh 16px 16px;
-    background: rgba(5, 8, 20, 0.6);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-}
-.cmd-overlay.open { display: flex; animation: modalFade 0.2s ease; }
-.cmd-box {
-    width: 100%; max-width: 560px; overflow: hidden;
-    background: var(--bg-main); border: 1px solid var(--card-border); border-radius: var(--radius-lg);
-    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.6);
-    animation: modalZoom 0.3s var(--ease-flow);
-}
-body:not(.dark-mode) .cmd-box { border-color: var(--border-color); }
-.cmd-input-wrap { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border-color); color: var(--text-muted); }
-.cmd-input-wrap input {
-    flex: 1; min-width: 0; padding: 6px 0; font-size: 1rem; font-weight: 500;
-    color: var(--text-main); background: transparent; border: none; box-shadow: none;
-}
-.cmd-input-wrap input:focus { box-shadow: none; }
-.cmd-list { list-style: none; max-height: 340px; overflow-y: auto; padding: 8px; }
-.cmd-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; border-radius: 10px; font-size: 0.92rem; font-weight: 500; cursor: pointer; }
-.cmd-item.active { color: #fff; background-image: var(--primary-gradient); }
-.cmd-tag { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); }
-.cmd-item.active .cmd-tag { color: rgba(255, 255, 255, 0.85); }
-.cmd-empty { padding: 22px; text-align: center; font-size: 0.9rem; color: var(--text-muted); }
-.cmd-footer { display: flex; gap: 18px; padding: 10px 18px; font-size: 0.76rem; color: var(--text-muted); border-top: 1px solid var(--border-color); }
-
-/* ---------- M. RESPONSIF UNTUK ELEMEN BARU ---------- */
-@media (max-width: 1000px) {
-    .stat-grid { grid-template-columns: repeat(2, 1fr); }
-    .health-list { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 768px) {
-    .hero { flex-direction: column; align-items: flex-start; padding: 20px 18px; gap: 14px; }
-    .hero-hints { display: none; }
-    .filter-bar { grid-template-columns: 1fr !important; }
-    .result-count { margin-top: 0; }
-
-    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .stat-tile { padding: 14px 12px 14px 18px; }
-    .stat-label { font-size: 0.66rem; }
-    .stat-value { font-size: clamp(1rem, 4.6vw, 1.3rem); }
-    .stat-sub { font-size: 0.74rem; }
-
-    .health-card { flex-direction: column; align-items: center; text-align: center; padding: 22px 16px; gap: 18px; }
-    .health-item { text-align: left; }
-
-    .tools-grid, .budget-list { grid-template-columns: 1fr; gap: 14px; }
-    .tool-card { padding: 18px 14px; }
-    .tool-card:hover { transform: none; }
-    .budget-form { grid-template-columns: 1fr; }
-    .tool-actions .btn-mini { flex: 1 1 100%; }
-
-    .btn-ke-atas { right: 14px; bottom: 16px; width: 42px; height: 42px; }
-    .cmd-overlay { padding-top: 8vh; }
-    .site-footer { margin-top: 18px; }
-
-    tbody td[data-label="Aksi"] { flex-wrap: wrap; }
-    tbody td .ket-wrap { align-items: flex-end; }
-    tbody td[data-label="Nota / Bukti"] .nota-actions { text-align: right; }
-}
-
-
-/* =====================================================================
-   Halaman "Rincian Transaksi" terpisah (khusus HP)
-   Di PC/laptop: tabel tetap di halaman Pencatatan, elemen ini disembunyikan.
-   ===================================================================== */
-.rincian-link, .btn-back-rincian { display: none; }
-
-@media (max-width: 768px) {
-    .rincian-link {
-        display: flex; align-items: center; justify-content: space-between; gap: 12px;
-        background: var(--card-solid); border: 1px solid var(--border-color);
-        border-radius: 16px; padding: 14px 16px; margin: 0 0 18px;
-        box-shadow: var(--shadow-card);
-    }
-    .rincian-link-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .rincian-link-text strong { font-size: 0.95rem; color: var(--text-main); }
-    .rincian-link-text span { font-size: 0.78rem; color: var(--text-muted); }
-    .rincian-link .btn-new { flex-shrink: 0; padding: 10px 16px; font-size: 0.82rem; white-space: nowrap; }
-
-    .btn-back-rincian {
-        display: inline-flex; align-items: center; gap: 6px;
-        background: var(--card-solid); color: var(--text-main);
-        border: 1px solid var(--border-color); border-radius: 12px;
-        padding: 10px 14px; margin-bottom: 16px;
-        font-weight: 700; font-size: 0.85rem; cursor: pointer;
-    }
-}
-
-
-/* =====================================================================
-   PENYEMPURNAAN TAMPILAN HP (lebar layar ≤ 768px)
-   Tujuan: lebih lega, font lebih ringkas, tidak "ramai".
-   Semua aturan berada di dalam media query ini, sehingga tampilan
-   PC/laptop tidak terpengaruh sama sekali.
-   ===================================================================== */
-@media (max-width: 768px) {
-
-    /* ---- 1. Kurangi hiasan latar yang membuat layar terasa ramai ---- */
-    body::before { display: none; }                 /* gelombang di dasar layar */
-    .bg-blobs { opacity: 0.45; }                    /* bola cahaya lebih redup */
-    .hero::after, .summary-item::after { display: none; }
-    .container { padding: 16px 12px; }
-
-    /* ---- 2. Ukuran huruf kolom isian & tombol ---- */
-    select, input[type="text"], input[type="number"] { font-size: 0.9rem; padding: 10px 12px; }
-    input[type="file"] { font-size: 0.76rem; }
-    button { font-size: 0.86rem; }
-
-    /* ---- 3. Banner sambutan ---- */
-    .hero { padding: 16px; margin-bottom: 16px; gap: 10px; }
-    .hero-greeting { font-size: 0.78rem; margin-bottom: 2px; }
-    .hero-title { font-size: 1.3rem; }
-    .hero-sub { font-size: 0.82rem; margin-top: 4px; }
-    .hero-status { padding: 7px 14px; font-size: 0.8rem; gap: 8px; }
-
-    /* ---- 4. Bar draf, impor Word, jumlah peserta ---- */
-    .draft-bar { padding: 12px; margin-bottom: 16px; gap: 8px; }
-    .draft-bar label { font-size: 0.8rem; }
-    .draft-bar button { font-size: 0.78rem; }
-    .import-box { padding: 12px; margin-bottom: 16px; border-width: 1px; }
-    .import-box-header { margin-bottom: 10px; }
-    .import-title { font-size: 0.88rem; }
-    .import-status { font-size: 0.74rem; }
-    .btn-template { font-size: 0.8rem; padding: 10px; }
-    .info-card { padding: 14px; margin-bottom: 16px; }
-
-    /* ---- 5. Form uang masuk / keluar ---- */
-    .grid { gap: 14px; margin-bottom: 16px; }
-    .card { padding: 16px 14px; }
-    .card h3 { font-size: 1rem; margin-bottom: 12px; }
-    .form-group { margin-bottom: 12px; }
-    .form-group label { font-size: 0.78rem; margin-bottom: 5px; }
-    .calc-group { gap: 8px; }
-    .calc-operator { width: 26px; height: 26px; font-size: 0.85rem; }
-    .chip-row { gap: 5px; margin-top: 8px; }
-    .chip { padding: 4px 10px; font-size: 0.72rem; }
-    .calc-subtotal { font-size: 0.82rem; padding: 6px 10px; }
-    .terbilang-text { font-size: 0.78rem; }
-    .btn-masuk, .btn-keluar { padding: 12px; font-size: 0.88rem; }
-
-    /* ---- 6. Kotak ringkasan ---- */
-    .summary-box { gap: 8px; margin-bottom: 16px; }
-    .summary-item { padding: 12px 8px; }
-    .summary-item h4 { font-size: 0.68rem; margin-bottom: 4px; }
-    .summary-item p { font-size: clamp(0.88rem, 3.8vw, 1.02rem); }
-
-    .rincian-link { margin-bottom: 16px; padding: 12px 14px; }
-    .rincian-link-text strong { font-size: 0.9rem; }
-    .rincian-link-text span { font-size: 0.74rem; }
-    .rincian-link .btn-new { padding: 9px 14px; font-size: 0.8rem; }
-    .btn-back-rincian { padding: 8px 12px; font-size: 0.8rem; margin-bottom: 12px; }
-
-    /* ---- 7. Halaman Rincian Transaksi: judul, filter, ekspor ---- */
-    .table-header-section { margin-bottom: 10px; }
-    .table-header-section h2 { font-size: 1.05rem; }
-    .table-header-section h2::before { width: 5px; height: 20px; }
-    .btn-history { font-size: 0.8rem; padding: 7px 12px; }
-
-    /* Filter: kolom cari penuh, dua pilihan berdampingan */
-    .filter-bar { grid-template-columns: 1fr 1fr !important; gap: 8px; margin-bottom: 10px; }
-    .filter-bar #searchKeyword, .filter-bar #sortTransaksi { grid-column: 1 / -1; }
-    .filter-bar select, .filter-bar input { font-size: 0.85rem; }
-    .result-count { font-size: 0.76rem; margin: 0 0 10px; }
-
-    .export-group { margin-top: 18px; gap: 10px !important; }
-    .btn-word, .btn-pdf, .btn-excel { padding: 12px; font-size: 0.86rem; }
-
-    /* ---- 8. Kartu transaksi: ringkas, font kecil, rapi ----
-          Baris atas : jenis (kiri) & total (kanan, satu baris penuh)
-          Tengah     : keterangan, harga satuan, jumlah, nota, catatan
-          Bawah      : tombol Edit / Duplikat / Hapus selebar kartu        */
-    table { font-size: 0.78rem; }
-
-    tbody tr:not(.row-divisi-header) {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        grid-template-areas:
-            "top    top"
-            "ket    ket"
-            "harga  jumlah"
-            "nota   catatan"
-            "aksi   aksi";
-        gap: 8px 12px;
-        padding: 12px;
-        margin-bottom: 8px;
-        border-radius: 12px;
-    }
-
-    tbody td[data-label] {
-        display: block; min-width: 0; padding: 0;
-        border: 0 !important;
-        text-align: left !important;
-        font-size: 0.78rem; line-height: 1.35; word-break: break-word;
-    }
-    tbody td[data-label]::before {
-        display: block; margin: 0 0 1px;
-        font-size: 0.58rem; font-weight: 500; letter-spacing: 0.04em;
-        text-transform: uppercase; color: var(--text-muted);
-    }
-
-    /* Nomor urut disembunyikan di kartu (urutan sudah jelas dari susunan kartu) */
-    tbody td[data-label="No"] { display: none; }
-
-    /* Jenis & Total berbagi satu baris: jenis di kiri, total rata kanan.
-       Total diberi ruang kiri agar tidak menimpa tulisan jenis. */
-    tbody td[data-label="Jenis"] { grid-area: top; justify-self: start; align-self: center; }
-    tbody .badge-masuk, tbody .badge-keluar { font-size: 0.66rem; }
-    tbody td[data-label="Total"] {
-        grid-area: top; align-self: center;
-        padding-left: 64px;
-        text-align: right !important;
-        font-size: 0.9rem;
-        white-space: nowrap; word-break: normal; overflow-wrap: normal;
-    }
-
-    tbody td[data-label="Keterangan"] { grid-area: ket; font-size: 0.84rem; font-weight: 600; }
-    tbody td[data-label="Harga Satuan"] { grid-area: harga; }
-    tbody td[data-label="Jumlah"] { grid-area: jumlah; }
-    tbody td[data-label="Nota / Bukti"] { grid-area: nota; }
-    tbody td[data-label="Catatan"] { grid-area: catatan; }
-
-    /* Label yang sudah jelas dari isinya tidak perlu ditulis */
-    tbody td[data-label="Jenis"]::before,
-    tbody td[data-label="Total"]::before,
-    tbody td[data-label="Keterangan"]::before,
-    tbody td[data-label="Aksi"]::before { display: none; }
-
-    tbody td .ket-wrap { align-items: flex-start; gap: 1px; }
-    .row-time { font-size: 0.62rem; }
-
-    tbody td[data-label="Nota / Bukti"] > div { flex-direction: row; flex-wrap: wrap; align-items: center; }
-    tbody td[data-label="Nota / Bukti"] .nota-actions { text-align: left; margin-top: 3px; }
-    .img-preview { width: 34px; height: 34px; }
-    .btn-nota-action, .btn-nota-delete { font-size: 0.72rem; padding: 1px 0; margin: 1px 10px 1px 0; }
-
-    /* Tombol aksi: tiga tombol sama lebar, penuh selebar kartu, satu baris */
-    tbody td[data-label="Aksi"] {
-        grid-area: aksi; width: auto;
-        display: flex; flex-wrap: nowrap; justify-content: stretch; gap: 6px;
-        margin-top: 0; padding-top: 8px;
-        border-top: 1px dashed var(--border-color) !important;
-    }
-    tbody td[data-label="Aksi"] button {
-        flex: 1 1 0; min-width: 0;
-        padding: 6px 2px; font-size: 0.7rem; font-weight: 600; white-space: nowrap;
-        background: var(--input-bg); color: var(--text-main);
-        border: 1px solid var(--border-color); border-radius: 8px;
-    }
-    tbody td[data-label="Aksi"] .btn-delete { color: #ef4444; border-color: rgba(244, 63, 94, 0.30); }
-
-    /* Judul divisi & baris kosong */
-    .row-divisi-header { margin: 12px 0 6px; }
-    .row-divisi-header td { padding: 8px 12px; font-size: 0.82rem; border-radius: 10px; }
-    tbody td.empty-row { grid-area: 1 / 1 / 2 / 3; padding: 16px 8px; font-size: 0.8rem; }
-
-    /* Kotak total di bawah daftar: baris saldo memenuhi lebar kotak,
-       teks diberi jarak ke tepi sehingga tidak terlihat mepet */
-    tfoot { margin-top: 4px; padding: 0; overflow: hidden; border-radius: 12px; }
-    .tfoot-summary { padding: 0 14px; gap: 10px; }
-    .tfoot-summary td { padding: 9px 0; font-size: 0.8rem; }
-    .tfoot-summary td:last-child { text-align: right; white-space: nowrap; }
-
-    /* ---- 9. Halaman Analisis & Grafik ---- */
-    .progress-label-group { font-size: 0.82rem; margin-bottom: 8px; }
-    .progress-track { height: 10px; }
-
-    .stat-grid { gap: 8px; margin-bottom: 16px; }
-    .stat-tile { padding: 12px 10px 12px 14px; }
-    .stat-label { font-size: 0.62rem; }
-    .stat-value { font-size: clamp(0.95rem, 4.2vw, 1.15rem); }
-    .stat-sub { font-size: 0.68rem; }
-
-    .charts-grid { gap: 14px; margin-bottom: 14px; }
-    .chart-card { padding: 14px 12px; }
-    .chart-card h4 { font-size: 0.9rem; margin-bottom: 10px; }
-    .chart-wrapper { height: 210px; }
-
-    .health-card { padding: 18px 14px; gap: 14px; }
-    .health-ring { width: 108px; height: 108px; }
-    .health-body h4 { font-size: 0.95rem; }
-    .health-verdict { font-size: 0.82rem; margin-bottom: 10px; }
-    .health-list { gap: 8px; }
-    .health-item b { font-size: 0.84rem; }
-    .health-item small { font-size: 0.72rem; }
-
-    .calc-widget { padding: 16px 14px; }
-    .calc-sim { margin-top: 14px; }
-    .calc-sim h3 { font-size: 0.95rem; }
-    .calc-result-box { padding: 12px 14px; font-size: 0.85rem; }
-
-    /* ---- 10. Halaman Tools & Google Drive ---- */
-    .tools-intro h3 { font-size: 1rem; }
-    .tools-intro p { font-size: 0.8rem; }
-    .tools-grid, .budget-list { gap: 12px; }
-    .tool-card { padding: 16px 14px; }
-    .tool-head { gap: 10px; margin-bottom: 12px; }
-    .tool-head h3 { font-size: 0.95rem; }
-    .tool-head p { font-size: 0.76rem; }
-    .tool-actions { gap: 8px; margin-top: 12px; }
-    .btn-mini { font-size: 0.8rem; }
-    .drive-desc { font-size: 0.8rem; margin-bottom: 14px; }
-
-    /* ---- 11. Lain-lain ---- */
-    .toast { padding: 11px 14px; font-size: 0.85rem; }
-    .site-footer { font-size: 0.74rem; }
-}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0b0716">
+    <title>Rekapan Keuangan - GAMATIKA Coding Club</title>
+
+    <!-- Favicon Logo GCC -->
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl">
+
+    <!-- Stylesheet Kustom -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Library docx & FileSaver untuk Word -->
+    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <!-- Library jsPDF + AutoTable untuk PDF teks asli -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Library Mammoth.js untuk Impor Word -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <!-- Library Chart.js untuk Grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Library SheetJS (XLSX) untuk Ekspor Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+    <!-- Garis kemajuan scroll di paling atas layar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- Kanvas konfeti perayaan -->
+    <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+    <!-- Elemen Bola Cahaya Bergerak Dekoratif -->
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Container Toast Notifikasi -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Modal Lightbox Bukti/Nota -->
+    <div id="imageModal" class="modal-lightbox" onclick="closeModal()">
+        <span class="modal-close">Tutup</span>
+        <img id="modalImage" class="modal-content" alt="Preview Nota/Bukti">
+        <div class="modal-caption" id="modalCaption"></div>
+    </div>
+
+    <!-- Palet Perintah (Ctrl + K) -->
+    <div id="cmdPalette" class="cmd-overlay">
+        <div class="cmd-box" role="dialog" aria-modal="true" aria-label="Palet perintah">
+            <div class="cmd-input-wrap">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" id="cmdInput" placeholder="Ketik perintah, mis. grafik, tema, draf baru..." autocomplete="off" spellcheck="false">
+                <kbd>Esc</kbd>
+            </div>
+            <ul id="cmdList" class="cmd-list"></ul>
+            <div class="cmd-footer">
+                <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> pilih</span>
+                <span><kbd>Enter</kbd> jalankan</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pratinjau Kuitansi -->
+    <div id="kuitansiModal" class="kw-overlay" onclick="if (event.target === this) tutupKuitansi()">
+        <div class="kw-dialog" role="dialog" aria-modal="true" aria-label="Pratinjau kuitansi">
+            <div class="kw-actions">
+                <button type="button" class="btn-mini primary" onclick="cetakKuitansi()">Cetak / Simpan PDF</button>
+                <button type="button" class="btn-mini" onclick="tutupKuitansi()">Tutup</button>
+            </div>
+            <div id="kwSheet"></div>
+        </div>
+    </div>
+
+    <!-- Tombol kembali ke atas -->
+    <button id="btnKeAtas" class="btn-ke-atas" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" aria-label="Kembali ke atas">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+
+    <!-- ================= NAVBAR UTAMA (PC & MOBILE) ================= -->
+    <header class="navbar-main">
+        <div class="nav-brand">
+            <img src="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl" alt="Logo GCC" class="nav-logo">
+            <div class="brand-info">
+                <h1>Keuangan GCC</h1>
+                <p>GAMATIKA Coding Club</p>
+            </div>
+        </div>
+
+        <!-- Navigasi Horizontal (Tampil Sempurna di PC) -->
+        <nav class="desktop-nav">
+            <button class="nav-tab active" data-tab="tab-pencatatan" onclick="switchTab('tab-pencatatan', this)">Pencatatan</button>
+            <button class="nav-tab" data-tab="tab-analisis" onclick="switchTab('tab-analisis', this)">Analisis &amp; Grafik</button>
+            <button class="nav-tab" data-tab="tab-tools" onclick="switchTab('tab-tools', this)">Tools</button>
+            <button class="nav-tab" data-tab="tab-gdrive" onclick="switchTab('tab-gdrive', this)">Google Drive</button>
+        </nav>
+
+        <div class="nav-right-pc">
+            <button class="btn-palette" onclick="openPalette()" title="Palet perintah (Ctrl + K)">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <span class="pal-label">Cari perintah</span>
+                <kbd class="pal-kbd">Ctrl K</kbd>
+            </button>
+            <button id="themeToggle" class="btn-theme" onclick="toggleTheme()" title="Ubah Tema">Mode Gelap</button>
+        </div>
+
+        <!-- Tombol Titik Tiga / Menu Hamburger (Khusus HP) -->
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <!-- Dropdown / Drawer Menu Navigasi HP -->
+    <div id="mobileMenuDropdown" class="mobile-dropdown-menu">
+        <button class="mobile-menu-item active" data-tab="tab-pencatatan" onclick="switchTabMobile('tab-pencatatan', this)">Pencatatan</button>
+        <button class="mobile-menu-item" data-tab="tab-rincian" onclick="switchTabMobile('tab-rincian', this)">Rincian Transaksi</button>
+        <button class="mobile-menu-item" data-tab="tab-analisis" onclick="switchTabMobile('tab-analisis', this)">Analisis &amp; Grafik</button>
+        <button class="mobile-menu-item" data-tab="tab-tools" onclick="switchTabMobile('tab-tools', this)">Tools</button>
+        <button class="mobile-menu-item" data-tab="tab-gdrive" onclick="switchTabMobile('tab-gdrive', this)">Google Drive</button>
+        <div class="mobile-menu-divider"></div>
+        <button class="mobile-menu-item" onclick="toggleMobileMenu(); openPalette();">Cari Perintah</button>
+        <button class="mobile-menu-item theme-toggle-mobile" onclick="toggleTheme(); toggleMobileMenu();">Ubah Tema Layar</button>
+    </div>
+
+    <!-- Container Konten Utama -->
+    <div class="container" id="exportContent">
+
+        <!-- ================= TAB 1: PENCATATAN ================= -->
+        <div id="tab-pencatatan" class="tab-content active">
+
+            <!-- Banner Sambutan Dinamis -->
+            <section class="hero" id="heroBanner">
+                <div class="hero-text">
+                    <p class="hero-greeting" id="heroGreeting">Selamat datang</p>
+                    <h2 class="hero-title" id="heroTitle">Rekapan Keuangan</h2>
+                    <p class="hero-sub" id="heroSub">Belum ada transaksi</p>
+                    <p class="hero-hints"><kbd>Ctrl</kbd><kbd>K</kbd> palet perintah <span class="dot-sep"></span> <kbd>Ctrl</kbd><kbd>Z</kbd> urungkan</p>
+                </div>
+                <div class="hero-status kosong" id="heroStatus">
+                    <span class="status-dot"></span>
+                    <span id="heroStatusText">Belum ada transaksi</span>
+                </div>
+            </section>
+
+            <!-- Bar Pilihan Draf -->
+            <div class="draft-bar">
+                <label for="selectDraft">Pilih Draf Kegiatan:</label>
+                <select id="selectDraft" onchange="gantiDraft()"></select>
+                <button class="btn-new" onclick="buatDraftBaru()">Draf Baru</button>
+                <button class="btn-rename" onclick="ubahNamaDraft()">Ubah Nama</button>
+                <button class="btn-reset" onclick="hapusDraftAktif()">Hapus Draf</button>
+            </div>
+
+            <!-- Impor & Download Templat Word -->
+            <div class="import-box">
+                <div class="import-box-header">
+                    <div>
+                        <p class="import-title">Impor Dokumen Word (.docx):</p>
+                        <span id="importStatus" class="import-status">Gunakan file Word hasil ekspor web ini atau Templat Resmi.</span>
+                    </div>
+                    <button onclick="downloadTemplateWord()" class="btn-template">Download Templat Word</button>
+                </div>
+                <input type="file" id="fileImportDoc" accept=".docx" onchange="imporDokumen(event)">
+            </div>
+
+            <input type="file" id="fileNotaHidden" class="hidden-input" accept="image/*" onchange="prosesGantiNota(event)">
+
+            <!-- Informasi Jumlah Peserta -->
+            <div class="info-card">
+                <div class="form-group">
+                    <label for="jumlahPeserta">Jumlah Total Peserta / Sasaran Kegiatan:</label>
+                    <input type="number" id="jumlahPeserta" value="0" min="0" onchange="ubahPeserta()">
+                </div>
+            </div>
+
+            <!-- Form Input Pemasukan & Pengeluaran -->
+            <div class="grid">
+                <div class="card masuk" id="cardMasuk">
+                    <h3>Input Uang Masuk</h3>
+                    <div class="form-group">
+                        <label>Masukkan Nama Departemen/Divisi</label>
+                        <input type="text" id="divisiMasuk" list="listDivisi" placeholder="misal: CONTER / Bendahara">
+                    </div>
+                    <div class="form-group">
+                        <label>Keterangan:</label>
+                        <input type="text" id="ketMasuk" placeholder="misal: HTM Peserta / Dana Fakultas">
+                    </div>
+                    <div class="form-group">
+                        <label>Perhitungan (Harga Satuan × Jumlah):</label>
+                        <div class="calc-group">
+                            <input type="number" id="hargaMasuk" placeholder="Harga Satuan" step="5000" oninput="hitungSubtotal('Masuk')">
+                            <span class="calc-operator">×</span>
+                            <input type="number" id="jumlahMasuk" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Masuk')">
+                        </div>
+                        <div class="chip-row" data-jenis="Masuk" aria-label="Tambah nominal cepat">
+                            <button type="button" class="chip" data-add="5000">+5rb</button>
+                            <button type="button" class="chip" data-add="10000">+10rb</button>
+                            <button type="button" class="chip" data-add="25000">+25rb</button>
+                            <button type="button" class="chip" data-add="50000">+50rb</button>
+                            <button type="button" class="chip" data-add="100000">+100rb</button>
+                            <button type="button" class="chip chip-clear" data-add="clear">Hapus</button>
+                        </div>
+                        <div class="calc-subtotal" id="subtotalMasuk">Total Item: Rp 0</div>
+                        <div class="terbilang-text" id="terbilangMasuk"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Upload Bukti Terima / Transfer (Foto/Gambar):</label>
+                        <input type="file" id="notaMasuk" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label>Catatan (Opsional):</label>
+                        <input type="text" id="catMasuk" placeholder="misal: Transfer Bank BSI">
+                    </div>
+                    <button class="btn-masuk" id="btnSubmitMasuk" onclick="tambahTransaksi('Masuk')">Tambah Uang Masuk</button>
+                </div>
+
+                <div class="card keluar" id="cardKeluar">
+                    <h3>Input Uang Keluar</h3>
+                    <div class="form-group">
+                        <label>Masukkan Nama Departemen/Divisi</label>
+                        <input type="text" id="divisiKeluar" list="listDivisi" placeholder="misal: MEDIA / PAKSIMA">
+                    </div>
+                    <div class="form-group">
+                        <label>Keterangan:</label>
+                        <input type="text" id="ketKeluar" placeholder="misal: Snack / Cetak Banner">
+                    </div>
+                    <div class="form-group">
+                        <label>Perhitungan (Harga Satuan × Jumlah):</label>
+                        <div class="calc-group">
+                            <input type="number" id="hargaKeluar" placeholder="Harga Satuan" step="5000" oninput="hitungSubtotal('Keluar')">
+                            <span class="calc-operator">×</span>
+                            <input type="number" id="jumlahKeluar" placeholder="Jumlah / Qty" value="1" min="1" oninput="hitungSubtotal('Keluar')">
+                        </div>
+                        <div class="chip-row" data-jenis="Keluar" aria-label="Tambah nominal cepat">
+                            <button type="button" class="chip" data-add="5000">+5rb</button>
+                            <button type="button" class="chip" data-add="10000">+10rb</button>
+                            <button type="button" class="chip" data-add="25000">+25rb</button>
+                            <button type="button" class="chip" data-add="50000">+50rb</button>
+                            <button type="button" class="chip" data-add="100000">+100rb</button>
+                            <button type="button" class="chip chip-clear" data-add="clear">Hapus</button>
+                        </div>
+                        <div class="calc-subtotal" id="subtotalKeluar">Total Item: Rp 0</div>
+                        <div class="terbilang-text" id="terbilangKeluar"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Upload File Nota / Kuitansi (Foto/Gambar):</label>
+                        <input type="file" id="notaKeluar" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label>Catatan (Opsional):</label>
+                        <input type="text" id="catKeluar" placeholder="misal: Nota Fisik Diserahkan">
+                    </div>
+                    <button class="btn-keluar" id="btnSubmitKeluar" onclick="tambahTransaksi('Keluar')">Tambah Uang Keluar</button>
+                </div>
+            </div>
+
+            <datalist id="listDivisi">
+                <option value="CONTER">
+                <option value="HUMAS">
+                <option value="MEDIA">
+                <option value="PAKSIMA">
+                <option value="PDK">
+                <option value="PPSDM">
+                <option value="Acara">
+                <option value="PDD">
+                <option value="Konsumsi">
+                <option value="Humas dan Kestari">
+                <option value="Perlengkapan dan Keamanan">
+            </datalist>
+
+            <!-- Summary Ringkas -->
+            <div class="summary-box">
+                <div class="summary-item">
+                    <h4>Total Peserta</h4>
+                    <p id="dispPeserta">0 Orang</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Total Uang Masuk</h4>
+                    <p id="dispMasuk" class="text-masuk">Rp 0</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Total Uang Keluar</h4>
+                    <p id="dispKeluar" class="text-keluar">Rp 0</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Sisa Saldo Akhir</h4>
+                    <p id="dispSaldo">Rp 0</p>
+                </div>
+            </div>
+
+            <!-- Kartu tautan ke halaman Rincian (hanya tampil di HP) -->
+            <div class="rincian-link" id="rincianLink">
+                <div class="rincian-link-text">
+                    <strong>Rincian Transaksi</strong>
+                    <span id="rincianLinkSub">Belum ada transaksi</span>
+                </div>
+                <button type="button" class="btn-new" onclick="switchTab('tab-rincian')">Buka Tabel</button>
+            </div>
+
+            <!-- Slot desktop: di PC, tabel tetap di halaman ini -->
+            <div id="rincianDesktopSlot">
+            <div id="rincianSection">
+            <!-- Header & Filter Tabel Transaksi -->
+            <div class="table-header-section">
+                <h2>Rincian Transaksi</h2>
+                <div class="history-controls">
+                    <button class="btn-history" id="btnUndo" onclick="undo()" disabled title="Undo (Ctrl+Z)">Undo</button>
+                    <button class="btn-history" id="btnRedo" onclick="redo()" disabled title="Redo (Ctrl+Y)">Redo</button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <input type="text" id="searchKeyword" placeholder="Cari transaksi / barang / catatan..." oninput="updateTampilan()">
+                <select id="filterDivisi" onchange="updateTampilan()">
+                    <option value="ALL">Semua Divisi</option>
+                </select>
+                <select id="filterJenis" onchange="updateTampilan()">
+                    <option value="ALL">Semua Jenis</option>
+                    <option value="Masuk">Hanya Uang Masuk</option>
+                    <option value="Keluar">Hanya Uang Keluar</option>
+                    <option value="NONOTA">Keluar tanpa nota</option>
+                </select>
+                <select id="sortTransaksi" onchange="updateTampilan()" aria-label="Urutkan transaksi">
+                    <option value="default">Urutan Input</option>
+                    <option value="nominal-desc">Nominal Terbesar</option>
+                    <option value="nominal-asc">Nominal Terkecil</option>
+                    <option value="nama-asc">Keterangan A-Z</option>
+                </select>
+            </div>
+            <p class="result-count" id="resultCount"></p>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-no">No</th>
+                            <th class="col-jenis">Jenis</th>
+                            <th>Keterangan</th>
+                            <th>Harga Satuan</th>
+                            <th class="col-qty">Jumlah</th>
+                            <th>Total Nominal</th>
+                            <th class="col-nota">Lampiran Nota / Bukti</th>
+                            <th>Catatan</th>
+                            <th class="col-action">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelBody">
+                        <tr>
+                            <td colspan="9" class="empty-row">Belum ada transaksi di draf ini.</td>
+                        </tr>
+                    </tbody>
+                    <tfoot id="tabelFoot">
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="export-group">
+                <button class="btn-word" onclick="exportToWord()">Download Word (.docx)</button>
+                <button class="btn-pdf" onclick="exportToPDF()">Download PDF (.pdf)</button>
+                <button class="btn-excel" onclick="exportToExcel()">Download Excel (.xlsx)</button>
+            </div>
+            </div><!-- /#rincianSection -->
+            </div><!-- /#rincianDesktopSlot -->
+        </div>
+
+        <!-- ================= HALAMAN RINCIAN TRANSAKSI (khusus HP) ================= -->
+        <div id="tab-rincian" class="tab-content">
+            <button type="button" class="btn-back-rincian" onclick="switchTab('tab-pencatatan')">&larr; Kembali ke Pencatatan</button>
+            <div id="rincianMobileSlot"></div>
+        </div>
+
+        <!-- ================= TAB 2: ANALISIS & GRAFIK ================= -->
+        <div id="tab-analisis" class="tab-content">
+            <div class="info-card">
+                <div class="progress-section">
+                    <div class="progress-label-group">
+                        <span>Penyerapan Uang Keluar dari Uang Masuk:</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="progressBar" class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kartu Wawasan Otomatis -->
+            <div class="stat-grid">
+                <div class="stat-tile">
+                    <span class="stat-label">Biaya per Peserta</span>
+                    <strong class="stat-value" id="statBiaya">—</strong>
+                    <span class="stat-sub" id="statBiayaSub">Isi jumlah peserta dulu</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Pengeluaran Terbesar</span>
+                    <strong class="stat-value" id="statTerbesar">—</strong>
+                    <span class="stat-sub" id="statTerbesarSub">Belum ada pengeluaran</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Jumlah Transaksi</span>
+                    <strong class="stat-value" id="statJumlah">0</strong>
+                    <span class="stat-sub" id="statJumlahSub">0 masuk · 0 keluar</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Kelengkapan Nota</span>
+                    <strong class="stat-value" id="statNota">—</strong>
+                    <span class="stat-sub" id="statNotaSub">Belum ada pengeluaran</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Divisi Terboros</span>
+                    <strong class="stat-value" id="statBoros">—</strong>
+                    <span class="stat-sub" id="statBorosSub">Belum ada pengeluaran</span>
+                </div>
+                <div class="stat-tile">
+                    <span class="stat-label">Rata-rata Pengeluaran</span>
+                    <strong class="stat-value" id="statRata">—</strong>
+                    <span class="stat-sub" id="statRataSub">per transaksi keluar</span>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h4>Analisis Masuk vs Keluar</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="chartComparison"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h4>Pengeluaran per Divisi</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="chartDivisi"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h4>Pergerakan Saldo Berjalan</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="chartSaldo"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h4>5 Pengeluaran Terbesar</h4>
+                    <div class="chart-wrapper">
+                        <canvas id="chartTop"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rekap per Divisi & Aktivitas Terakhir -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h4>Rekap per Divisi</h4>
+                    <div id="rekapDivisiList" class="rekap-list"></div>
+                </div>
+                <div class="chart-card">
+                    <h4>Aktivitas Terakhir</h4>
+                    <ul id="aktivitasList" class="aktivitas-list"></ul>
+                </div>
+            </div>
+
+            <!-- Cek Kesiapan Laporan -->
+            <div class="health-card">
+                <div class="health-ring">
+                    <svg viewBox="0 0 100 100" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="healthGrad" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#5b6cff"/>
+                                <stop offset="50%" stop-color="#9b5cf6"/>
+                                <stop offset="100%" stop-color="#ec5fa8"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="ring-bg" cx="50" cy="50" r="42"/>
+                        <circle class="ring-arc" id="healthArc" cx="50" cy="50" r="42"/>
+                    </svg>
+                    <span class="health-score" id="healthScore">0%</span>
+                </div>
+                <div class="health-body">
+                    <h4>Kesiapan Laporan (LPJ)</h4>
+                    <p class="health-verdict" id="healthVerdict">Perlu dilengkapi</p>
+                    <ul class="health-list" id="healthList"></ul>
+                </div>
+            </div>
+
+            <div class="calc-widget calc-sim">
+                <h3>Simulator Kalkulator Target HTM Peserta</h3>
+                <div class="grid-calc">
+                    <div class="form-group">
+                        <label>Estimasi Target Peserta:</label>
+                        <input type="number" id="simPeserta" placeholder="35" oninput="hitungSimulasiHTM()">
+                    </div>
+                    <div class="form-group">
+                        <label>Target Dana Non-HTM (Sponsor/Kas):</label>
+                        <input type="number" id="simSponsor" placeholder="1500000" oninput="hitungSimulasiHTM()">
+                    </div>
+                </div>
+                <div id="simulasiResult" class="calc-result-box">
+                    Masukkan jumlah peserta dan sponsor untuk melihat estimasi minimal HTM/peserta.
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: TOOLS ================= -->
+        <div id="tab-tools" class="tab-content">
+            <div class="info-card tools-intro">
+                <h3>Kotak Perkakas Bendahara</h3>
+                <p>Alat bantu praktis untuk mengatur pagu, menghitung cepat, membuat terbilang kuitansi, membagikan ringkasan, dan mengamankan data.</p>
+            </div>
+
+            <div class="tools-grid">
+
+                <!-- Pagu Anggaran -->
+                <div class="tool-card tool-wide">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h15a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7z"/><path d="M3 7l2-3h11"/><circle cx="17" cy="14" r="1.2"/></svg></span>
+                        <div>
+                            <h3>Pagu Anggaran per Divisi</h3>
+                            <p>Tentukan batas pengeluaran tiap divisi. Web akan memberi peringatan otomatis saat pagu hampir habis atau terlampaui.</p>
+                        </div>
+                    </div>
+                    <div class="budget-form">
+                        <input type="text" id="budgetDivisi" list="listDivisi" placeholder="Nama divisi, mis. MEDIA">
+                        <input type="number" id="budgetNominal" placeholder="Pagu (Rp)" min="0" step="50000">
+                        <button class="btn-new" onclick="simpanBudget()">Simpan Pagu</button>
+                    </div>
+                    <div id="budgetSuggest" class="budget-suggest"></div>
+                    <div id="budgetList" class="budget-list"></div>
+                </div>
+
+                <!-- Kalkulator -->
+                <div class="tool-card">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></span>
+                        <div>
+                            <h3>Kalkulator Cepat</h3>
+                            <p>Bisa diketik lewat keyboard. Hasilnya dapat langsung dikirim ke form.</p>
+                        </div>
+                    </div>
+                    <div class="calc-display">
+                        <div class="calc-expr" id="calcExpr">&nbsp;</div>
+                        <div class="calc-out" id="calcResult">0</div>
+                    </div>
+                    <div class="calc-keys" id="calcKeys">
+                        <button type="button" class="calc-key fn" data-key="C">C</button>
+                        <button type="button" class="calc-key fn" data-key="DEL">&larr;</button>
+                        <button type="button" class="calc-key fn" data-key="%" title="Bagi 100">%</button>
+                        <button type="button" class="calc-key op" data-key="/">÷</button>
+                        <button type="button" class="calc-key" data-key="7">7</button>
+                        <button type="button" class="calc-key" data-key="8">8</button>
+                        <button type="button" class="calc-key" data-key="9">9</button>
+                        <button type="button" class="calc-key op" data-key="*">×</button>
+                        <button type="button" class="calc-key" data-key="4">4</button>
+                        <button type="button" class="calc-key" data-key="5">5</button>
+                        <button type="button" class="calc-key" data-key="6">6</button>
+                        <button type="button" class="calc-key op" data-key="-">−</button>
+                        <button type="button" class="calc-key" data-key="1">1</button>
+                        <button type="button" class="calc-key" data-key="2">2</button>
+                        <button type="button" class="calc-key" data-key="3">3</button>
+                        <button type="button" class="calc-key op" data-key="+">+</button>
+                        <button type="button" class="calc-key" data-key="0">0</button>
+                        <button type="button" class="calc-key" data-key="000">000</button>
+                        <button type="button" class="calc-key" data-key=".">,</button>
+                        <button type="button" class="calc-key eq" data-key="=">=</button>
+                    </div>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini" onclick="calcKirim('Masuk')">Pakai sebagai Harga Masuk</button>
+                        <button type="button" class="btn-mini" onclick="calcKirim('Keluar')">Pakai sebagai Harga Keluar</button>
+                    </div>
+                </div>
+
+                <!-- Terbilang -->
+                <div class="tool-card">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h16"/></svg></span>
+                        <div>
+                            <h3>Terbilang Kuitansi</h3>
+                            <p>Ubah angka menjadi tulisan rupiah untuk kuitansi dan LPJ.</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="terbilangInput">Nominal (Rp):</label>
+                        <input type="number" id="terbilangInput" placeholder="mis. 1500000" min="0" oninput="updateTerbilangTool()">
+                    </div>
+                    <div class="terbilang-out kosong" id="terbilangOutput">Masukkan nominal untuk melihat terbilangnya.</div>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini" onclick="salinTerbilang()">Salin Teks</button>
+                    </div>
+                </div>
+
+                <!-- Ringkasan WhatsApp -->
+                <div class="tool-card tool-wide">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg></span>
+                        <div>
+                            <h3>Ringkasan untuk WhatsApp</h3>
+                            <p>Teks ringkas draf aktif yang siap dibagikan ke grup pengurus. Isi diperbarui otomatis.</p>
+                        </div>
+                    </div>
+                    <textarea id="waPreview" rows="10" readonly aria-label="Pratinjau ringkasan WhatsApp"></textarea>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini primary" onclick="salinRingkasan()">Salin Ringkasan</button>
+                        <button type="button" class="btn-mini wa" onclick="bukaWhatsApp()">Kirim via WhatsApp</button>
+                    </div>
+                </div>
+
+                <!-- Pembuat Kuitansi -->
+                <div class="tool-card tool-wide">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></svg></span>
+                        <div>
+                            <h3>Pembuat Kuitansi</h3>
+                            <p>Buat kuitansi rapi lengkap dengan terbilang otomatis, lalu cetak atau simpan sebagai PDF. Bisa diisi otomatis dari transaksi yang sudah dicatat.</p>
+                        </div>
+                    </div>
+                    <div class="kw-grid">
+                        <div class="form-group">
+                            <label for="kwSumber">Isi dari transaksi (opsional):</label>
+                            <select id="kwSumber" onchange="kuitansiIsiDariTransaksi()"><option value="">— Isi manual —</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="kwJenis">Jenis kuitansi:</label>
+                            <select id="kwJenis">
+                                <option value="terima">Penerimaan uang (telah terima dari)</option>
+                                <option value="bayar">Pembayaran (telah dibayarkan kepada)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="kwNama">Nama pihak terkait:</label>
+                            <input type="text" id="kwNama" placeholder="mis. Budi Santoso / Toko Maju Jaya">
+                        </div>
+                        <div class="form-group">
+                            <label for="kwUntuk">Untuk pembayaran:</label>
+                            <input type="text" id="kwUntuk" placeholder="mis. Konsumsi kegiatan">
+                        </div>
+                        <div class="form-group">
+                            <label for="kwNominal">Nominal (Rp):</label>
+                            <input type="number" id="kwNominal" min="0" placeholder="mis. 1500000" oninput="kuitansiTerbilangLive()">
+                            <div class="terbilang-text" id="kwTerbilang"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="kwTanggal">Tanggal:</label>
+                            <input type="date" id="kwTanggal">
+                        </div>
+                        <div class="form-group">
+                            <label for="kwBendahara">Nama bendahara (penandatangan):</label>
+                            <input type="text" id="kwBendahara" placeholder="Nama bendahara">
+                        </div>
+                    </div>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini primary" onclick="bukaKuitansi()">Pratinjau &amp; Cetak Kuitansi</button>
+                    </div>
+                </div>
+
+                <!-- Backup & Restore -->
+                <div class="tool-card tool-wide">
+                    <div class="tool-head">
+                        <span class="tool-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span>
+                        <div>
+                            <h3>Cadangan &amp; Pemulihan Data</h3>
+                            <p>Semua draf tersimpan di browser perangkat ini. Unduh cadangan secara berkala agar data aman jika browser dibersihkan.</p>
+                        </div>
+                    </div>
+                    <div class="storage-meter">
+                        <div class="storage-label">
+                            <span>Penyimpanan browser terpakai</span>
+                            <span id="storageText">0 KB</span>
+                        </div>
+                        <div class="storage-track"><div class="storage-fill" id="storageFill"></div></div>
+                    </div>
+                    <div class="tool-actions">
+                        <button type="button" class="btn-mini primary" onclick="backupSemuaDraf()">Unduh Cadangan (.json)</button>
+                        <label class="btn-mini btn-file">Pulihkan dari Cadangan
+                            <input type="file" id="fileRestore" class="hidden-input" accept=".json,application/json" onchange="restoreDraf(event)">
+                        </label>
+                        <button type="button" class="btn-mini" onclick="exportCSV()">Ekspor CSV Draf Aktif</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= TAB 4: GOOGLE DRIVE ================= -->
+        <div id="tab-gdrive" class="tab-content">
+            <div class="card card-drive">
+                <h3>Upload Rekapan ke Google Drive GCC</h3>
+                <p class="drive-desc">
+                    File hasil rekapan akan tersimpan otomatis ke folder target Google Drive resmi departemen.
+                </p>
+
+                <div class="grid grid-drive">
+                    <div class="form-group">
+                        <label>Pilih Departemen / Divisi:</label>
+                        <select id="driveDeptSelect">
+                            <option value="CONTER">CONTER</option>
+                            <option value="HUMAS">HUMAS</option>
+                            <option value="MEDIA">MEDIA</option>
+                            <option value="PAKSIMA">PAKSIMA</option>
+                            <option value="PDK">PDK</option>
+                            <option value="PPSDM">PPSDM</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kategori Dokumen:</label>
+                        <select id="driveCategorySelect">
+                            <option value="RAB">RAB (Rencana Anggaran Biaya)</option>
+                            <option value="Realisasi Anggaran">Realisasi Anggaran</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label class="drive-opt">
+                    <input type="checkbox" id="driveKonversi" checked>
+                    <span>Simpan juga sebagai Google Docs / Google Sheets agar langsung bisa dibuka dan diedit. File PDF tetap berupa PDF.</span>
+                </label>
+
+                <div class="export-group export-drive">
+                    <button class="btn-word" onclick="uploadKeDrive('docx')">Upload Word (.docx)</button>
+                    <button class="btn-pdf" onclick="uploadKeDrive('pdf')">Upload PDF (.pdf)</button>
+                    <button class="btn-excel" onclick="uploadKeDrive('xlsx')">Upload Excel (.xlsx)</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="site-footer">
+        Keuangan GCC &middot; GAMATIKA Coding Club
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
