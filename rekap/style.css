@@ -1423,45 +1423,55 @@ body:not(.dark-mode) .cmd-box { border-color: var(--border-color); }
     .export-group { margin-top: 18px; gap: 10px !important; }
     .btn-word, .btn-pdf, .btn-excel { padding: 12px; font-size: 0.86rem; }
 
-    /* ---- 8. Kartu transaksi: ringkas, hanya info penting yang menonjol ----
-          Baris atas : jenis (kiri) & total (kanan)
+    /* ---- 8. Kartu transaksi: ringkas, font kecil, rapi ----
+          Baris atas : jenis (kiri) & total (kanan, satu baris penuh)
           Tengah     : keterangan, harga satuan, jumlah, nota, catatan
-          Bawah      : tombol Edit / Duplikat / Hapus                      */
-    table { font-size: 0.86rem; }
+          Bawah      : tombol Edit / Duplikat / Hapus selebar kartu        */
+    table { font-size: 0.78rem; }
 
     tbody tr:not(.row-divisi-header) {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         grid-template-areas:
-            "jenis  total"
+            "top    top"
             "ket    ket"
             "harga  jumlah"
             "nota   catatan"
             "aksi   aksi";
-        gap: 10px 14px;
-        padding: 14px;
-        margin-bottom: 10px;
-        border-radius: 14px;
+        gap: 8px 12px;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 12px;
     }
 
     tbody td[data-label] {
         display: block; min-width: 0; padding: 0;
         border: 0 !important;
         text-align: left !important;
-        font-size: 0.86rem; word-break: break-word;
+        font-size: 0.78rem; line-height: 1.35; word-break: break-word;
     }
     tbody td[data-label]::before {
-        display: block; margin: 0 0 2px;
-        font-size: 0.64rem; font-weight: 500; letter-spacing: 0.04em;
+        display: block; margin: 0 0 1px;
+        font-size: 0.58rem; font-weight: 500; letter-spacing: 0.04em;
         text-transform: uppercase; color: var(--text-muted);
     }
 
     /* Nomor urut disembunyikan di kartu (urutan sudah jelas dari susunan kartu) */
     tbody td[data-label="No"] { display: none; }
 
-    tbody td[data-label="Jenis"] { grid-area: jenis; align-self: center; }
-    tbody td[data-label="Total"] { grid-area: total; align-self: center; text-align: right !important; font-size: 1rem; }
-    tbody td[data-label="Keterangan"] { grid-area: ket; font-size: 0.92rem; font-weight: 600; }
+    /* Jenis & Total berbagi satu baris: jenis di kiri, total rata kanan.
+       Total diberi ruang kiri agar tidak menimpa tulisan jenis. */
+    tbody td[data-label="Jenis"] { grid-area: top; justify-self: start; align-self: center; }
+    tbody .badge-masuk, tbody .badge-keluar { font-size: 0.66rem; }
+    tbody td[data-label="Total"] {
+        grid-area: top; align-self: center;
+        padding-left: 64px;
+        text-align: right !important;
+        font-size: 0.9rem;
+        white-space: nowrap; word-break: normal; overflow-wrap: normal;
+    }
+
+    tbody td[data-label="Keterangan"] { grid-area: ket; font-size: 0.84rem; font-weight: 600; }
     tbody td[data-label="Harga Satuan"] { grid-area: harga; }
     tbody td[data-label="Jumlah"] { grid-area: jumlah; }
     tbody td[data-label="Nota / Bukti"] { grid-area: nota; }
@@ -1473,35 +1483,40 @@ body:not(.dark-mode) .cmd-box { border-color: var(--border-color); }
     tbody td[data-label="Keterangan"]::before,
     tbody td[data-label="Aksi"]::before { display: none; }
 
-    tbody td .ket-wrap { align-items: flex-start; }
-    .row-time { font-size: 0.68rem; }
+    tbody td .ket-wrap { align-items: flex-start; gap: 1px; }
+    .row-time { font-size: 0.62rem; }
 
     tbody td[data-label="Nota / Bukti"] > div { flex-direction: row; flex-wrap: wrap; align-items: center; }
-    tbody td[data-label="Nota / Bukti"] .nota-actions { text-align: left; margin-top: 4px; }
-    .img-preview { width: 38px; height: 38px; }
-    .btn-nota-action, .btn-nota-delete { font-size: 0.78rem; padding: 2px 0; margin: 2px 12px 2px 0; }
+    tbody td[data-label="Nota / Bukti"] .nota-actions { text-align: left; margin-top: 3px; }
+    .img-preview { width: 34px; height: 34px; }
+    .btn-nota-action, .btn-nota-delete { font-size: 0.72rem; padding: 1px 0; margin: 1px 10px 1px 0; }
 
+    /* Tombol aksi: tiga tombol sama lebar, penuh selebar kartu, satu baris */
     tbody td[data-label="Aksi"] {
-        grid-area: aksi;
-        display: flex; flex-wrap: nowrap; justify-content: stretch; gap: 8px;
-        margin-top: 2px; padding-top: 10px;
+        grid-area: aksi; width: auto;
+        display: flex; flex-wrap: nowrap; justify-content: stretch; gap: 6px;
+        margin-top: 0; padding-top: 8px;
         border-top: 1px dashed var(--border-color) !important;
     }
     tbody td[data-label="Aksi"] button {
-        flex: 1; padding: 8px 4px; font-size: 0.78rem; font-weight: 600;
+        flex: 1 1 0; min-width: 0;
+        padding: 6px 2px; font-size: 0.7rem; font-weight: 600; white-space: nowrap;
         background: var(--input-bg); color: var(--text-main);
-        border: 1px solid var(--border-color); border-radius: 10px;
+        border: 1px solid var(--border-color); border-radius: 8px;
     }
     tbody td[data-label="Aksi"] .btn-delete { color: #ef4444; border-color: rgba(244, 63, 94, 0.30); }
 
     /* Judul divisi & baris kosong */
-    .row-divisi-header { margin: 14px 0 8px; }
-    .row-divisi-header td { padding: 10px 12px; font-size: 0.9rem; border-radius: 10px; }
-    tbody td.empty-row { grid-area: 1 / 1 / 2 / 3; padding: 18px 8px; font-size: 0.86rem; }
+    .row-divisi-header { margin: 12px 0 6px; }
+    .row-divisi-header td { padding: 8px 12px; font-size: 0.82rem; border-radius: 10px; }
+    tbody td.empty-row { grid-area: 1 / 1 / 2 / 3; padding: 16px 8px; font-size: 0.8rem; }
 
-    /* Total di bawah daftar */
-    tfoot { padding: 2px 14px; }
-    .tfoot-summary td { padding: 10px 0; font-size: 0.86rem; }
+    /* Kotak total di bawah daftar: baris saldo memenuhi lebar kotak,
+       teks diberi jarak ke tepi sehingga tidak terlihat mepet */
+    tfoot { margin-top: 4px; padding: 0; overflow: hidden; border-radius: 12px; }
+    .tfoot-summary { padding: 0 14px; gap: 10px; }
+    .tfoot-summary td { padding: 9px 0; font-size: 0.8rem; }
+    .tfoot-summary td:last-child { text-align: right; white-space: nowrap; }
 
     /* ---- 9. Halaman Analisis & Grafik ---- */
     .progress-label-group { font-size: 0.82rem; margin-bottom: 8px; }
