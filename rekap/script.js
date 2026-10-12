@@ -940,6 +940,41 @@ function switchTabMobile(tabId, btnElement) {
 }
 
 /* ---------------------------------------------------------------------
+   Rincian Transaksi: di HP tampil di halaman sendiri, di PC tetap di
+   halaman Pencatatan. Elemen yang sama dipindah (bukan digandakan) agar
+   semua fungsi (filter, edit, hapus, undo) tetap bekerja.
+   --------------------------------------------------------------------- */
+const MQ_HP = window.matchMedia('(max-width: 768px)');
+
+function posisikanRincian() {
+    const bagian = document.getElementById('rincianSection');
+    const tujuan = document.getElementById(MQ_HP.matches ? 'rincianMobileSlot' : 'rincianDesktopSlot');
+    if (bagian && tujuan && bagian.parentNode !== tujuan) tujuan.appendChild(bagian);
+
+    // Layar melebar ke ukuran PC saat halaman Rincian terbuka -> kembali ke Pencatatan
+    const halamanRincian = document.getElementById('tab-rincian');
+    if (!MQ_HP.matches && halamanRincian && halamanRincian.classList.contains('active')) {
+        switchTab('tab-pencatatan');
+    }
+}
+
+function bukaRincian() {
+    if (MQ_HP.matches) {
+        switchTab('tab-rincian');
+    } else {
+        switchTab('tab-pencatatan');
+        setTimeout(() => {
+            const bagian = document.getElementById('rincianSection');
+            if (bagian) bagian.scrollIntoView({ behavior: REDUCED_MOTION ? 'auto' : 'smooth', block: 'start' });
+        }, 120);
+    }
+}
+
+function updateRincianLink() {
+    setTeks('rincianLinkSub', transaksi.length ? `${transaksi.length} transaksi tercatat` : 'Belum ada transaksi');
+}
+
+/* ---------------------------------------------------------------------
    E. ANGKA BERANIMASI (count-up) & RINGKASAN
    --------------------------------------------------------------------- */
 function animasiAngka(id, target, format) {
@@ -1737,6 +1772,7 @@ function daftarPerintah() {
     const tab = (id, label, kata) => ({ grup: 'Navigasi', label, kata, jalan: () => switchTab(id) });
     return [
         tab('tab-pencatatan', 'Buka Pencatatan', 'transaksi input catat'),
+        { grup: 'Navigasi', label: 'Buka Rincian Transaksi', kata: 'tabel daftar transaksi rincian', jalan: () => bukaRincian() },
         tab('tab-analisis', 'Buka Analisis & Grafik', 'chart statistik laporan kesiapan'),
         tab('tab-tools', 'Buka Tools', 'kalkulator pagu budget terbilang backup'),
         tab('tab-gdrive', 'Buka Google Drive', 'upload unggah drive'),
@@ -2036,7 +2072,14 @@ function editTransaksi(index) {
     document.getElementById(isMasuk ? 'catMasuk' : 'catKeluar').value = item.catatan === '-' ? '' : item.catatan;
     document.getElementById(isMasuk ? 'btnSubmitMasuk' : 'btnSubmitKeluar').innerText = 'Simpan Perubahan';
     hitungSubtotal(item.jenis);
-    document.getElementById(isMasuk ? 'cardMasuk' : 'cardKeluar').scrollIntoView({ behavior: 'smooth' });
+    const kartuForm = document.getElementById(isMasuk ? 'cardMasuk' : 'cardKeluar');
+    if (MQ_HP.matches) {
+        // Di HP, form ada di halaman Pencatatan: pindah dulu, lalu gulir ke form
+        switchTab('tab-pencatatan');
+        setTimeout(() => kartuForm.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+    } else {
+        kartuForm.scrollIntoView({ behavior: 'smooth' });
+    }
     document.getElementById(isMasuk ? 'ketMasuk' : 'ketKeluar').focus({ preventScroll: true });
 }
 
@@ -2161,12 +2204,18 @@ function updateTampilan() {
     updateHealth(summary);
     updateHero(summary);
     updateWAPreview(summary);
+    updateRincianLink();
 }
 
 /* ---------------------------------------------------------------------
    Q. INISIALISASI SEMUA FITUR
    --------------------------------------------------------------------- */
 function initFitur() {
+    // Tempatkan tabel sesuai ukuran layar & pantau perubahan ukuran/rotasi
+    posisikanRincian();
+    if (MQ_HP.addEventListener) MQ_HP.addEventListener('change', posisikanRincian);
+    else if (MQ_HP.addListener) MQ_HP.addListener(posisikanRincian);
+
     // Klik gambar nota di tabel -> buka lightbox (tanpa menaruh data gambar di atribut onclick)
     document.getElementById('tabelBody').addEventListener('click', e => {
         const gambar = e.target.closest('[data-open-nota]');
