@@ -30,8 +30,8 @@ font-weight: 600;
 font-family: var(--mono) !important;
 }
 
-/* STREAMING_CHUNK:Styling cards, tables, summary rows, and buttons... */
-.card, .info-card, .chart-card, .stat-tile, .tool-card, .health-card, .import-box, .draft-bar, .calc-widget, .summary-item, .rincian-link, .cmd-box, .kw-dialog, .modal-content, .table-responsive {
+/* STREAMING_CHUNK:Styling cards, tables, summary rows, charts, and buttons... */
+.card, .info-card, .chart-card, .stat-tile, .tool-card, .health-card, .import-box, .draft-bar, .calc-widget, .summary-item, .rincian-link, .cmd-box, .kw-dialog, .modal-content, .table-responsive, div.card {
 background: var(--kartu) !important;
 border: 1.5px solid var(--tinta) !important;
 border-radius: 6px !important;
@@ -42,6 +42,13 @@ color: var(--tinta) !important;
 
 .card::before, .card::after, .chart-card::before, .stat-tile::before, .tool-card::before {
 display: none !important;
+}
+
+/* Penyesuaian khusus untuk wrapper grafik agar kotaknya konsisten */
+.chart-wrapper, canvas {
+background: transparent !important;
+box-shadow: none !important;
+border: none !important;
 }
 
 /* Styling Tabel & Baris Footer Total (Menyesuaikan dengan Kotak) */
