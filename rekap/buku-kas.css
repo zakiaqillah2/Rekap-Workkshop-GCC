@@ -1,17 +1,17 @@
-/* Tema "Buku Kas" — Hanya Font dan Bentuk Kotak/Card Saja */
-:root{
---font:'Newsreader',Georgia,serif;
---mono:'IBM Plex Mono',ui-monospace,monospace;
---sans:'DM Sans',system-ui,sans-serif;
---kartu:#fffdff;
---tinta:#1d1237;
---garis:#d9cdf0;
+/* STREAMING_CHUNK:Defining theme variables and retro typography... */
+:root {
+--font: 'Newsreader', Georgia, serif;
+--mono: 'IBM Plex Mono', ui-monospace, monospace;
+--sans: 'DM Sans', system-ui, sans-serif;
+--kartu: #fffdff;
+--tinta: #1d1237;
+--garis: #d9cdf0;
 }
 
-body.dark-mode{
---kartu:#1a1230;
---tinta:#ece6ff;
---garis:#3a2d5e;
+body.dark-mode {
+--kartu: #1a1230;
+--tinta: #ece6ff;
+--garis: #3a2d5e;
 }
 
 /* 1. Pengaturan Font */
@@ -30,8 +30,8 @@ font-weight: 600;
 font-family: var(--mono) !important;
 }
 
-/* 2. Pengaturan Bentuk Kotak / Card Saja */
-.card, .info-card, .chart-card, .stat-tile, .tool-card, .health-card, .import-box, .draft-bar, .calc-widget, .summary-item, .rincian-link, .cmd-box, .kw-dialog, .modal-content {
+/* STREAMING_CHUNK:Styling cards, tables, summary rows, and buttons... */
+.card, .info-card, .chart-card, .stat-tile, .tool-card, .health-card, .import-box, .draft-bar, .calc-widget, .summary-item, .rincian-link, .cmd-box, .kw-dialog, .modal-content, .table-responsive {
 background: var(--kartu) !important;
 border: 1.5px solid var(--tinta) !important;
 border-radius: 6px !important;
@@ -42,4 +42,40 @@ color: var(--tinta) !important;
 
 .card::before, .card::after, .chart-card::before, .stat-tile::before, .tool-card::before {
 display: none !important;
+}
+
+/* Styling Tabel & Baris Footer Total (Menyesuaikan dengan Kotak) */
+table {
+border-collapse: separate !important;
+border-spacing: 0;
+width: 100%;
+}
+
+th, td {
+border-color: var(--tinta) !important;
+}
+
+.tfoot-summary td {
+background: var(--kartu) !important;
+border-top: 1.5px solid var(--tinta) !important;
+border-bottom: 1.5px solid var(--tinta) !important;
+color: var(--tinta) !important;
+font-weight: 600;
+box-shadow: none !important;
+}
+
+/* Tombol Ekspor/Aksi agar menyatu dengan gaya card */
+button, .btn-primary, .btn-secondary {
+background: var(--kartu) !important;
+border: 1.5px solid var(--tinta) !important;
+border-radius: 6px !important;
+box-shadow: 3px 3px 0 var(--garis) !important;
+color: var(--tinta) !important;
+font-weight: 600 !important;
+transition: all 0.1s ease !important;
+}
+
+button:hover, .btn-primary:hover, .btn-secondary:hover {
+transform: translate(-1px, -1px);
+box-shadow: 4px 4px 0 var(--tinta) !important;
 }
