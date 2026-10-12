@@ -640,6 +640,38 @@ async function exportToWord() {
     showToast(`File ${fileName} berhasil di-download!`, "success");
 }
 
+/* ---------------------------------------------------------------------
+   UPLOAD KE GOOGLE DRIVE
+   Agar file terbaca saat dibuka dengan Google Docs / Sheets / Drive:
+   - tipe MIME dikirim eksplisit per format (tidak bergantung pada blob)
+   - isi file diperiksa dulu (Word/Excel = arsip ZIP "PK", PDF = "%PDF")
+   - opsional: minta Drive membuat salinan Google Docs / Google Sheets
+   --------------------------------------------------------------------- */
+const MIME_DRIVE = {
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    pdf: 'application/pdf'
+};
+const GOOGLE_TIPE = { docx: 'document', xlsx: 'spreadsheet', pdf: null };
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyt9AmgH3Ks5dLjPNDi2oK3gR5PD3M9MDKbtLGrKUaKMgCsmB3WfVS4Fc3MTjHJd1_H/exec";
+
+function bacaBlobSebagai(blob, mode) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(reader.error || new Error('Gagal membaca file'));
+        reader.onload = () => resolve(reader.result);
+        if (mode === 'buffer') reader.readAsArrayBuffer(blob);
+        else reader.readAsDataURL(blob);
+    });
+}
+
+async function fileDriveValid(blob, formatType) {
+    if (!blob || !blob.size) return false;
+    const kepala = new Uint8Array(await bacaBlobSebagai(blob.slice(0, 5), 'buffer'));
+    const teks = String.fromCharCode.apply(null, kepala);
+    return formatType === 'pdf' ? teks.indexOf('%PDF') === 0 : teks.indexOf('PK') === 0;
+}
+
 async function uploadKeDrive(formatType) {
     const dept = document.getElementById('driveDeptSelect').value;
     const category = document.getElementById('driveCategorySelect').value;
@@ -657,37 +689,48 @@ async function uploadKeDrive(formatType) {
     try {
         const fileBlob = await generateFileBlob(formatType);
 
-        const reader = new FileReader();
-        reader.readAsDataURL(fileBlob);
-        reader.onloadend = async function () {
-            const base64Data = reader.result.split(',')[1];
+        if (!(await fileDriveValid(fileBlob, formatType))) {
+            showToast("File gagal dibuat dengan benar, unggahan dibatalkan.", "error");
+            return;
+        }
 
-            const payload = {
-                folderId: targetFolderId,
-                fileName: fileName,
-                mimeType: fileBlob.type,
-                fileData: base64Data
-            };
+        const dataUrl = await bacaBlobSebagai(fileBlob, 'url');
+        const base64Data = String(dataUrl).split(',')[1];
 
-            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyt9AmgH3Ks5dLjPNDi2oK3gR5PD3M9MDKbtLGrKUaKMgCsmB3WfVS4Fc3MTjHJd1_H/exec";
+        const kolomKonversi = document.getElementById('driveKonversi');
+        const googleType = GOOGLE_TIPE[formatType];
+        const konversi = !!(kolomKonversi && kolomKonversi.checked && googleType);
 
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
-                if (result.status === "success" || response.ok) {
-                    showToast(`Berhasil mengirim "${fileName}" ke Google Drive!`, "success");
-                } else {
-                    showToast(`Gagal: ${result.message || 'Unknown error'}`, "error");
-                }
-            } catch (err) {
-                console.error(err);
-                showToast("Permintaan unggah terkirim ke Google Drive!", "success");
-            }
+        const payload = {
+            folderId: targetFolderId,
+            fileName: fileName,
+            ext: formatType,
+            mimeType: MIME_DRIVE[formatType] || fileBlob.type,
+            size: fileBlob.size,
+            convert: konversi,
+            googleType: konversi ? googleType : null,
+            fileData: base64Data
         };
+
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (result.status === "success" || response.ok) {
+                let pesan = `Berhasil mengirim "${fileName}" ke Google Drive!`;
+                if (konversi && result.converted) pesan += formatType === 'docx' ? ' Salinan Google Docs juga dibuat.' : ' Salinan Google Sheets juga dibuat.';
+                showToast(pesan, "success");
+            } else {
+                showToast(`Gagal: ${result.message || 'Unknown error'}`, "error");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Permintaan unggah terkirim ke Google Drive!", "success");
+        }
     } catch (err) {
         console.error(err);
         showToast("Gagal memproses file untuk Google Drive.", "error");
@@ -1773,6 +1816,8 @@ function daftarPerintah() {
     return [
         tab('tab-pencatatan', 'Buka Pencatatan', 'transaksi input catat'),
         { grup: 'Navigasi', label: 'Buka Rincian Transaksi', kata: 'tabel daftar transaksi rincian', jalan: () => bukaRincian() },
+        { grup: 'Navigasi', label: 'Tampilkan transaksi tanpa nota', kata: 'nota filter kurang lampiran bukti', jalan: () => tampilkanTanpaNota() },
+        { grup: 'Tools', label: 'Buat kuitansi', kata: 'kwitansi cetak bukti kas', jalan: () => { switchTab('tab-tools'); setTimeout(() => { const e = document.getElementById('kwNama'); if (e) e.focus({ preventScroll: true }); }, 200); } },
         tab('tab-analisis', 'Buka Analisis & Grafik', 'chart statistik laporan kesiapan'),
         tab('tab-tools', 'Buka Tools', 'kalkulator pagu budget terbilang backup'),
         tab('tab-gdrive', 'Buka Google Drive', 'upload unggah drive'),
@@ -2164,7 +2209,8 @@ function updateTampilan() {
         const teksCari = `${t.keterangan || ''} ${t.divisi || ''} ${t.catatan || ''}`.toLowerCase();
         if (keyword && !teksCari.includes(keyword)) return;
         if (filterDiv !== 'ALL' && (t.divisi || 'CONTER') !== filterDiv) return;
-        if (filterJen !== 'ALL' && t.jenis !== filterJen) return;
+        if (filterJen === 'NONOTA') { if (t.jenis !== 'Keluar' || t.notaData) return; }
+        else if (filterJen !== 'ALL' && t.jenis !== filterJen) return;
         cocok.push({ t, idx });
     });
 
@@ -2205,6 +2251,9 @@ function updateTampilan() {
     updateHero(summary);
     updateWAPreview(summary);
     updateRincianLink();
+    renderRekapDivisi();
+    renderAktivitas();
+    kuitansiPerbaruiSumber();
 }
 
 /* ---------------------------------------------------------------------
@@ -2215,6 +2264,7 @@ function initFitur() {
     posisikanRincian();
     if (MQ_HP.addEventListener) MQ_HP.addEventListener('change', posisikanRincian);
     else if (MQ_HP.addListener) MQ_HP.addListener(posisikanRincian);
+    kuitansiInit();
 
     // Klik gambar nota di tabel -> buka lightbox (tanpa menaruh data gambar di atribut onclick)
     document.getElementById('tabelBody').addEventListener('click', e => {
@@ -2346,3 +2396,223 @@ window.onload = function () {
     muatSemuaDraft();
     initFitur();
 };
+
+
+/* =====================================================================
+   FITUR BARU: Rekap per Divisi, Aktivitas Terakhir, Filter Tanpa Nota,
+   dan Pembuat Kuitansi
+   ===================================================================== */
+
+/* ---------- Rekap per Divisi (halaman Analisis) ---------- */
+function renderRekapDivisi() {
+    const wadah = document.getElementById('rekapDivisiList');
+    if (!wadah) return;
+
+    const peta = {};
+    transaksi.forEach(t => {
+        const k = String(t.divisi || 'CONTER').trim().toUpperCase();
+        const o = peta[k] = peta[k] || { masuk: 0, keluar: 0 };
+        const n = Number(t.totalNominal) || 0;
+        if (t.jenis === 'Masuk') o.masuk += n;
+        else if (t.jenis === 'Keluar') o.keluar += n;
+    });
+
+    const nama = Object.keys(peta).sort((a, b) => peta[b].keluar - peta[a].keluar);
+    if (!nama.length) {
+        wadah.innerHTML = '<p class="empty-note">Belum ada transaksi di draf ini.</p>';
+        return;
+    }
+
+    const draft = getDraftAktif();
+    const budgets = (draft && draft.budgets) || {};
+
+    wadah.innerHTML = nama.map(k => {
+        const { masuk, keluar } = peta[k];
+        const selisih = masuk - keluar;
+        const pagu = Number(budgets[k]) || 0;
+        let bar = '';
+        if (pagu > 0) {
+            const p = (keluar / pagu) * 100;
+            const status = p > 100 ? 'over' : p >= 80 ? 'warn' : 'ok';
+            bar = `<div class="rekap-pagu ${status}">
+                <div class="budget-bar"><span data-w="${Math.min(p, 100).toFixed(1)}"></span></div>
+                <div class="budget-note">${Math.round(p)}% dari pagu ${formatRupiah(pagu)}</div>
+            </div>`;
+        }
+        return `<div class="rekap-row">
+            <div class="rekap-top"><strong>${esc(k)}</strong><span class="${selisih < 0 ? 'text-keluar' : 'text-masuk'}">${formatRupiah(selisih)}</span></div>
+            <div class="rekap-sub"><span>Masuk ${formatRupiah(masuk)}</span><span>Keluar ${formatRupiah(keluar)}</span></div>
+            ${bar}
+        </div>`;
+    }).join('');
+
+    setTimeout(() => {
+        wadah.querySelectorAll('.budget-bar span[data-w]').forEach(el => { el.style.width = el.dataset.w + '%'; });
+    }, 30);
+}
+
+/* ---------- Aktivitas Terakhir (halaman Analisis) ---------- */
+function waktuRelatif(ms) {
+    const menit = Math.floor((Date.now() - ms) / 60000);
+    if (menit < 1) return 'baru saja';
+    if (menit < 60) return `${menit} menit lalu`;
+    const jam = Math.floor(menit / 60);
+    if (jam < 24) return `${jam} jam lalu`;
+    const hari = Math.floor(jam / 24);
+    if (hari < 7) return `${hari} hari lalu`;
+    return formatWaktu(ms);
+}
+
+function renderAktivitas() {
+    const wadah = document.getElementById('aktivitasList');
+    if (!wadah) return;
+    if (!transaksi.length) {
+        wadah.innerHTML = '<li class="empty-note">Belum ada aktivitas.</li>';
+        return;
+    }
+    const terbaru = transaksi
+        .map((t, i) => ({ t, i }))
+        .sort((a, b) => ((b.t.waktu || 0) - (a.t.waktu || 0)) || (b.i - a.i))
+        .slice(0, 6);
+
+    wadah.innerHTML = terbaru.map(({ t }) => {
+        const masuk = t.jenis === 'Masuk';
+        const waktu = t.waktu ? ' · ' + waktuRelatif(t.waktu) : '';
+        return `<li class="aktv ${masuk ? 'in' : 'out'}">
+            <span class="aktv-dot"></span>
+            <div class="aktv-body"><b>${esc(t.keterangan)}</b><small>${esc(String(t.divisi || 'CONTER'))}${esc(waktu)}</small></div>
+            <span class="aktv-amt">${masuk ? '+' : '−'}${formatRupiah(Number(t.totalNominal) || 0)}</span>
+        </li>`;
+    }).join('');
+}
+
+/* ---------- Filter: transaksi keluar tanpa nota ---------- */
+function tampilkanTanpaNota() {
+    const cari = document.getElementById('searchKeyword');
+    const jenis = document.getElementById('filterJenis');
+    const divisi = document.getElementById('filterDivisi');
+    if (cari) cari.value = '';
+    if (divisi) divisi.value = 'ALL';
+    if (jenis) jenis.value = 'NONOTA';
+    updateTampilan();
+    bukaRincian();
+    const jumlah = transaksi.filter(t => t.jenis === 'Keluar' && !t.notaData).length;
+    showToast(jumlah ? `${jumlah} pengeluaran belum ada nota` : 'Semua pengeluaran sudah punya nota', jumlah ? 'info' : 'success');
+}
+
+/* ---------- Pembuat Kuitansi ---------- */
+let kwNomorSementara = '';
+
+function hariIniISO() {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 10);
+}
+
+function kuitansiInit() {
+    const tgl = document.getElementById('kwTanggal');
+    if (tgl && !tgl.value) tgl.value = hariIniISO();
+    try {
+        const b = localStorage.getItem('gcc_kw_bendahara');
+        const kolom = document.getElementById('kwBendahara');
+        if (b && kolom && !kolom.value) kolom.value = b;
+    } catch (e) { /* penyimpanan tidak tersedia */ }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupKuitansi(); });
+}
+
+function kuitansiPerbaruiSumber() {
+    const sel = document.getElementById('kwSumber');
+    if (!sel) return;
+    const sebelum = sel.value;
+    sel.innerHTML = '<option value="">— Isi manual —</option>' + transaksi.map((t, i) =>
+        `<option value="${i}">${esc(t.jenis)} · ${esc(t.keterangan)} · ${esc(formatRupiah(Number(t.totalNominal) || 0))}</option>`
+    ).join('');
+    sel.value = (sebelum !== '' && transaksi[Number(sebelum)]) ? sebelum : '';
+}
+
+function kuitansiIsiDariTransaksi() {
+    const t = transaksi[Number(document.getElementById('kwSumber').value)];
+    if (!t) return;
+    document.getElementById('kwUntuk').value = t.keterangan || '';
+    document.getElementById('kwNominal').value = Number(t.totalNominal) || '';
+    document.getElementById('kwJenis').value = t.jenis === 'Masuk' ? 'terima' : 'bayar';
+    kuitansiTerbilangLive();
+}
+
+function kuitansiTerbilangLive() {
+    const n = parseFloat(document.getElementById('kwNominal').value);
+    setTeks('kwTerbilang', n > 0 ? formatTerbilang(n) : '');
+}
+
+function nomorKuitansiBerikut() {
+    let n = 0;
+    try { n = Number(localStorage.getItem('gcc_kw_no')) || 0; } catch (e) { /* abaikan */ }
+    return n + 1;
+}
+
+function bukaKuitansi() {
+    const ambil = id => (document.getElementById(id).value || '').trim();
+    const nominal = parseFloat(document.getElementById('kwNominal').value);
+    if (!(nominal > 0)) { showToast('Isi nominal kuitansi terlebih dahulu', 'error'); return; }
+
+    const jenis = ambil('kwJenis');
+    const nama = ambil('kwNama');
+    const untuk = ambil('kwUntuk');
+    const bendahara = ambil('kwBendahara');
+    try { localStorage.setItem('gcc_kw_bendahara', bendahara); } catch (e) { /* abaikan */ }
+
+    const tglIso = ambil('kwTanggal') || hariIniISO();
+    const tanggal = new Date(tglIso + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const nomor = 'KW-' + String(nomorKuitansiBerikut()).padStart(4, '0');
+    kwNomorSementara = nomor;
+
+    const label = jenis === 'terima' ? 'Telah terima dari' : 'Telah dibayarkan kepada';
+    const penyerah = jenis === 'terima' ? nama : bendahara;
+    const penerima = jenis === 'terima' ? bendahara : nama;
+    const titik = '...............................';
+
+    document.getElementById('kwSheet').innerHTML = `
+        <div class="kw-paper">
+            <div class="kw-head">
+                <div><strong>GAMATIKA Coding Club</strong><span class="kw-sub">Bukti Kas</span></div>
+                <div class="kw-no">No. ${esc(nomor)}</div>
+            </div>
+            <h2>KUITANSI</h2>
+            <dl>
+                <div class="kw-row"><dt>${label}</dt><dd>${esc(nama || titik)}</dd></div>
+                <div class="kw-row"><dt>Uang sejumlah</dt><dd><span class="kw-terbilang">${esc(formatTerbilang(nominal))}</span></dd></div>
+                <div class="kw-row"><dt>Untuk pembayaran</dt><dd>${esc(untuk || titik)}</dd></div>
+            </dl>
+            <div class="kw-bottom">
+                <div class="kw-amount">${esc(formatRupiah(nominal))}</div>
+                <div>
+                    <div class="kw-tgl">${esc(tanggal)}</div>
+                    <div class="kw-sign-wrap">
+                        <div class="kw-sign"><span>Yang menyerahkan,</span><div class="kw-line"></div><strong>${esc(penyerah || titik)}</strong></div>
+                        <div class="kw-sign"><span>Yang menerima,</span><div class="kw-line"></div><strong>${esc(penerima || titik)}</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    document.getElementById('kuitansiModal').classList.add('show');
+}
+
+function tutupKuitansi() {
+    const m = document.getElementById('kuitansiModal');
+    if (m) m.classList.remove('show');
+}
+
+function cetakKuitansi() {
+    // Nomor kuitansi baru dihitung "terpakai" saat benar-benar dicetak
+    const angka = parseInt(String(kwNomorSementara).replace(/\D/g, ''), 10);
+    if (angka) { try { localStorage.setItem('gcc_kw_no', String(angka)); } catch (e) { /* abaikan */ } }
+
+    document.body.classList.add('cetak-kuitansi');
+    const bersih = () => {
+        document.body.classList.remove('cetak-kuitansi');
+        window.removeEventListener('afterprint', bersih);
+    };
+    window.addEventListener('afterprint', bersih);
+    setTimeout(() => window.print(), 60);
+}
