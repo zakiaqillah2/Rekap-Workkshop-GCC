@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0b0716">
+    <meta name="theme-color" content="#161a17">
     <title>Rekapan Keuangan - GAMATIKA Coding Club</title>
 
     <!-- Favicon Logo GCC -->
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1QOjchWwyuyYMdB00zTWBUyS-h7LYGvWl">
 
     <!-- Stylesheet Kustom -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&family=Newsreader:ital,wght@0,500;0,700;1,500;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="buku-kas.css">
 
     <!-- Library docx & FileSaver untuk Word -->
-    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+    <script src="https://unpkg.com/docx@9.6.1/dist/index.iife.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <!-- Library jsPDF + AutoTable untuk PDF teks asli -->
@@ -26,8 +29,11 @@
     <!-- Library Chart.js untuk Grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Library SheetJS (XLSX) untuk Ekspor Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Library ExcelJS untuk Ekspor Excel (format, garis, lebar kolom) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+
+    <!-- Library JSZip untuk membaca data cadangan di dalam file Word -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -140,8 +146,8 @@
             <!-- Banner Sambutan Dinamis -->
             <section class="hero" id="heroBanner">
                 <div class="hero-text">
-                    <p class="hero-greeting" id="heroGreeting">Selamat datang</p>
-                    <h2 class="hero-title" id="heroTitle">Rekapan Keuangan</h2>
+                    <p class="hero-greeting" id="heroGreeting">Halaman hari ini</p>
+                    <h2 class="hero-title" id="heroTitle">Buku Kas Kegiatan</h2>
                     <p class="hero-sub" id="heroSub">Belum ada transaksi</p>
                     <p class="hero-hints"><kbd>Ctrl</kbd><kbd>K</kbd> palet perintah <span class="dot-sep"></span> <kbd>Ctrl</kbd><kbd>Z</kbd> urungkan</p>
                 </div>
@@ -474,9 +480,9 @@
                     <svg viewBox="0 0 100 100" aria-hidden="true">
                         <defs>
                             <linearGradient id="healthGrad" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stop-color="#5b6cff"/>
-                                <stop offset="50%" stop-color="#9b5cf6"/>
-                                <stop offset="100%" stop-color="#ec5fa8"/>
+                                <stop offset="0%" stop-color="#2f5d46"/>
+                                <stop offset="50%" stop-color="#2f5d46"/>
+                                <stop offset="100%" stop-color="#b8892b"/>
                             </linearGradient>
                         </defs>
                         <circle class="ring-bg" cx="50" cy="50" r="42"/>
